@@ -1,17 +1,18 @@
 {
-  "name": "http-backend",
+  "name": "@repo/types",
   "module": "index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest",
-    "@repo/types": "workspace:*"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "@types/express": "^5.0.6",
-    "express": "^5.2.1"
+    "zod": "^4.3.6"
+  },
+  "exports": {
+    "./types": "./index.ts"
   }
 }
