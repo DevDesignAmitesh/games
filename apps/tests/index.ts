@@ -8,7 +8,10 @@ export const createUser = async () => {
     password: String(Math.random()),
   };
 
-  await axios.post(`${HTTP_URL}/register`, data);
+  // should return token and userId
+  const res = (await axios.post(`${HTTP_URL}/register`, data)) as {
+    data: { token: string; userId: string };
+  };
 
-  return data;
+  return { ...data, ...res.data };
 };
