@@ -6,6 +6,7 @@ import {
   friendReqSchema,
   registerSchema,
 } from "@repo/types/types";
+import { register } from "./services/register";
 
 const app = express();
 const PORT = 3000;
@@ -22,7 +23,7 @@ app.post(
     schema: registerSchema,
     type: ["body"],
   }),
-  registerRoute,
+  register,
 );
 
 app.post(

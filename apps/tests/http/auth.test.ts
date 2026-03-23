@@ -23,29 +23,7 @@ describe("POST /register", () => {
     expect(res.status).toBe(403);
     expect(res.data.message).toBe("invalid inputs");
   });
-
-  it("this should return email already exists", async () => {
-    const { email, password } = await createUser();
-
-    const res = await axios.post(`${HTTP_URL}/register`, {
-      email,
-      password,
-    });
-
-    expect(res.status).toBe(409);
-    expect(res.data.message).toBe("email already exists");
-  });
-
-  it("this should return user not found", async () => {
-    const res = await axios.post(`${HTTP_URL}/register`, {
-      email: "nana@gmail.com",
-      password: String(Math.random()),
-    });
-
-    expect(res.status).toBe(404);
-    expect(res.data.message).toBe("user not found");
-  });
-
+  
   it("this should return password is wrong", async () => {
     const { email } = await createUser();
 

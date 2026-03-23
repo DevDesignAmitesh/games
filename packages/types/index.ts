@@ -4,16 +4,20 @@ export const friendReqSchema = z.object({
   to: z.uuid(),
 });
 
+export type FriendReqSchema = z.infer<typeof friendReqSchema>;
+
 export const registerSchema = z.object({
   email: z.email(),
   password: z.string().min(3),
 });
+export type RegisterSchemaInput = z.infer<typeof registerSchema>;
 
 export const createGameSchema = z.object({
   numberOfPlayers: z.number().min(2).max(10),
   drawTime: z.number().multipleOf(15),
   rounds: z.number().multipleOf(2),
 });
+export type CreateGameSchema = z.infer<typeof createGameSchema>;
 
 type inputType = "body" | "params" | "query";
 
