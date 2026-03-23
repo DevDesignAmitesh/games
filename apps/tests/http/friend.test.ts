@@ -6,7 +6,7 @@ const user1 = await createUser();
 const user2 = await createUser();
 
 describe("POST /friend-request/send", () => {
-  it("this will create a send the reqeust and create a pending request in the db", async () => {
+  it("this will create a pending request in the db", async () => {
     const res = await axios.post(
       `${HTTP_URL}/friend-request/send`,
       { to: user2.userId },
@@ -24,7 +24,7 @@ describe("POST /friend-request/send", () => {
       { headers: { Authorization: `Bearer ${user1.token}` } },
     );
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
     expect(res.data.message).toBe("friend request already exists");
   });
 
@@ -101,7 +101,7 @@ describe("POST /friend-request/send", () => {
       { headers: { Authorization: `Bearer ${user1.token}` } },
     );
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
     expect(res.data.message).toBe("you are already friends");
   });
 });

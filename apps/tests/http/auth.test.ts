@@ -11,6 +11,7 @@ describe("POST /register", () => {
 
     expect(res.status).toBe(201);
     expect(res.data.token).toBeDefined();
+    expect(res.data.userId).toBeDefined();
   });
 
   it("this should return invalid input", async () => {

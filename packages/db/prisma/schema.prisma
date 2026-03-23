@@ -54,10 +54,12 @@ model User {
   sender   FriendsMapUser[] @relation("user_sender")
   receiver FriendsMapUser[] @relation("user_receiver")
 
-  bodmasGameAnswers BodmasGameUserAnswer[]
-  bodmasGameresults BodmasGameResult[]
-  bodmasGameCreator BodmasGame[]           @relation("bodmas_creator")
-  boardGamePlayers  BodmasGamePlayer[]
+  bodmasGameAnswers  BodmasGameUserAnswer[]
+  bodmasGameresults  BodmasGameResult[]
+  bodmasGameCreator  BodmasGame[]           @relation("bodmas_creator")
+  drawingGameCreator DrawingGame[]          @relation("drawing_creator")
+  bodmasGamePlayers  BodmasGamePlayer[]
+  drawingGamePlayer  DrawingGamePlayer[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,6 +163,9 @@ model BodmasGameQuestion {
 model DrawingGame {
   id String @id @default(uuid())
 
+  createdBy String
+  creator   User   @relation("drawing_creator", fields: [createdBy], references: [id])
+
   numberOfPlayers Int // limit set by the user while creating game
   language        DrawingGameLanguage @default(en)
   drawTime        Int // limit for drawing in each round
@@ -172,6 +177,9 @@ model DrawingGame {
 
 model DrawingGamePlayer {
   id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
   score Int
 

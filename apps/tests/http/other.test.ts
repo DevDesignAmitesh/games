@@ -32,7 +32,7 @@ describe("POST /create-game/:type", () => {
       headers: { Authorization: `Bearer ${user.token}` },
     });
 
-    expect(res.status).toBe(411);
+    expect(res.status).toBe(403);
     expect(res.data.message).toBe("invalid inputs");
   });
 
