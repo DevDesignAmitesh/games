@@ -44,14 +44,12 @@ enum UserStatus {
 }
 
 model User {
-  id         String     @id @default(uuid())
-  email      String     @unique
-  password   String
-  userName   String
-  isOnline   Boolean    @default(false)
-  rating     Int        @default(1000)
-  lastSeen   DateTime   @default(now())
-  status     UserStatus @default(IDOL)
+  id       String     @id @default(uuid())
+  email    String     @unique
+  password String
+  userName String
+  isOnline Boolean    @default(false)
+  status   UserStatus @default(IDOL)
 
   sender   FriendsMapUser[] @relation("user_sender")
   receiver FriendsMapUser[] @relation("user_receiver")
@@ -59,6 +57,7 @@ model User {
   bodmasGameAnswers BodmasGameUserAnswer[]
   bodmasGameresults BodmasGameResult[]
   bodmasGameCreator BodmasGame[]           @relation("bodmas_creator")
+  boardGamePlayers  BodmasGamePlayer[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -69,6 +68,9 @@ model BodmasGamePlayer {
 
   bodmasGameId String
   bodmasGame   BodmasGame @relation(references: [id], fields: [bodmasGameId])
+
+  userId String
+  user   User   @relation(references: [id], fields: [userId])
 }
 
 model BodmasGame {
@@ -89,9 +91,9 @@ model BodmasGame {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userAnswer BodmasGameUserAnswer[]
-  questions  BodmasGameQuestion[]
-  results    BodmasGameResult[]
+  answer    BodmasGameUserAnswer[]
+  questions BodmasGameQuestion[]
+  results   BodmasGameResult[]
 }
 
 model BodmasGameResult {
@@ -101,14 +103,8 @@ model BodmasGameResult {
   game   BodmasGame @relation(fields: [gameId], references: [id])
   user   User       @relation(fields: [userId], references: [id])
 
-  score            Int
   correctAnswers   Int
   incorrectAnswers Int
-  timeSpent        Int
-  rank             Int
-  ratingBefore     Int
-  ratingAfter      Int
-  ratingChange     Int
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -117,18 +113,18 @@ model BodmasGameResult {
 }
 
 model BodmasGameUserAnswer {
-  id         String   @id @default(uuid())
+  id         String @id @default(uuid())
   gameId     String
   userId     String
   questionId String
+
   answer     Int
   isCorrect  Boolean
-  timeSpent  Int
-  answeredAt DateTime @default(now())
+  answeredAt DateTime?
 
-  game     BodmasGame     @relation(fields: [gameId], references: [id])
-  user     User           @relation(fields: [userId], references: [id])
-  question BodmasQuestion @relation(fields: [questionId], references: [id])
+  game     BodmasGame         @relation(fields: [gameId], references: [id])
+  user     User               @relation(fields: [userId], references: [id])
+  question BodmasGameQuestion @relation(fields: [questionId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -143,9 +139,8 @@ model BodmasQuestion {
   operand1  Int
   operand2  Int
   answer    Int
-  createdAt DateTime           @default(now())
+  createdAt DateTime                 @default(now())
 
-  userAnswer    BodmasGameUserAnswer[]
   gameQuestions BodmasGameQuestion[]
 }
 
@@ -158,6 +153,8 @@ model BodmasGameQuestion {
   game     BodmasGame     @relation(fields: [gameId], references: [id])
   question BodmasQuestion @relation(fields: [questionId], references: [id])
 
+  userAnswer BodmasGameUserAnswer[]
+
   @@unique([gameId, questionId])
 }
 
@@ -168,8 +165,8 @@ model DrawingGame {
   language        DrawingGameLanguage @default(en)
   drawTime        Int // limit for drawing in each round
   rounds          Int // total rounds
-  status          GameStatus
-  
+  status          GameStatus          @default(WAITING_FOR_PLAYERS)
+
   players DrawingGamePlayer[]
 }
 
@@ -202,7 +199,7 @@ model FriendsMapUser {
 }
 
 model AdminGame {
-  id    String      @id       @default(uuid())
-  slug   String   @unique
-  status  AdminGameStatus
+  id     String          @id @default(uuid())
+  slug   String          @unique
+  status AdminGameStatus
 }
