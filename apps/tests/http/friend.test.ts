@@ -11,7 +11,7 @@ describe("POST /friend-request/send", () => {
     const res = await axios.post(
       `${HTTP_URL}/friend-request/send`,
       { to: user2.userId },
-      { headers: { Authorization: `Bearer ${user1.token}` } },
+      { headers: { Authorization: `Bearer ${user1.token}` }, validateStatus: () => true },
     );
 
     expect(res.status).toBeOneOf([200, 201]);
@@ -22,7 +22,7 @@ describe("POST /friend-request/send", () => {
     const res = await axios.post(
       `${HTTP_URL}/friend-request/send`,
       { to: user2.userId },
-      { headers: { Authorization: `Bearer ${user1.token}` } },
+      { headers: { Authorization: `Bearer ${user1.token}` }, validateStatus: () => true },
     );
 
     expect(res.status).toBe(400);
@@ -32,8 +32,8 @@ describe("POST /friend-request/send", () => {
   it("this return other user not found", async () => {
     const res = await axios.post(
       `${HTTP_URL}/friend-request/send`,
-      { to: "jibhriii" },
-      { headers: { Authorization: `Bearer ${user1.token}` } },
+      { to: crypto.randomUUID() },
+      { headers: { Authorization: `Bearer ${user1.token}` }, validateStatus: () => true },
     );
 
     expect(res.status).toBe(404);
@@ -43,6 +43,8 @@ describe("POST /friend-request/send", () => {
   it("this return bearer token not found", async () => {
     const res = await axios.post(`${HTTP_URL}/friend-request/send`, {
       to: "jibhriii",
+    }, {
+      validateStatus: () => true
     });
 
     expect(res.status).toBe(401);
@@ -55,8 +57,8 @@ describe("POST /friend-request/accept", () => {
     const status = "ACCEPTED";
     const res = await axios.put(
       `${HTTP_URL}/friend-request/accept`,
-      { to: user1.userId, status },
-      { headers: { Authorization: `Bearer ${user2.token}` } },
+      { to: user1.userId, status, hello: "cohco" },
+      { headers: { Authorization: `Bearer ${user2.token}` }, validateStatus: () => true },
     );
 
     expect(res.status).toBe(200);
@@ -68,9 +70,10 @@ describe("POST /friend-request/accept", () => {
     const res = await axios.put(
       `${HTTP_URL}/friend-request/accept`,
       { to: user1.userId, status },
-      { headers: { Authorization: `Bearer ${user2.token}` } },
+      { headers: { Authorization: `Bearer ${user2.token}` }, validateStatus: () => true },
     );
 
+    console.log("res.data.message ", res.data.message);
     expect(res.status).toBe(400);
     expect(res.data.message).toBe("friend request already accepted");
   });
@@ -80,10 +83,10 @@ describe("POST /friend-request/accept", () => {
     const res = await axios.put(
       `${HTTP_URL}/friend-request/accept`,
       { to: user3.userId, status },
-      { headers: { Authorization: `Bearer ${user2.token}` } },
+      { headers: { Authorization: `Bearer ${user2.token}` }, validateStatus: () => true },
     );
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(404);
     expect(res.data.message).toBe("friend request not found");
   });
 
@@ -91,12 +94,12 @@ describe("POST /friend-request/accept", () => {
     const status = "ACCEPTED";
     const res = await axios.put(
       `${HTTP_URL}/friend-request/accept`,
-      { to: "jibrishhhh", status },
-      { headers: { Authorization: `Bearer ${user2.token}` } },
+      { to: crypto.randomUUID(), status },
+      { headers: { Authorization: `Bearer ${user2.token}` }, validateStatus: () => true },
     );
 
-    expect(res.status).toBe(400);
-    expect(res.data.message).toBe("friend request already accepted");
+    expect(res.status).toBe(404);
+    expect(res.data.message).toBe("other user not found");
   });
 
   it("this will return auth error", async () => {
@@ -104,6 +107,8 @@ describe("POST /friend-request/accept", () => {
     const res = await axios.put(`${HTTP_URL}/friend-request/accept`, {
       to: user1.userId,
       status
+    }, {
+      validateStatus: () => true
     });
 
     expect(res.status).toBe(401);
@@ -116,10 +121,10 @@ describe("POST /friend-request/send", () => {
     const res = await axios.post(
       `${HTTP_URL}/friend-request/send`,
       { to: user2.userId },
-      { headers: { Authorization: `Bearer ${user1.token}` } },
+      { headers: { Authorization: `Bearer ${user1.token}` }, validateStatus: () => true },
     );
 
     expect(res.status).toBe(400);
-    expect(res.data.message).toBe("you are already friends");
+    expect(res.data.message).toBe("friend request already exists");
   });
 });

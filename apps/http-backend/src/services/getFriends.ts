@@ -10,5 +10,5 @@ export const getFriends = async (req: Request, res: Response) => {
     }
   });;
 
-  return res.json({ friends });
+  return res.json({ friends, message: "friends found" });
 };

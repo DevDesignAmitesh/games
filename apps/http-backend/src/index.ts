@@ -2,6 +2,7 @@ import express from "express";
 import { auth } from "./middleware/auth";
 import { validate } from "./middleware/validate";
 import {
+  acceptFriendReqSchema,
   createGameSchema,
   friendReqSchema,
   registerSchema,
@@ -45,20 +46,20 @@ app.put(
   "/friend-request/accept",
   auth,
   validate({
-    schema: friendReqSchema,
+    schema: acceptFriendReqSchema,
     type: ["body"],
   }),
   acceptReq,
 );
 
 app.post(
-  "/create-game/:gameType",
+  "/create-game",
   auth,
   validate({
     schema: createGameSchema,
-    type: ["body", "params"],
+    type: ["body"],
   }),
-  createGame as any,
+  createGame,
 );
 
 app.get("/admin-games", auth, getAdminGame);

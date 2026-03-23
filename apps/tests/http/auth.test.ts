@@ -15,21 +15,25 @@ describe("POST /register", () => {
   });
 
   it("this should return invalid input", async () => {
-    const res = await axios.post(`${HTTP_URL}/register`, {
-      email: Math.random(),
-      password: "na",
-    });
+      const res = await axios.post(`${HTTP_URL}/register`, {
+        email: Math.random(),
+        password: "na",
+      }, {
+        validateStatus: () => true
+      });
 
-    expect(res.status).toBe(403);
-    expect(res.data.message).toBe("invalid inputs");
+      expect(res.status).toBe(403);
+      expect(res.data.message).toBe("invalid inputs");
   });
-  
+
   it("this should return password is wrong", async () => {
     const { email } = await createUser();
 
     const res = await axios.post(`${HTTP_URL}/register`, {
       email,
       password: "ladlee meoww",
+    }, {
+      validateStatus: () => true
     });
 
     expect(res.status).toBe(411);

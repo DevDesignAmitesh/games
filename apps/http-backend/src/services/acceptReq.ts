@@ -44,7 +44,7 @@ export const acceptReq = async (
     },
   });
 
-  return res.status(201).json({
+  return res.status(200).json({
     message: `friend request successfully ${status}`,
   });
 };

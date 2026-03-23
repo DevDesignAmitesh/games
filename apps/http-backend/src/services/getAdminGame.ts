@@ -4,5 +4,5 @@ import type { Request, Response } from "express";
 export const getAdminGame = async (req: Request, res: Response) => {
   const adminGames = await prisma.adminGame.findMany();
 
-  return res.json({ games: adminGames });
+  return res.json({ games: adminGames, message: "games found" });
 };

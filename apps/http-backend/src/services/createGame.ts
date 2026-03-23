@@ -2,15 +2,12 @@ import { prisma } from "@repo/db/db";
 import type { CreateGameSchema } from "@repo/types/types";
 import type { Request, Response } from "express";
 
-type TypedRequest<P, B, Q> = Request<P, any, B, Q>;
-
 export const createGame = async (
-  req: TypedRequest<CreateGameSchema, CreateGameSchema, {}>,
+  req: Request<{}, {}, CreateGameSchema, {}>,
   res: Response,
 ) => {
   const { userId } = req.user;
-  const { drawTime, numberOfPlayers, rounds } = req.body;
-  const { gameType } = req.params;
+  const { drawTime, numberOfPlayers, rounds, gameType } = req.body;
 
   if (gameType === "drawing") {
     const drawGame = await prisma.drawingGame.create({

@@ -16,7 +16,7 @@ export type AcceptFriendReqSchema = z.infer<typeof acceptFriendReqSchema>;
 
 export const registerSchema = z.object({
   email: z.email(),
-  password: z.string().min(3),
+  password: z.string().min(3),  
 });
 export type RegisterSchemaInput = z.infer<typeof registerSchema>;
 
@@ -24,7 +24,7 @@ export const createGameSchema = z.object({
   numberOfPlayers: z.number().min(2).max(10),
   drawTime: z.number().multipleOf(15),
   rounds: z.number().multipleOf(2),
-  gameType: z.enum(["drawing"]),
+  gameType: z.enum(["drawing"])
 });
 export type CreateGameSchema = z.infer<typeof createGameSchema>;
 

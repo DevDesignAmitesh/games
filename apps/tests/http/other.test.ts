@@ -4,16 +4,18 @@ import { createUser, HTTP_URL } from "..";
 
 const user = await createUser();
 
-describe("POST /create-game/:type", () => {
+describe("POST /create-game", () => {
   it("this will create the game successfully", async () => {
     const data = {
       numberOfPlayers: 2,
       drawTime: 60,
       rounds: 4,
+      gameType: "drawing"
     };
 
-    const res = await axios.post(`${HTTP_URL}/create-game/drawing`, data, {
+    const res = await axios.post(`${HTTP_URL}/create-game`, data, {
       headers: { Authorization: `Bearer ${user.token}` },
+      validateStatus: () => true
     });
 
     expect(res.status).toBe(201);
@@ -26,10 +28,12 @@ describe("POST /create-game/:type", () => {
       numberOfPlayers: 1000,
       drawTime: 22,
       rounds: 1,
+      gameType: "choco"
     };
 
-    const res = await axios.post(`${HTTP_URL}/create-game/choco`, data, {
+    const res = await axios.post(`${HTTP_URL}/create-game`, data, {
       headers: { Authorization: `Bearer ${user.token}` },
+      validateStatus: () => true
     });
 
     expect(res.status).toBe(403);
@@ -41,9 +45,12 @@ describe("POST /create-game/:type", () => {
       numberOfPlayers: 1,
       drawTime: 22,
       rounds: 1,
+      gameType: "drawing"
     };
 
-    const res = await axios.post(`${HTTP_URL}/create-game/drawing`, data);
+    const res = await axios.post(`${HTTP_URL}/create-game`, data, {
+      validateStatus: () => true
+    });
 
     expect(res.status).toBe(401);
     expect(res.data.message).toBe("bearer token not found");
@@ -52,7 +59,9 @@ describe("POST /create-game/:type", () => {
 
 describe("GET /admin-games", () => {
   it("it will return auth error", async () => {
-    const res = await axios.get(`${HTTP_URL}/admin-games`);
+    const res = await axios.get(`${HTTP_URL}/admin-games`, {
+      validateStatus: () => true
+    });
 
     expect(res.status).toBe(401);
     expect(res.data.message).toBe("bearer token not found");
@@ -61,6 +70,7 @@ describe("GET /admin-games", () => {
   it("it will return all the admin games", async () => {
     const res = await axios.get(`${HTTP_URL}/admin-games`, {
       headers: { Authorization: `Bearer ${user.token}` },
+      validateStatus: () => true
     });
 
     expect(res.data.games).toBeArray();
@@ -71,7 +81,9 @@ describe("GET /admin-games", () => {
 
 describe("GET /friends", () => {
   it("it will return auth error", async () => {
-    const res = await axios.get(`${HTTP_URL}/friends`);
+    const res = await axios.get(`${HTTP_URL}/friends`, {
+      validateStatus: () => true
+    });
 
     expect(res.status).toBe(401);
     expect(res.data.message).toBe("bearer token not found");
@@ -80,6 +92,7 @@ describe("GET /friends", () => {
   it("it will return all the friends", async () => {
     const res = await axios.get(`${HTTP_URL}/friends`, {
       headers: { Authorization: `Bearer ${user.token}` },
+      validateStatus: () => true
     });
 
     expect(res.data.friends).toBeArray();
