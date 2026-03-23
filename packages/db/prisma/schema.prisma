@@ -48,7 +48,6 @@ model User {
   email      String     @unique
   password   String
   userName   String
-  isVerified Boolean    @default(false)
   isOnline   Boolean    @default(false)
   rating     Int        @default(1000)
   lastSeen   DateTime   @default(now())
@@ -200,16 +199,6 @@ model FriendsMapUser {
   updatedAt DateTime @updatedAt
 
   @@unique([receiverId, senderId])
-}
-
-model Otp {
-  id String @id @default(uuid())
-
-  value      String
-  identifier String @unique
-
-  createdAt DateTime @default(now())
-  expiresAt DateTime
 }
 
 model AdminGame {
