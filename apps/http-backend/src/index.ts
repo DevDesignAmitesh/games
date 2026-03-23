@@ -22,6 +22,7 @@ app.post(
     schema: registerSchema,
     type: ["body"],
   }),
+  registerRoute,
 );
 
 app.post(
