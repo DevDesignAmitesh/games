@@ -6,3 +6,214 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum AdminGameStatus {
+  running
+  under_development
+}
+
+enum DrawingGameLanguage {
+  en
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  IGNORED
+}
+
+enum BodmasQuestionOperations {
+  ADD
+  SUB
+  MUL
+  DIV
+}
+
+enum GameStatus {
+  WAITING_FOR_PLAYERS
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum UserStatus {
+  IDOL
+  PLAYING
+  SEARCHING
+}
+
+model User {
+  id         String     @id @default(uuid())
+  email      String     @unique
+  password   String
+  userName   String
+  isVerified Boolean    @default(false)
+  isOnline   Boolean    @default(false)
+  rating     Int        @default(1000)
+  lastSeen   DateTime   @default(now())
+  status     UserStatus @default(IDOL)
+
+  sender   FriendsMapUser[] @relation("user_sender")
+  receiver FriendsMapUser[] @relation("user_receiver")
+
+  bodmasGameAnswers BodmasGameUserAnswer[]
+  bodmasGameresults BodmasGameResult[]
+  bodmasGameCreator BodmasGame[]           @relation("bodmas_creator")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BodmasGamePlayer {
+  id String @id @default(uuid())
+
+  bodmasGameId String
+  bodmasGame   BodmasGame @relation(references: [id], fields: [bodmasGameId])
+}
+
+model BodmasGame {
+  id     String     @id @default(uuid())
+  status GameStatus @default(WAITING_FOR_PLAYERS)
+
+  createdBy String
+  creator   User   @relation("bodmas_creator", fields: [createdBy], references: [id])
+
+  endTime   DateTime?
+  startTime DateTime?
+
+  timeLimit       Int
+  numberOfPlayers Int
+
+  players BodmasGamePlayer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userAnswer BodmasGameUserAnswer[]
+  questions  BodmasGameQuestion[]
+  results    BodmasGameResult[]
+}
+
+model BodmasGameResult {
+  id     String     @id @default(uuid())
+  gameId String
+  userId String
+  game   BodmasGame @relation(fields: [gameId], references: [id])
+  user   User       @relation(fields: [userId], references: [id])
+
+  score            Int
+  correctAnswers   Int
+  incorrectAnswers Int
+  timeSpent        Int
+  rank             Int
+  ratingBefore     Int
+  ratingAfter      Int
+  ratingChange     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, userId])
+}
+
+model BodmasGameUserAnswer {
+  id         String   @id @default(uuid())
+  gameId     String
+  userId     String
+  questionId String
+  answer     Int
+  isCorrect  Boolean
+  timeSpent  Int
+  answeredAt DateTime @default(now())
+
+  game     BodmasGame     @relation(fields: [gameId], references: [id])
+  user     User           @relation(fields: [userId], references: [id])
+  question BodmasQuestion @relation(fields: [questionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, userId, questionId])
+}
+
+model BodmasQuestion {
+  id String @id @default(uuid())
+
+  operation BodmasQuestionOperations
+  operand1  Int
+  operand2  Int
+  answer    Int
+  createdAt DateTime           @default(now())
+
+  userAnswer    BodmasGameUserAnswer[]
+  gameQuestions BodmasGameQuestion[]
+}
+
+model BodmasGameQuestion {
+  id         String @id @default(uuid())
+  gameId     String
+  questionId String
+  orderIndex Int
+
+  game     BodmasGame     @relation(fields: [gameId], references: [id])
+  question BodmasQuestion @relation(fields: [questionId], references: [id])
+
+  @@unique([gameId, questionId])
+}
+
+model DrawingGame {
+  id String @id @default(uuid())
+
+  numberOfPlayers Int // limit set by the user while creating game
+  language        DrawingGameLanguage @default(en)
+  drawTime        Int // limit for drawing in each round
+  rounds          Int // total rounds
+  status          GameStatus
+  
+  players DrawingGamePlayer[]
+}
+
+model DrawingGamePlayer {
+  id String @id @default(uuid())
+
+  score Int
+
+  drawingGameId String
+  drawingGame   DrawingGame @relation(references: [id], fields: [drawingGameId])
+}
+
+model FriendsMapUser {
+  id String @id @default(uuid())
+
+  status      FriendRequestStatus @default(PENDING)
+  requestedAt DateTime
+  respondedAt DateTime?
+
+  senderId String
+  sender   User   @relation("user_sender", fields: [senderId], references: [id])
+
+  receiverId String
+  receiver   User   @relation("user_receiver", fields: [receiverId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([receiverId, senderId])
+}
+
+model Otp {
+  id String @id @default(uuid())
+
+  value      String
+  identifier String @unique
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model AdminGame {
+  id    String      @id       @default(uuid())
+  slug   String   @unique
+  status  AdminGameStatus
+}
