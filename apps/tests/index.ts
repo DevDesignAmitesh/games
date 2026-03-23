@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const HTTP_URL = "http://localhost:3000/api/v1";
+export const HTTP_URL = "http://localhost:3000/";
 
 export const createUser = async () => {
   const data = {

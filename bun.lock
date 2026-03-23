@@ -96,6 +96,7 @@
         "zod": "^4.3.6",
       },
       "devDependencies": {
+        "@repo/db": "workspace:*",
         "@types/bun": "latest",
       },
       "peerDependencies": {

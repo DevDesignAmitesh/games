@@ -7,6 +7,11 @@ import {
   registerSchema,
 } from "@repo/types/types";
 import { register } from "./services/register";
+import { sendReq } from "./services/sendReq";
+import { acceptReq } from "./services/acceptReq";
+import { createGame } from "./services/createGame";
+import { getAdminGame } from "./services/getAdminGame";
+import { getFriends } from "./services/getFriends";
 
 const app = express();
 const PORT = 3000;
@@ -33,6 +38,7 @@ app.post(
     schema: friendReqSchema,
     type: ["body"],
   }),
+  sendReq,
 );
 
 app.put(
@@ -42,6 +48,7 @@ app.put(
     schema: friendReqSchema,
     type: ["body"],
   }),
+  acceptReq,
 );
 
 app.post(
@@ -51,10 +58,11 @@ app.post(
     schema: createGameSchema,
     type: ["body", "params"],
   }),
+  createGame as any,
 );
 
-app.get("/admin-game", auth);
+app.get("/admin-games", auth, getAdminGame);
 
-app.get("/friends", auth);
+app.get("/friends", auth, getFriends);
 
 app.listen(PORT, () => console.log("code is running at ", PORT));
