@@ -1,5 +1,5 @@
 {
-  "name": "db",
+  "name": "@repo/db",
   "module": "index.ts",
   "type": "module",
   "private": true,
@@ -11,6 +11,10 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0"
+  },
+  "exports": {
+    "./db": "./index.ts"
   }
 }
