@@ -21,28 +21,40 @@ class RedisManager {
   }
 
   subscribe(channel: string, users: User[]) {
+    console.log(users.length);
+
     this.client.subscribe(channel, (message, channel) => {
-      console.log("message in ", channel);
-      console.log(message);
+      if (channel === "online_users") {
+        const parsedData = JSON.parse(message);
 
-      //   some sending logic
-      //   like
+        if (parsedData.type === "online_users") {
+          users.forEach((usr) => {
+            usr.ws.send(
+              JSON.stringify({
+                type: parsedData.type,
+                users,
+              }),
+            );
+          });
+        } else if (
+          parsedData.type === "FRIEND_REQUEST_SEND" ||
+          parsedData.type === "FRIEND_REQUEST_ACCEPT"
+        ) {
+          const user = users.find((usr) => usr.id === parsedData.to);
+          if (!user) return;
 
-      // users.forEach((usr) => {
-      //   usr.ws.send(JSON.stringify({
-      //     some_data,
-      //     some_data
-      //   }))
-      // })
+          user.ws.send(message);
+        }
+      }
     });
   }
 
   publish(channel: string, message?: any) {
-    this.publisher.publish(channel, JSON.stringify({ type: channel, message }));
+    this.publisher.publish(channel, JSON.stringify(message));
   }
 
   push(key: string, data: any) {
-    this.client.lPush(key, JSON.stringify(data));
+    this.publisher.lPush(key, JSON.stringify(data));
   }
 
   async pop(key: string) {

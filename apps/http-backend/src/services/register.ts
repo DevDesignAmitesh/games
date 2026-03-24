@@ -37,6 +37,8 @@ export const register = async (
 
   const token = signToken({ userId: user.id });
 
+  console.log("token ", token);
+  
   return res.status(201).json({
     message: "registration done",
     token,

@@ -1,24 +1,24 @@
 import { redisManager } from "@repo/redis/redis";
 
 async function main() {
-  while (true) {
-    const data = await redisManager.pop("analytics_worker");
+  const data = await redisManager.pop("analytics_worker");
 
-    if (!data) return;
+  console.log("data from queue", data);
 
+  if (!data) {
+  } else {
     // update db like below (mostly)
     /**
-     * 
+     *
      * await prisma.analytics.upsert({
-      *  
-      * where: { totalUsers: data.totalUsers },
-      * create: { totalUsers: data.totalUsers },
-      * update: { totalUsers: data.totalUsers }
-     *  
+     *
+     * where: { totalUsers: data.totalUsers },
+     * create: { totalUsers: data.totalUsers },
+     * update: { totalUsers: data.totalUsers }
+     *
      * })
      */
   }
 }
 
-
-main();
+setInterval(main, 3000);

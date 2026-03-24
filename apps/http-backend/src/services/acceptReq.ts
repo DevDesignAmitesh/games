@@ -44,7 +44,10 @@ export const acceptReq = async (
     },
   });
 
+  console.log("to in accept req", to);
+  
   return res.status(200).json({
     message: `friend request successfully ${status}`,
+    to,
   });
 };

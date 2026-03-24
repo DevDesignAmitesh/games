@@ -61,5 +61,7 @@ export const sendReq = async (
     },
   });
 
-  return res.status(201).json({ message: "friend request sent successfully" });
+  console.log("to in send req", to);
+
+  return res.status(201).json({ message: "friend request sent successfully", to });
 };

@@ -9,9 +9,7 @@ import { bodmasgameManager } from "./gameManager";
 
 const server = new WebSocketServer({ port: 8080 });
 
-type ExtendedWs = WebSocket & {
-  user: TokenPayload;
-};
+type ExtendedWs = WebSocket & TokenPayload;
 
 server.on("connection", (ws: ExtendedWs, req) => {
   ws.on("error", console.error);
@@ -27,7 +25,7 @@ server.on("connection", (ws: ExtendedWs, req) => {
 
   const userId = verifyToken(token).userId;
 
-  ws.user.userId = userId;
+  ws.userId = userId;
   userManager.addUser({
     status: "IDOL",
     ws,
@@ -37,14 +35,11 @@ server.on("connection", (ws: ExtendedWs, req) => {
   redisManager.subscribe("online_users", userManager.users);
 
   redisManager.publish("online_users", {
-    payload: {
-      type: "online_users",
-      users: userManager.users,
-    },
+    type: "online_users",
   });
 
   redisManager.push("analytics_worker", {
-    totalUsers: userManager.users,
+    totalUsers: userManager.users.length,
   });
 
   ws.on("ping", () => {
@@ -60,7 +55,7 @@ server.on("connection", (ws: ExtendedWs, req) => {
     ) {
       const { to } = parsedData.payload;
 
-      const sender = userManager.users.find((usr) => usr.id === ws.user.userId);
+      const sender = userManager.users.find((usr) => usr.id === ws.userId);
       const receiver = userManager.users.find((usr) => usr.id === to);
 
       if (!receiver) return;
@@ -68,53 +63,67 @@ server.on("connection", (ws: ExtendedWs, req) => {
 
       const senderFromDb = await prisma.user.findFirst({
         where: { id: sender.id },
-        select: { userName: true },
+        select: { userName: true, id: true },
       });
 
       if (!senderFromDb) return ws.close();
 
       redisManager.publish("online_users", {
-        payload: {
-          type: parsedData.type,
-          to,
-          from: { name: senderFromDb.userName },
-        },
-      });
-    }
-
-    if (parsedData.type === "PLAY_BODMAS_GAME") {
-      const { gameId } = parsedData.payload;
-
-      const requestedBy = userManager.users.find(
-        (usr) => usr.id === ws.user.userId,
-      );
-
-      if (!requestedBy) return ws.close();
-
-      userManager.update(requestedBy.id, { status: "SEARCHING" });
-
-      const game = await prisma.bodmasGame.findFirst({
-        where: { id: gameId },
-      });
-
-      if (!game) return ws.close();
-
-      bodmasgameManager.createGame({
-        ...game,
-        answers: [],
-        questions: [],
-        users: [{ ...requestedBy, joinedAt: new Date() }],
-      });
-
-      redisManager.subscribe(`bodmas:game:${game.id}`, [requestedBy]);
-      redisManager.publish("online_users", {
         type: parsedData.type,
-        requestedBy: requestedBy.id,
+        to,
+        from: { name: senderFromDb.userName, id: senderFromDb.id },
       });
     }
 
-    if (parsedData.type === "ACCEPT_BODMAS_GAME") {
-    }
+    // if (parsedData.type === "PLAY_BODMAS_GAME") {
+    //   const { gameId } = parsedData.payload;
+
+    //   const requestedBy = userManager.users.find(
+    //     (usr) => usr.id === ws.userId,
+    //   );
+
+    //   if (!requestedBy) return ws.close();
+
+    //   const requestedByFromDb = await prisma.user.findFirst({
+    //     where: { id: ws.userId },
+    //     select: {
+    //       userName: true,
+    //       id: true,
+    //     },
+    //   });
+
+    //   if (!requestedByFromDb) return ws.close();
+
+    //   userManager.update(requestedBy.id, { status: "SEARCHING" });
+
+    //   const game = await prisma.bodmasGame.findFirst({
+    //     where: { id: gameId },
+    //   });
+
+    //   if (!game) return ws.close();
+
+    //   bodmasgameManager.createGame({
+    //     ...game,
+    //     answers: [],
+    //     questions: [],
+    //     users: [{ ...requestedBy, joinedAt: new Date() }],
+    //   });
+
+    //   const inmemoryGame = bodmasgameManager.games.get(game.id)!;
+
+    //   redisManager.subscribe(`bodmas:game:${game.id}`, inmemoryGame.users);
+
+    //   redisManager.publish("online_users", {
+    //     type: parsedData.type,
+    //     from: {
+    //       name: requestedByFromDb.userName,
+    //       id: requestedByFromDb.id,
+    //     },
+    //   });
+    // }
+
+    // if (parsedData.type === "ACCEPT_BODMAS_GAME") {
+    // }
   });
 
   ws.on("close", () => {
@@ -123,13 +132,12 @@ server.on("connection", (ws: ExtendedWs, req) => {
 
     redisManager.publish("online_users", {
       type: "online_users",
-      payload: {
-        users: userManager.users,
-      },
     });
 
+    console.log("running???")
+
     redisManager.push("analytics_worker", {
-      totalUsers: userManager.users,
+      totalUsers: userManager.users.length,
     });
   });
 });
