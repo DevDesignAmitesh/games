@@ -16,7 +16,7 @@ server.on("connection", (ws: ExtendedWs, req) => {
 
   console.log("connection done");
 
-  const token = req.url?.split("?")[1]?.split("=")[1];
+  const token = req.url?.split("?token=")[1];
 
   if (!token) {
     ws.close();
@@ -40,7 +40,7 @@ server.on("connection", (ws: ExtendedWs, req) => {
       users: userManager.users,
     },
   });
-  
+
   redisManager.push("analytics_worker", {
     totalUsers: userManager.users,
   });

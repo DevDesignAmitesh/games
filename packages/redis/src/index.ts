@@ -38,10 +38,8 @@ class RedisManager {
     this.client.lPush(key, JSON.stringify(data));
   }
 
-  async pop(key: Keys, handler: (input: string) => void) {
-    const data = await this.client.rPop(key);
-    if (!data) return;
-    handler(data);
+  async pop(key: Keys) {
+    return await this.client.rPop(key);
   }
 }
 
