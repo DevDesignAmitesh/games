@@ -2,7 +2,7 @@ import type { RegisterSchemaInput } from "@repo/types/types";
 import type { Request, Response } from "express";
 import { prisma } from "@repo/db/db";
 import { compareFn, hashFn } from "../bcrypt";
-import { signToken } from "../jwt";
+import { signToken } from "@repo/common/common";
 
 export const register = async (
   req: Request<{}, {}, RegisterSchemaInput, {}>,

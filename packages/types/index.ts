@@ -40,3 +40,7 @@ export const zodErrorMessage = ({ error }: { error: ZodError }) => {
     .map((er) => `${er.path.join(".")}: ${er.message}`)
     .join(", ");
 };
+
+export type TokenPayload = {
+  userId: string;
+};
