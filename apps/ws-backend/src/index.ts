@@ -32,7 +32,7 @@ server.on("connection", (ws: ExtendedWs, req) => {
     id: userId,
   });
 
-  redisManager.subscribe("online_users", userManager.users);
+  redisManager.subscribe("online_users");
 
   redisManager.publish("online_users", {
     type: "online_users",
@@ -75,52 +75,50 @@ server.on("connection", (ws: ExtendedWs, req) => {
       });
     }
 
-    // if (parsedData.type === "PLAY_BODMAS_GAME") {
-    //   const { gameId } = parsedData.payload;
+    if (parsedData.type === "BODMAS_GAME_REQUEST") {
+      const { gameId } = parsedData.payload;
 
-    //   const requestedBy = userManager.users.find(
-    //     (usr) => usr.id === ws.userId,
-    //   );
+      const requestedBy = userManager.users.find(
+        (usr) => usr.id === ws.userId,
+      );
 
-    //   if (!requestedBy) return ws.close();
+      if (!requestedBy) return ws.close();
 
-    //   const requestedByFromDb = await prisma.user.findFirst({
-    //     where: { id: ws.userId },
-    //     select: {
-    //       userName: true,
-    //       id: true,
-    //     },
-    //   });
+      const requestedByFromDb = await prisma.user.findFirst({
+        where: { id: ws.userId },
+        select: {
+          userName: true,
+          id: true,
+        },
+      });
 
-    //   if (!requestedByFromDb) return ws.close();
+      if (!requestedByFromDb) return ws.close();
 
-    //   userManager.update(requestedBy.id, { status: "SEARCHING" });
+      userManager.update(requestedBy.id, { status: "SEARCHING" });
 
-    //   const game = await prisma.bodmasGame.findFirst({
-    //     where: { id: gameId },
-    //   });
+      const game = await prisma.bodmasGame.findFirst({
+        where: { id: gameId },
+      });
 
-    //   if (!game) return ws.close();
+      if (!game) return ws.close();
 
-    //   bodmasgameManager.createGame({
-    //     ...game,
-    //     answers: [],
-    //     questions: [],
-    //     users: [{ ...requestedBy, joinedAt: new Date() }],
-    //   });
+      bodmasgameManager.createGame({
+        ...game,
+        answers: [],
+        questions: [],
+        users: [{ ...requestedBy, joinedAt: new Date() }],
+      });
 
-    //   const inmemoryGame = bodmasgameManager.games.get(game.id)!;
+      redisManager.subscribe(`bodmas:game:${game.id}`);
 
-    //   redisManager.subscribe(`bodmas:game:${game.id}`, inmemoryGame.users);
-
-    //   redisManager.publish("online_users", {
-    //     type: parsedData.type,
-    //     from: {
-    //       name: requestedByFromDb.userName,
-    //       id: requestedByFromDb.id,
-    //     },
-    //   });
-    // }
+      redisManager.publish("online_users", {
+        type: parsedData.type,
+        from: {
+          name: requestedByFromDb.userName,
+          id: requestedByFromDb.id,
+        },
+      });
+    }
 
     // if (parsedData.type === "ACCEPT_BODMAS_GAME") {
     // }
@@ -130,14 +128,19 @@ server.on("connection", (ws: ExtendedWs, req) => {
     console.log("connection left");
     userManager.removeUser(userId);
 
+    redisManager.unsubscribe("online_users");
+
     redisManager.publish("online_users", {
       type: "online_users",
     });
 
-    console.log("running???")
+    console.log("running???");
 
     redisManager.push("analytics_worker", {
       totalUsers: userManager.users.length,
     });
   });
 });
+
+export * from "./userManager";
+export * from "./gameManager";
