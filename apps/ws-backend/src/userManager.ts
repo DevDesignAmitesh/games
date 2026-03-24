@@ -1,11 +1,4 @@
-import type { WebSocket } from "ws";
-import { UserStatus } from "@repo/db/db";
-
-type User = {
-  id: string;
-  ws: WebSocket;
-  status: UserStatus;
-};
+import type { User } from "@repo/types/types";
 
 class UserManager {
   private static instance: UserManager;
@@ -26,6 +19,15 @@ class UserManager {
 
   removeUser(userId: string) {
     this.users = this.users.filter((usr) => usr.id !== userId);
+  }
+
+  update(userId: string, data: Partial<User>) {
+    const user = this.users.find((usr) => usr.id === userId);
+    if (!user) return;
+
+    const newUser: User = { ...user, ...data };
+    this.users = this.users.filter((usr) => usr.id !== userId);
+    this.addUser(newUser);
   }
 }
 

@@ -1,8 +1,5 @@
 import { type RedisClientType, createClient } from "redis";
-
-type Channels = "online_users";
-
-type Keys = "analytics_worker";
+import type { User } from "@repo/types/types";
 
 class RedisManager {
   private static instance: RedisManager;
@@ -23,22 +20,32 @@ class RedisManager {
     return RedisManager.instance;
   }
 
-  subscribe(channel: Channels) {
+  subscribe(channel: string, users: User[]) {
     this.client.subscribe(channel, (message, channel) => {
       console.log("message in ", channel);
       console.log(message);
+
+      //   some sending logic
+      //   like
+
+      // users.forEach((usr) => {
+      //   usr.ws.send(JSON.stringify({
+      //     some_data,
+      //     some_data
+      //   }))
+      // })
     });
   }
 
-  publish(channel: Channels, message: any) {
-    this.publisher.publish(channel, JSON.stringify(message));
+  publish(channel: string, message?: any) {
+    this.publisher.publish(channel, JSON.stringify({ type: channel, message }));
   }
 
-  push(key: Keys, data: any) {
+  push(key: string, data: any) {
     this.client.lPush(key, JSON.stringify(data));
   }
 
-  async pop(key: Keys) {
+  async pop(key: string) {
     return await this.client.rPop(key);
   }
 }

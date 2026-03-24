@@ -1,5 +1,12 @@
 import z, { ZodError } from "zod";
-import { FriendRequestStatus } from "@repo/db/db";
+import {
+  FriendRequestStatus,
+  UserStatus,
+  type BodmasGame,
+  type BodmasGameUserAnswer,
+  type BodmasQuestion,
+} from "@repo/db/db";
+import type { WebSocket } from "ws";
 
 export const friendReqSchema = z.object({
   to: z.uuid(),
@@ -16,7 +23,7 @@ export type AcceptFriendReqSchema = z.infer<typeof acceptFriendReqSchema>;
 
 export const registerSchema = z.object({
   email: z.email(),
-  password: z.string().min(3),  
+  password: z.string().min(3),
 });
 export type RegisterSchemaInput = z.infer<typeof registerSchema>;
 
@@ -24,7 +31,7 @@ export const createGameSchema = z.object({
   numberOfPlayers: z.number().min(2).max(10),
   drawTime: z.number().multipleOf(15),
   rounds: z.number().multipleOf(2),
-  gameType: z.enum(["drawing"])
+  gameType: z.enum(["drawing"]),
 });
 export type CreateGameSchema = z.infer<typeof createGameSchema>;
 
@@ -44,3 +51,15 @@ export const zodErrorMessage = ({ error }: { error: ZodError }) => {
 export type TokenPayload = {
   userId: string;
 };
+
+export type User = {
+  id: string;
+  ws: WebSocket;
+  status: UserStatus;
+};
+
+export interface BoadMasGame extends BodmasGame {
+  users: Array<User & { joinedAt: Date }>;
+  answers: BodmasGameUserAnswer[];
+  questions: BodmasQuestion[];
+}
