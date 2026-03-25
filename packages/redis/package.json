@@ -4,9 +4,9 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest",
     "@repo/types": "workspace:*",
-    "@repo/ws-backend": "workspace:*"
+    "@repo/ws-backend": "workspace:*",
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"

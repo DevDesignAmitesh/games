@@ -28,6 +28,24 @@ class BodmasGameManager {
   create_update_game(data: BoadMasGame) {
     this.games.set(data.id, data);
   }
+
+  // gameId-userId
+  getQsCounter(gameId: string, userId: string) {
+    const key = `${gameId}:${userId}`
+    return this.questionCounter.get(key);
+  }
+
+  // gameId-userId
+  setQsCounter(gameId: string, userId: string, counter: number) {
+    const key = `${gameId}:${userId}`
+    return this.questionCounter.set(key, counter);
+  }
+
+  // questionId-userId
+  setQsTimer(questionId: string, userId: string, time: number) {
+    const key = `${questionId}:${userId}`
+    return this.questionCounter.set(key, time);
+  }
 }
 
 export const bodmasgameManager = BodmasGameManager.getInstance();

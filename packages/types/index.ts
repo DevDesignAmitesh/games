@@ -64,3 +64,26 @@ export interface BoadMasGame extends BodmasGame {
   answers: BodmasGameUserAnswer[];
   questions: BodmasQuestion[];
 }
+
+export type RedisPushData =
+  | {
+      type: "START_BODMAS_GAME";
+      payload: {
+        questionCounter: number;
+        questions: BodmasQuestion[];
+        gameId: string;
+        userId: string;
+        questionStartTimeWithId: {
+          id: string;
+          startTime: number;
+        };
+      };
+    }
+  | {
+      type: "BODMAS_GAME_ACCEPT";
+      payload: {
+        acceptedBy: string;
+        createdBy: string;
+        gameId: string;
+      };
+    };

@@ -1,5 +1,6 @@
 import { type RedisClientType, createClient } from "redis";
 import { userManager, bodmasgameManager } from "@repo/ws-backend/ws-backend";
+import { type RedisPushData } from "@repo/types/types"
 
 class RedisManager {
   private static instance: RedisManager;
@@ -80,11 +81,11 @@ class RedisManager {
     this.publisher.publish(channel, JSON.stringify(message));
   }
 
-  unsubscribe(channel: string) {
+  unsubscribe(channel?: string) {
     this.client.unsubscribe(channel);
   }
 
-  push(key: string, data: any) {
+  push(key: string, data: RedisPushData) {
     this.publisher.lPush(key, JSON.stringify(data));
   }
 

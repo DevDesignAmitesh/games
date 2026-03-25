@@ -68,6 +68,9 @@ model BodmasGamePlayer {
 
   userId String
   user   User   @relation(references: [id], fields: [userId])
+
+  questionCounter  Int    @default(0)
+  @@unique([bodmasGameId, userId])
 }
 
 model BodmasGame {
@@ -146,6 +149,7 @@ model BodmasGameQuestion {
   gameId     String
   questionId String
   orderIndex Int
+  startTime        Int?   // Date.now() => number
 
   game     BodmasGame     @relation(fields: [gameId], references: [id])
   question BodmasQuestion @relation(fields: [questionId], references: [id])

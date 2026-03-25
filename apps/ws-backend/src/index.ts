@@ -6,6 +6,7 @@ import type { TokenPayload } from "@repo/types/types";
 import { redisManager } from "@repo/redis/redis";
 import { prisma } from "@repo/db/db";
 import { bodmasgameManager } from "./gameManager";
+import { generateRandomQuesions } from "./utils";
 
 const server = new WebSocketServer({ port: 8081 });
 
@@ -142,6 +143,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       if (!acceptedBy || !creator || !bodmasGame) return ws.close();
 
+      if (bodmasGame.createdBy !== creator.id) return;
+
       const bodmasGameFromDb = await prisma.bodmasGame.findFirst({
         where: { id: bodmasGame.id },
         include: { players: true },
@@ -165,9 +168,12 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       if (bodmasGame.users.some((usr) => usr.id === ws.userId)) return;
 
       redisManager.push("bodmas:game", {
-        acceptedBy: acceptedBy.id,
-        createdBy,
-        gameId,
+        type: parsedData.type,
+        payload: {
+          acceptedBy: acceptedBy.id,
+          createdBy,
+          gameId,
+        },
       });
 
       userManager.update(createdBy, { status: "PLAYING" });
@@ -187,13 +193,60 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         type: "START_BODMAS_GAME",
       });
     }
+
+    if (parsedData.type === "START_BODMAS_GAME") {
+      const { gameId } = parsedData.payload;
+
+      const bodmasGameFromDb = await prisma.bodmasGame.findFirst({
+        where: { id: gameId },
+      });
+      if (!bodmasGameFromDb) return ws.close();
+
+      const inmemoryBodmasGame = bodmasgameManager.games.get(gameId);
+      if (!inmemoryBodmasGame) return ws.close();
+
+      const counter = bodmasgameManager.getQsCounter(gameId, ws.userId) || 0;
+      bodmasgameManager.setQsCounter(gameId, ws.userId, counter);
+      // this counter should be updated in db's game table
+
+      const randomQuestions = generateRandomQuesions();
+      bodmasgameManager.inmemoryQuestions.set(gameId, randomQuestions);
+      // these questions should also be updated in db's questions table
+
+      const startTime = Date.now();
+      const question = randomQuestions[counter]!;
+      bodmasgameManager.setQsTimer(question.id, ws.userId, startTime);
+      // this start time should also be updated in db's questions table
+
+      inmemoryBodmasGame.questions.push(question);
+      // these questions are alread updated in db so on memory loss will get from the db
+
+      redisManager.publish(`bodmas:game:${inmemoryBodmasGame.id}`, {
+        type: "BODMAS_GAME_ROUND_STARTED",
+        question,
+      });
+
+      redisManager.push("bodmas:game", {
+        type: parsedData.type,
+        payload: {
+          userId: ws.userId,
+          gameId,
+          questionCounter: counter,
+          questions: randomQuestions,
+          questionStartTimeWithId: {
+            id: question.id,
+            startTime,
+          },
+        },
+      });
+    }
   });
 
   ws.on("close", () => {
     console.log("connection left");
     userManager.removeUser(userId);
 
-    redisManager.unsubscribe("online_users");
+    redisManager.unsubscribe();
 
     redisManager.publish("online_users", {
       type: "online_users",
