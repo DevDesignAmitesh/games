@@ -10,18 +10,64 @@ export const createGame = async (
   const { drawTime, numberOfPlayers, rounds, gameType } = req.body;
 
   if (gameType === "drawing") {
-    const drawGame = await prisma.drawingGame.create({
-      data: {
-        createdBy: userId,
-        drawTime,
-        numberOfPlayers,
-        rounds,
-      },
+    const gameId = await prisma.$transaction(async (tx) => {
+      const drawGame = await tx.drawingGame.create({
+        data: {
+          createdBy: userId,
+          drawTime,
+          numberOfPlayers,
+          rounds,
+        },
+      });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { status: "SEARCHING" },
+      });
+
+      await tx.drawingGamePlayer.create({
+        data: {
+          userId,
+          drawingGameId: drawGame.id,
+          score: 0,
+        },
+      });
+      
+      return drawGame.id;
     });
 
     return res.status(201).json({
       message: "game created successfully",
-      gameId: drawGame.id,
+      gameId,
+    });
+  } else if (gameType === "bodmas") {
+    const gameId = await prisma.$transaction(async (tx) => {
+      const bodmasGame = await tx.bodmasGame.create({
+        data: {
+          createdBy: userId,
+          numberOfPlayers,
+          timeLimit: 60,
+        },
+      });
+  
+      await tx.user.update({
+        where: { id: userId },
+        data: { status: "SEARCHING" },
+      });
+
+      await tx.bodmasGamePlayer.create({
+        data: {
+          userId,
+          bodmasGameId: bodmasGame.id
+        },
+      });
+      
+      return bodmasGame.id;
+    })
+    
+    return res.status(201).json({
+      message: "game created successfully",
+      gameId,
     });
   }
 };

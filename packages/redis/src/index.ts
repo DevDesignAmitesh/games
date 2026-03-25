@@ -1,5 +1,4 @@
 import { type RedisClientType, createClient } from "redis";
-import type { User } from "@repo/types/types";
 import { userManager, bodmasgameManager } from "@repo/ws-backend/ws-backend";
 
 class RedisManager {
@@ -23,27 +22,35 @@ class RedisManager {
 
   subscribe(key: string) {
     this.client.subscribe(key, (message, channel) => {
+      console.log("running");
       const parsedData = JSON.parse(message);
       if (channel === "online_users") {
-        const isOnlineChannel = parsedData.type === "online_users";
+        const isOnlineType = parsedData.type === "online_users";
+        const users = userManager.users;
         if (
           parsedData.type === "online_users" ||
-          parsedData.type === "PLAY_BODMAS_GAME"
+          parsedData.type === "BODMAS_GAME_REQUEST"
         ) {
-          const users = userManager.users;
-          users.forEach((usr) => {
-            usr.ws.send(
-              JSON.stringify({
-                type: parsedData.type,
-                users: isOnlineChannel ? users : null,
-              }),
-            );
-          });
+          if (isOnlineType) {
+            users.forEach((usr) => {
+              usr.ws.send(
+                JSON.stringify({
+                  type: parsedData.type,
+                  users: users,
+                }),
+              );
+            });
+          } else {
+            users.forEach((usr) => {
+              if (usr.id !== parsedData.from.id) {
+                usr.ws.send(message);
+              }
+            });
+          }
         } else if (
           parsedData.type === "FRIEND_REQUEST_SEND" ||
           parsedData.type === "FRIEND_REQUEST_ACCEPT"
         ) {
-          const users = userManager.users;
           const user = users.find((usr) => usr.id === parsedData.to);
           if (!user) return;
 
@@ -51,22 +58,25 @@ class RedisManager {
         }
       } else if (channel.includes("bodmas:game:")) {
         const gameId = channel.split("bodmas:game:")[1];
-        if (!gameId) return;
+        if (!gameId) {
+          console.log("game id not found");
+          return;
+        }
 
         const game = bodmasgameManager.games.get(gameId);
-        if (!game) return;
+        if (!game) {
+          console.log("game not found");
+          return;
+        }
+
         game.users.forEach((usr) => {
-          usr.ws.send(
-            JSON.stringify({
-              type: parsedData.type,
-            }),
-          );
+          usr.ws.send(message);
         });
       }
     });
   }
 
-  publish(channel: string, message?: any) {
+  publish(channel: string, message: any) {
     this.publisher.publish(channel, JSON.stringify(message));
   }
 
@@ -80,6 +90,14 @@ class RedisManager {
 
   async pop(key: string) {
     return await this.client.rPop(key);
+  }
+
+  async lock(key: string, value: string) {
+    return this.publisher.SETNX(key, value);
+  }
+
+  releaseLock(key: string) {
+    this.publisher.DEL(key);
   }
 }
 

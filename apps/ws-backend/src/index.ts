@@ -7,11 +7,11 @@ import { redisManager } from "@repo/redis/redis";
 import { prisma } from "@repo/db/db";
 import { bodmasgameManager } from "./gameManager";
 
-const server = new WebSocketServer({ port: 8080 });
+const server = new WebSocketServer({ port: 8081 });
 
 type ExtendedWs = WebSocket & TokenPayload;
 
-server.on("connection", (ws: ExtendedWs, req) => {
+server.on("connection", async (ws: ExtendedWs, req) => {
   ws.on("error", console.error);
 
   console.log("connection done");
@@ -25,21 +25,24 @@ server.on("connection", (ws: ExtendedWs, req) => {
 
   const userId = verifyToken(token).userId;
 
+  const user = await prisma.user.findFirst({ where: { id: userId } });
+  if (!user) {
+    ws.close();
+    return;
+  }
+
   ws.userId = userId;
   userManager.addUser({
     status: "IDOL",
     ws,
     id: userId,
+    username: user.userName,
   });
 
   redisManager.subscribe("online_users");
 
   redisManager.publish("online_users", {
     type: "online_users",
-  });
-
-  redisManager.push("analytics_worker", {
-    totalUsers: userManager.users.length,
   });
 
   ws.on("ping", () => {
@@ -78,9 +81,7 @@ server.on("connection", (ws: ExtendedWs, req) => {
     if (parsedData.type === "BODMAS_GAME_REQUEST") {
       const { gameId } = parsedData.payload;
 
-      const requestedBy = userManager.users.find(
-        (usr) => usr.id === ws.userId,
-      );
+      const requestedBy = userManager.users.find((usr) => usr.id === ws.userId);
 
       if (!requestedBy) return ws.close();
 
@@ -96,20 +97,20 @@ server.on("connection", (ws: ExtendedWs, req) => {
 
       userManager.update(requestedBy.id, { status: "SEARCHING" });
 
-      const game = await prisma.bodmasGame.findFirst({
+      const bodmasGame = await prisma.bodmasGame.findFirst({
         where: { id: gameId },
       });
 
-      if (!game) return ws.close();
+      if (!bodmasGame) return ws.close();
 
-      bodmasgameManager.createGame({
-        ...game,
+      bodmasgameManager.create_update_game({
+        ...bodmasGame,
         answers: [],
         questions: [],
         users: [{ ...requestedBy, joinedAt: new Date() }],
       });
 
-      redisManager.subscribe(`bodmas:game:${game.id}`);
+      redisManager.subscribe(`bodmas:game:${bodmasGame.id}`);
 
       redisManager.publish("online_users", {
         type: parsedData.type,
@@ -117,11 +118,75 @@ server.on("connection", (ws: ExtendedWs, req) => {
           name: requestedByFromDb.userName,
           id: requestedByFromDb.id,
         },
+        gameId,
       });
     }
 
-    // if (parsedData.type === "ACCEPT_BODMAS_GAME") {
-    // }
+    if (parsedData.type === "BODMAS_GAME_ACCEPT") {
+      const { gameId, createdBy } = parsedData.payload;
+      const key = `bodmas:game:${gameId}`;
+      const lock = await redisManager.lock(key, `${ws.userId}:${Date.now()}`);
+
+      if (lock === 0) {
+        ws.send(
+          JSON.stringify({
+            type: "GAME_IS_FULL",
+          }),
+        );
+        return;
+      }
+
+      const acceptedBy = userManager.users.find((usr) => usr.id === ws.userId);
+      const creator = userManager.users.find((usr) => usr.id === createdBy);
+      const bodmasGame = bodmasgameManager.games.get(gameId);
+
+      if (!acceptedBy || !creator || !bodmasGame) return ws.close();
+
+      const bodmasGameFromDb = await prisma.bodmasGame.findFirst({
+        where: { id: bodmasGame.id },
+        include: { players: true },
+      });
+
+      if (!bodmasGameFromDb) {
+        return ws.close();
+      }
+
+      if (bodmasGameFromDb.players.length === 2) {
+        // we will use this same logic in the worker and there we will relase the lock
+        ws.send(
+          JSON.stringify({
+            type: "GAME_IS_FULL",
+          }),
+        );
+        return;
+      }
+
+      // idempotency ( already joined )
+      if (bodmasGame.users.some((usr) => usr.id === ws.userId)) return;
+
+      redisManager.push("bodmas:game", {
+        acceptedBy: acceptedBy.id,
+        createdBy,
+        gameId,
+      });
+
+      userManager.update(createdBy, { status: "PLAYING" });
+      userManager.update(acceptedBy.id, { status: "PLAYING" });
+
+      bodmasgameManager.create_update_game({
+        ...bodmasGame,
+        startTime: new Date(),
+        status: "IN_PROGRESS",
+        users: [...bodmasGame.users, { ...acceptedBy, joinedAt: new Date() }],
+      });
+
+      redisManager.releaseLock(key);
+
+      redisManager.subscribe(`bodmas:game:${bodmasGame.id}`);
+      redisManager.publish(`bodmas:game:${bodmasGame.id}`, {
+        type: "START_BODMAS_GAME",
+      });
+    }
   });
 
   ws.on("close", () => {
@@ -132,12 +197,6 @@ server.on("connection", (ws: ExtendedWs, req) => {
 
     redisManager.publish("online_users", {
       type: "online_users",
-    });
-
-    console.log("running???");
-
-    redisManager.push("analytics_worker", {
-      totalUsers: userManager.users.length,
     });
   });
 });

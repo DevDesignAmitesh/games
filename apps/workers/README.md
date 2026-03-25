@@ -1,4 +1,4 @@
-# analytics-backend
+# workers
 
 To install dependencies:
 

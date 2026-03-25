@@ -31,7 +31,7 @@ export const createGameSchema = z.object({
   numberOfPlayers: z.number().min(2).max(10),
   drawTime: z.number().multipleOf(15),
   rounds: z.number().multipleOf(2),
-  gameType: z.enum(["drawing"]),
+  gameType: z.enum(["drawing", "bodmas"]),
 });
 export type CreateGameSchema = z.infer<typeof createGameSchema>;
 
@@ -54,6 +54,7 @@ export type TokenPayload = {
 
 export type User = {
   id: string;
+  username: string;
   ws: WebSocket;
   status: UserStatus;
 };

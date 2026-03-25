@@ -30,7 +30,7 @@ export const register = async (
 
   const hashedPassword = await hashFn(password);
   const userName = email.split("@")[0]!;
-
+  
   const user = await prisma.user.create({
     data: { email, password: hashedPassword, userName },
   });

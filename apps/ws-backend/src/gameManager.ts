@@ -25,10 +25,9 @@ class BodmasGameManager {
     return BodmasGameManager.instance;
   }
 
-  createGame(data: BoadMasGame) {
+  create_update_game(data: BoadMasGame) {
     this.games.set(data.id, data);
   }
-
 }
 
 export const bodmasgameManager = BodmasGameManager.getInstance();

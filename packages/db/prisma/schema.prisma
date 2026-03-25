@@ -7,11 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum AdminGameStatus {
-  running
-  under_development
-}
-
 enum DrawingGameLanguage {
   en
 }
@@ -85,7 +80,7 @@ model BodmasGame {
   endTime   DateTime?
   startTime DateTime?
 
-  timeLimit       Int
+  timeLimit       Int // in seconds
   numberOfPlayers Int
 
   players BodmasGamePlayer[]
@@ -204,10 +199,4 @@ model FriendsMapUser {
   updatedAt DateTime @updatedAt
 
   @@unique([receiverId, senderId])
-}
-
-model AdminGame {
-  id     String          @id @default(uuid())
-  slug   String          @unique
-  status AdminGameStatus
 }
