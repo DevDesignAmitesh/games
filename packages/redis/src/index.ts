@@ -1,6 +1,6 @@
 import { type RedisClientType, createClient } from "redis";
 import { userManager, bodmasgameManager } from "@repo/ws-backend/ws-backend";
-import { type RedisPushData } from "@repo/types/types"
+import { type RedisPushData } from "@repo/types/types";
 
 class RedisManager {
   private static instance: RedisManager;
@@ -35,7 +35,7 @@ class RedisManager {
           if (isOnlineType) {
             users.forEach((usr) => {
               if (!usr.ws) return;
-              
+
               usr.ws.send(
                 JSON.stringify({
                   type: parsedData.type,
@@ -76,7 +76,7 @@ class RedisManager {
 
         game.players.forEach((plr) => {
           if (!plr.ws) return;
-          
+
           plr.ws.send(message);
         });
       }
@@ -91,12 +91,15 @@ class RedisManager {
     this.client.unsubscribe(channel);
   }
 
-  push(key: string, data: RedisPushData) {
+  push(key: string, data: RedisPushData, delay?: number) {
     this.publisher.lPush(key, JSON.stringify(data));
   }
 
   async pop(key: string) {
-    return await this.client.rPop(key);
+    return await this.publisher.rPop(key);    
+  }
+
+  async worker(key: string) {
   }
 
   async lock(key: string, value: string) {

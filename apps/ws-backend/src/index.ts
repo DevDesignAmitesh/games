@@ -23,7 +23,11 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     return;
   }
 
-  const { userId } = verifyToken(token);
+  const decoded = verifyToken(token);
+
+  if (!decoded) return ws.close();
+
+  const { userId } = decoded;
 
   const user = await prisma.user.findFirst({ where: { id: userId } });
   if (!user) {
@@ -49,8 +53,15 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     ws.send(JSON.stringify({ status: "ok" }));
   });
 
-  ws.on("message", async (data) => {
-    const parsedData = JSON.parse(data.toString());
+    ws.on("message", async (data) => {
+    let parsedData;
+
+    try {
+      parsedData = JSON.parse(data.toString());
+    } catch (e) {
+      console.log("parsing error ", e);
+      return;
+    }
 
     if (
       parsedData.type === "FRIEND_REQUEST_SEND" ||
@@ -61,8 +72,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const sender = userManager.users.find((usr) => usr.id === ws.userId);
       const receiver = userManager.users.find((usr) => usr.id === to);
 
-      if (!receiver) return;
-      if (!sender) return ws.close();
+      if (!receiver || !sender) return ws.close();
 
       redisManager.publish("online_users", {
         type: parsedData.type,
@@ -120,6 +130,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const key = `bodmas:game:${gameId}`;
       const lock = await redisManager.lock(key, `${ws.userId}:${Date.now()}`);
 
+      console.log("lock ", lock);
+      
       if (lock === 0) {
         ws.send(
           JSON.stringify({
@@ -135,19 +147,22 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       if (!acceptedBy || !creator || !bodmasGame) return ws.close();
 
+      console.log("here-1")
+      
+      
       if (bodmasGame.createdBy !== creator.id) return;
-
+      
       const bodmasGameFromDb = await prisma.bodmasGame.findFirst({
         where: { id: bodmasGame.id },
         include: { players: true },
       });
-
+      console.log("here-2")
+      
       if (!bodmasGameFromDb) {
         return ws.close();
       }
-
+      
       if (bodmasGameFromDb.players.length === 2) {
-        // we will use this same logic in the worker and there we will relase the lock
         ws.send(
           JSON.stringify({
             type: "GAME_IS_FULL",
@@ -155,10 +170,11 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         );
         return;
       }
-
+      
+      console.log("here-3")
       // idempotency ( already joined )
       if (bodmasGame.players.some((plr) => plr.id === ws.userId)) return;
-
+      
       redisManager.push("bodmas:game", {
         type: "BODMAS_GAME_ACCEPT",
         payload: {
@@ -170,7 +186,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       userManager.update(createdBy, { status: "PLAYING" });
       userManager.update(acceptedBy.id, { status: "PLAYING" });
-
+      console.log("here-4")
+      
       bodmasgameManager.create_update_game({
         ...bodmasGame,
         startTime: new Date(),
@@ -180,15 +197,17 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           { ...acceptedBy, joinedAt: new Date() },
         ],
       });
-
+      
       redisManager.releaseLock(key);
-
+      
+      console.log("here-5")
       redisManager.subscribe(`bodmas:game:${bodmasGame.id}`);
       redisManager.publish(`bodmas:game:${bodmasGame.id}`, {
         type: "START_BODMAS_GAME",
       });
     }
 
+    // todo: have to decide that who will send this event client or server and if client then only admin or everyone
     if (parsedData.type === "START_BODMAS_GAME") {
       const { gameId } = parsedData.payload;
 
