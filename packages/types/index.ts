@@ -92,4 +92,14 @@ export type RedisPushData =
       payload: {
         answer: BodmasGameUserAnswer;
       };
-    };
+    }
+  
+  | 
+
+  {
+    type: "TRACK_BODMAS_GAME",
+    payload: {
+      gameId: string
+    }
+  }
+    ;

@@ -39,7 +39,7 @@ async function main() {
 
     if (bodmasGame.createdBy !== creator.id) return;
 
-    prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       await tx.bodmasGamePlayer.create({
         data: {
           userId: acceptor.id,
@@ -73,7 +73,7 @@ async function main() {
       userId,
     } = parsedData.payload;
 
-    prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       questions.forEach(async (qs, idx) => {
         const question = await tx.bodmasQuestion.create({
           data: qs,
@@ -119,6 +119,41 @@ async function main() {
       create: answer,
       update: answer,
     });
+  }
+
+  if (parsedData.type === "TRACK_BODMAS_GAME") {
+    const { gameId } = parsedData.payload;
+
+    const bodmasGame = await prisma.bodmasGame.findFirst({
+      where: { id: gameId },
+      include: { players: true },
+    });
+
+    if (!bodmasGame) return;
+
+    setTimeout(async () => {
+      await prisma.$transaction(async (tx) => {
+        await tx.bodmasGame.update({
+          where: { id: gameId },
+          data: {
+            status: "COMPLETED",
+            endTime: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+
+        bodmasGame.players.forEach(async (plr) => {
+          await tx.user.update({
+            where: { id: plr.userId },
+            data: { status: "IDOL" },
+          });
+        });
+      });
+
+      redisManager.publish(`bodmas:game:${gameId}`, {
+        type: "BODMAS_GAME_ENDS",
+      });
+    }, bodmasGame.timeLimit * 1000);
   }
 }
 

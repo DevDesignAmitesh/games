@@ -18,13 +18,12 @@ server.on("connection", async (ws: ExtendedWs, req) => {
   console.log("connection done");
 
   const token = req.url?.split("?token=")[1];
-
   if (!token) {
     ws.close();
     return;
   }
 
-  const userId = verifyToken(token).userId;
+  const { userId } = verifyToken(token);
 
   const user = await prisma.user.findFirst({ where: { id: userId } });
   if (!user) {
@@ -65,17 +64,10 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       if (!receiver) return;
       if (!sender) return ws.close();
 
-      const senderFromDb = await prisma.user.findFirst({
-        where: { id: sender.id },
-        select: { userName: true, id: true },
-      });
-
-      if (!senderFromDb) return ws.close();
-
       redisManager.publish("online_users", {
         type: parsedData.type,
         to,
-        from: { name: senderFromDb.userName, id: senderFromDb.id },
+        from: { name: sender.username, id: sender.id },
       });
     }
 
@@ -223,6 +215,13 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       inmemoryBodmasGame.questions.push(question);
       // these questions are alread updated in db so on memory loss will get from the db
+
+      redisManager.push("bodmas:game", {
+        type: "TRACK_BODMAS_GAME",
+        payload: {
+          gameId,
+        },
+      });
 
       redisManager.push("bodmas:game", {
         type: "START_BODMAS_GAME",

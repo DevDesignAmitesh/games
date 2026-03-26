@@ -45,7 +45,7 @@ export const createGame = async (
       const bodmasGame = await tx.bodmasGame.create({
         data: {
           createdBy: userId,
-          numberOfPlayers,
+          numberOfPlayers: 2,
           timeLimit: 60,
         },
       });
