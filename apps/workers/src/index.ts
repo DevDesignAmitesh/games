@@ -147,12 +147,38 @@ async function main() {
             where: { id: plr.userId },
             data: { status: "IDOL" },
           });
+
+          const answers = await tx.bodmasGameUserAnswer.findMany({
+            where: { userId: plr.userId, gameId },
+          });
+
+          let correctAnswers = 0;
+          let incorrectAnswers = 0;
+
+          answers.forEach((ans) => {
+            if (ans.isCorrect) {
+              correctAnswers += 1;
+            } else {
+              incorrectAnswers += 1;
+            }
+          });
+
+          await tx.bodmasGameResult.create({
+            data: {
+              gameId,
+              userId: plr.userId,
+              correctAnswers,
+              incorrectAnswers,
+            },
+          });
         });
       });
 
       redisManager.publish(`bodmas:game:${gameId}`, {
         type: "BODMAS_GAME_ENDS",
       });
+
+      // bodmasGame.timeLimit => in seconds
     }, bodmasGame.timeLimit * 1000);
   }
 }
