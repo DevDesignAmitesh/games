@@ -62,7 +62,9 @@ async function main() {
         data: { status: "PLAYING" },
       });
     });
-  } else if (parsedData.type === "START_BODMAS_GAME") {
+  }
+
+  if (parsedData.type === "START_BODMAS_GAME") {
     const {
       questionCounter,
       questionStartTimeWithId,
@@ -102,6 +104,20 @@ async function main() {
         where: { id: questionStartTimeWithId.id },
         data: { startTime: questionStartTimeWithId.startTime },
       });
+    });
+  }
+
+  if (parsedData.type === "BODMAS_GAME_ANSWER") {
+    const { answer } = parsedData.payload;
+
+    // if already existing then update it else create
+
+    await prisma.bodmasGameUserAnswer.upsert({
+      where: {
+        id: answer.id,
+      },
+      create: answer,
+      update: answer,
     });
   }
 }

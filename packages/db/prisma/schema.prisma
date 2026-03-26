@@ -69,7 +69,8 @@ model BodmasGamePlayer {
   userId String
   user   User   @relation(references: [id], fields: [userId])
 
-  questionCounter  Int    @default(0)
+  questionCounter Int @default(0)
+
   @@unique([bodmasGameId, userId])
 }
 
@@ -91,7 +92,7 @@ model BodmasGame {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  answer    BodmasGameUserAnswer[]
+  answers   BodmasGameUserAnswer[]
   questions BodmasGameQuestion[]
   results   BodmasGameResult[]
 }
@@ -119,6 +120,7 @@ model BodmasGameUserAnswer {
   questionId String
 
   answer     Int
+  timeSpent  Int
   isCorrect  Boolean
   answeredAt DateTime?
 
@@ -149,7 +151,7 @@ model BodmasGameQuestion {
   gameId     String
   questionId String
   orderIndex Int
-  startTime        Int?   // Date.now() => number
+  startTime  Int? // Date.now() => number
 
   game     BodmasGame     @relation(fields: [gameId], references: [id])
   question BodmasQuestion @relation(fields: [questionId], references: [id])

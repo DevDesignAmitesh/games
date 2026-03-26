@@ -4,7 +4,7 @@ import { verifyToken } from "@repo/common/common";
 import type { WebSocket } from "ws";
 import type { TokenPayload } from "@repo/types/types";
 import { redisManager } from "@repo/redis/redis";
-import { prisma } from "@repo/db/db";
+import { prisma, type BodmasGameUserAnswer } from "@repo/db/db";
 import { bodmasgameManager } from "./gameManager";
 import { generateRandomQuesions } from "./utils";
 
@@ -108,7 +108,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         ...bodmasGame,
         answers: [],
         questions: [],
-        users: [{ ...requestedBy, joinedAt: new Date() }],
+        players: [{ ...requestedBy, joinedAt: new Date() }],
       });
 
       redisManager.subscribe(`bodmas:game:${bodmasGame.id}`);
@@ -165,10 +165,10 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       }
 
       // idempotency ( already joined )
-      if (bodmasGame.users.some((usr) => usr.id === ws.userId)) return;
+      if (bodmasGame.players.some((plr) => plr.id === ws.userId)) return;
 
       redisManager.push("bodmas:game", {
-        type: parsedData.type,
+        type: "BODMAS_GAME_ACCEPT",
         payload: {
           acceptedBy: acceptedBy.id,
           createdBy,
@@ -183,7 +183,10 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         ...bodmasGame,
         startTime: new Date(),
         status: "IN_PROGRESS",
-        users: [...bodmasGame.users, { ...acceptedBy, joinedAt: new Date() }],
+        players: [
+          ...bodmasGame.players,
+          { ...acceptedBy, joinedAt: new Date() },
+        ],
       });
 
       redisManager.releaseLock(key);
@@ -221,13 +224,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       inmemoryBodmasGame.questions.push(question);
       // these questions are alread updated in db so on memory loss will get from the db
 
-      redisManager.publish(`bodmas:game:${inmemoryBodmasGame.id}`, {
-        type: "BODMAS_GAME_ROUND_STARTED",
-        question,
-      });
-
       redisManager.push("bodmas:game", {
-        type: parsedData.type,
+        type: "START_BODMAS_GAME",
         payload: {
           userId: ws.userId,
           gameId,
@@ -238,6 +236,121 @@ server.on("connection", async (ws: ExtendedWs, req) => {
             startTime,
           },
         },
+      });
+
+      redisManager.publish(`bodmas:game:${inmemoryBodmasGame.id}`, {
+        type: "BODMAS_GAME_ROUND_STARTED",
+        question,
+      });
+    }
+
+    if (parsedData.type === "BODMAS_GAME_ANSWER") {
+      const { gameId, questionId, answer } = parsedData.payload;
+
+      const game = await prisma.bodmasGame.findFirst({
+        where: { id: gameId },
+      });
+      if (!game) return;
+
+      const presentGame = bodmasgameManager.games.get(game.id);
+      if (!presentGame) return;
+
+      const allQuestions = bodmasgameManager.inmemoryQuestions.get(game.id);
+      if (!allQuestions || !allQuestions.length) return;
+
+      const question = allQuestions.find((qs) => qs.id === questionId);
+      if (!question) return;
+
+      const startedAt = bodmasgameManager.getQsTimer(question.id, ws.userId);
+      if (!startedAt) return;
+
+      const timeSpent = Date.now() - startedAt;
+
+      const isAnswerExists = presentGame.answers.find(
+        (ans) => ans.questionId == question.id && ans.userId === ws.userId,
+      );
+
+      if (isAnswerExists) {
+        let updatedAnswer: BodmasGameUserAnswer = {
+          ...isAnswerExists,
+          timeSpent,
+          updatedAt: new Date(),
+          answeredAt: new Date(),
+        };
+
+        if (question.answer !== Number(answer)) {
+          updatedAnswer = {
+            ...isAnswerExists,
+            isCorrect: false,
+          };
+        } else {
+          updatedAnswer = {
+            ...isAnswerExists,
+            isCorrect: true,
+          };
+          bodmasgameManager.delQsTimer(question.id, ws.userId);
+        }
+
+        const updatedAnswers = presentGame.answers.filter(
+          (ans) => ans.id !== isAnswerExists.id,
+        );
+
+        // update the db via worker
+        redisManager.push("bodmas:game", {
+          type: "BODMAS_GAME_ANSWER",
+          payload: {
+            answer: updatedAnswer,
+          },
+        });
+
+        presentGame.answers = [...updatedAnswers, updatedAnswer];
+
+        if (question.answer !== Number(answer)) return;
+      } else {
+        const isCorrect = question.answer === Number(answer);
+
+        const newAnswer: BodmasGameUserAnswer = {
+          id: crypto.randomUUID(),
+          questionId: question.id,
+          answer,
+          isCorrect,
+          timeSpent,
+          userId: ws.userId,
+          gameId: game.id,
+          answeredAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        presentGame.answers.push(newAnswer);
+
+        if (isCorrect) bodmasgameManager.delQsTimer(question.id, ws.userId);
+
+        // create in the db via worker
+        redisManager.push("bodmas:game", {
+          type: "BODMAS_GAME_ANSWER",
+          payload: {
+            answer: newAnswer,
+          },
+        });
+        if (!isCorrect) return;
+      }
+
+      let counter = bodmasgameManager.getQsCounter(gameId, ws.userId);
+      if (!counter) return;
+
+      counter += 1;
+
+      bodmasgameManager.setQsCounter(gameId, ws.userId, counter);
+
+      const nextQuestion = allQuestions[counter];
+      if (!nextQuestion) return;
+
+      bodmasgameManager.setQsTimer(nextQuestion.id, ws.userId, Date.now());
+
+      redisManager.publish(`bodmas:game:${gameId}`, {
+        type: "BODMAS_GAME_ROUND_STARTED",
+        question: nextQuestion,
       });
     }
   });

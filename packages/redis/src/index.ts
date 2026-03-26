@@ -34,6 +34,8 @@ class RedisManager {
         ) {
           if (isOnlineType) {
             users.forEach((usr) => {
+              if (!usr.ws) return;
+              
               usr.ws.send(
                 JSON.stringify({
                   type: parsedData.type,
@@ -43,6 +45,8 @@ class RedisManager {
             });
           } else {
             users.forEach((usr) => {
+              if (!usr.ws) return;
+
               if (usr.id !== parsedData.from.id) {
                 usr.ws.send(message);
               }
@@ -53,7 +57,7 @@ class RedisManager {
           parsedData.type === "FRIEND_REQUEST_ACCEPT"
         ) {
           const user = users.find((usr) => usr.id === parsedData.to);
-          if (!user) return;
+          if (!user || !user.ws) return;
 
           user.ws.send(message);
         }
@@ -70,8 +74,10 @@ class RedisManager {
           return;
         }
 
-        game.users.forEach((usr) => {
-          usr.ws.send(message);
+        game.players.forEach((plr) => {
+          if (!plr.ws) return;
+          
+          plr.ws.send(message);
         });
       }
     });

@@ -55,12 +55,12 @@ export type TokenPayload = {
 export type User = {
   id: string;
   username: string;
-  ws: WebSocket;
+  ws?: WebSocket;
   status: UserStatus;
 };
 
 export interface BoadMasGame extends BodmasGame {
-  users: Array<User & { joinedAt: Date }>;
+  players: Array<User & { joinedAt?: Date; questionCounter?: number }>;
   answers: BodmasGameUserAnswer[];
   questions: BodmasQuestion[];
 }
@@ -85,5 +85,11 @@ export type RedisPushData =
         acceptedBy: string;
         createdBy: string;
         gameId: string;
+      };
+    }
+  | {
+      type: "BODMAS_GAME_ANSWER";
+      payload: {
+        answer: BodmasGameUserAnswer;
       };
     };

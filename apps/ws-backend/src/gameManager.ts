@@ -1,26 +1,49 @@
 import type { BodmasQuestion } from "@repo/db/db";
-import type { BoadMasGame, User } from "@repo/types/types";
+import type { BoadMasGame } from "@repo/types/types";
+import { getGamesFromDb } from "./utils";
 
 class BodmasGameManager {
   private static instance: BodmasGameManager;
 
   // gameId, game with all the details (players, answers)
-  games: Map<string, BoadMasGame> = new Map();
+  games: Map<string, BoadMasGame>;
 
   // game id with all the questions
-  inmemoryQuestions: Map<string, BodmasQuestion[]> = new Map();
+  inmemoryQuestions: Map<string, BodmasQuestion[]>;
 
   // gameId-userId and question index (for finding that which question to send now)
-  questionCounter: Map<string, number> = new Map();
+  questionCounter: Map<string, number>;
 
   // questionId-userId and answers at (for calculating the response from the user of a particular ques.)
-  questionTiming: Map<string, number> = new Map();
+  questionTiming: Map<string, number>;
 
-  private constructor() {}
+  private constructor(games: BoadMasGame[]) {
+    this.games = new Map(games.map((gm) => [gm.id, gm]));
+    this.inmemoryQuestions = new Map(games.map((gm) => [gm.id, gm.questions]));
+    this.questionCounter = new Map(
+      games.flatMap((gm) =>
+        gm.players.map((plr) => [
+          `${gm.id}-${plr.id}`,
+          plr.questionCounter || 0,
+        ]),
+      ),
+    );
+    this.questionTiming = new Map(
+      games.flatMap((gm) =>
+        gm.players.flatMap((plr) => 
+          gm.questions.map((qs) => [
+          `${qs.id}-${plr.id}`,
+          plr.questionCounter || 0,
+        ])  
+        ),
+      ),
+    );
+  }
 
-  static getInstance(): BodmasGameManager {
+  static async getInstance(): Promise<BodmasGameManager> {
     if (!BodmasGameManager.instance) {
-      BodmasGameManager.instance = new BodmasGameManager();
+      const games = await getGamesFromDb();
+      BodmasGameManager.instance = new BodmasGameManager(games);
     }
     return BodmasGameManager.instance;
   }
@@ -31,21 +54,33 @@ class BodmasGameManager {
 
   // gameId-userId
   getQsCounter(gameId: string, userId: string) {
-    const key = `${gameId}:${userId}`
+    const key = `${gameId}:${userId}`;
     return this.questionCounter.get(key);
   }
 
   // gameId-userId
   setQsCounter(gameId: string, userId: string, counter: number) {
-    const key = `${gameId}:${userId}`
+    const key = `${gameId}:${userId}`;
     return this.questionCounter.set(key, counter);
   }
 
   // questionId-userId
   setQsTimer(questionId: string, userId: string, time: number) {
-    const key = `${questionId}:${userId}`
-    return this.questionCounter.set(key, time);
+    const key = `${questionId}:${userId}`;
+    return this.questionTiming.set(key, time);
+  }
+
+  // questionId-userId
+  getQsTimer(questionId: string, userId: string) {
+    const key = `${questionId}:${userId}`;
+    return this.questionTiming.get(key);
+  }
+
+  // questionId-userId
+  delQsTimer(questionId: string, userId: string) {
+    const key = `${questionId}:${userId}`;
+    return this.questionTiming.delete(key);
   }
 }
 
-export const bodmasgameManager = BodmasGameManager.getInstance();
+export const bodmasgameManager = await BodmasGameManager.getInstance();
