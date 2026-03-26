@@ -11,8 +11,8 @@ import { register } from "./services/register";
 import { sendReq } from "./services/sendReq";
 import { acceptReq } from "./services/acceptReq";
 import { createGame } from "./services/createGame";
-import { getAdminGame } from "./services/getAdminGame";
 import { getFriends } from "./services/getFriends";
+import { getResults } from "./services/getResults";
 
 const app = express();
 const PORT = 3000;
@@ -62,8 +62,8 @@ app.post(
   createGame,
 );
 
-app.get("/admin-games", auth, getAdminGame);
-
 app.get("/friends", auth, getFriends);
+
+app.get("/results/:gameId", auth, getResults);
 
 app.listen(PORT, () => console.log("code is running at ", PORT));
