@@ -69,6 +69,7 @@
         "@repo/db": "workspace:*",
         "@repo/redis": "workspace:*",
         "@repo/types": "workspace:*",
+        "@repo/ws-backend": "workspace:*",
         "@types/bun": "latest",
         "@types/ioredis": "^5.0.0",
       },

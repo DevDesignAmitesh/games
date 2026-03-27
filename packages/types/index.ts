@@ -3,6 +3,7 @@ import {
   FriendRequestStatus,
   UserStatus,
   type BodmasGame,
+  type BodmasGameQuestion,
   type BodmasGameUserAnswer,
   type BodmasQuestion,
 } from "@repo/db/db";
@@ -63,6 +64,7 @@ export interface BoadMasGame extends BodmasGame {
   players: Array<User & { joinedAt?: Date; questionCounter?: number }>;
   answers: BodmasGameUserAnswer[];
   questions: BodmasQuestion[];
+  gameQuestions: BodmasGameQuestion[];
 }
 
 export type RedisPushData =
@@ -70,13 +72,12 @@ export type RedisPushData =
       type: "START_BODMAS_GAME";
       payload: {
         questionCounter: number;
+        orderIndex: number;
         questions?: BodmasQuestion[];
         gameId: string;
         userId: string;
-        questionStartTimeWithId: {
-          id: string;
-          startTime: Date;
-        };
+        gameQuestion: BodmasQuestion;
+        questionStartTime: Date
       };
     }
   | {
@@ -85,8 +86,8 @@ export type RedisPushData =
         acceptedBy: string;
         createdBy: string;
         gameId: string;
-        startTime: Date
-        endTime: Date
+        startTime: Date;
+        endTime: Date;
       };
     }
   | {
@@ -95,13 +96,9 @@ export type RedisPushData =
         answer: BodmasGameUserAnswer;
       };
     }
-  
-  | 
-
-  {
-    type: "TRACK_BODMAS_GAME",
-    payload: {
-      gameId: string
-    }
-  }
-    ;
+  | {
+      type: "TRACK_BODMAS_GAME";
+      payload: {
+        gameId: string;
+      };
+    };

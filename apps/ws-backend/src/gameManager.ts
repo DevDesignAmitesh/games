@@ -30,14 +30,34 @@ class BodmasGameManager {
     );
     this.questionTiming = new Map(
       games.flatMap((gm) =>
-        gm.players.flatMap((plr) => 
-          gm.questions.map((qs) => [
-          `${qs.id}-${plr.id}`,
-          plr.questionCounter || 0,
-        ])  
+        gm.players.flatMap((plr) =>
+          gm.gameQuestions.map((qs) => [
+            `${qs.id}-${plr.id}`,
+            plr.questionCounter || 0,
+          ]),
         ),
       ),
     );
+  }
+
+  updateGame(game: BoadMasGame) {
+    this.games.set(game.id, game);
+
+    this.inmemoryQuestions.set(game.id, game.questions);
+    
+    for (let [_idx, plr] of game.players.entries()) {
+      this.setQsCounter(game.id, plr.id, plr.questionCounter || 0);
+    }
+    
+    for (let [idx, ques] of game.gameQuestions.entries()) {
+      this.setQsTimer(
+        ques.questionId,
+        ??,
+        ques.startTime ? ques.startTime.valueOf() : Date.now(),
+      );
+    }
+
+    this.questionTiming;
   }
 
   static async getInstance(): Promise<BodmasGameManager> {

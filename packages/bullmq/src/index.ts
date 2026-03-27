@@ -1,8 +1,9 @@
 import { Worker, Queue } from "bullmq";
 import IORedis from "ioredis";
-import { type RedisPushData } from "@repo/types/types";
+import { type RedisPushData, type BoadMasGame } from "@repo/types/types";
 import { prisma } from "@repo/db/db";
 import { redisManager } from "@repo/redis/redis";
+import { bodmasgameManager } from "@repo/ws-backend/ws-backend";
 
 class BullmqManager {
   private static connection: IORedis;
@@ -98,38 +99,37 @@ class BullmqManager {
     if (data.type === "START_BODMAS_GAME") {
       const {
         questionCounter,
-        questionStartTimeWithId,
         questions,
         gameId,
         userId,
+        gameQuestion,
+        questionStartTime,
+        orderIndex,
       } = data.payload;
 
       await prisma.$transaction(async (tx) => {
         if (questions) {
           for (let [idx, qs] of questions.entries()) {
-            const question = await tx.bodmasQuestion.create({
+            await tx.bodmasQuestion.create({
               data: qs,
-            });
-
-            await tx.bodmasGameQuestion.create({
-              data: {
-                gameId,
-                questionId: question.id,
-                orderIndex: idx,
-              },
             });
           }
         }
 
-        await tx.bodmasGameQuestion.update({
+        await tx.bodmasGameQuestion.upsert({
           where: {
             gameId_questionId: {
               gameId,
-              questionId: questionStartTimeWithId.id,
+              questionId: gameQuestion.id,
             },
           },
-          data: {
-            startTime: questionStartTimeWithId.startTime,
+          create: {
+            gameId,
+            questionId: gameQuestion.id,
+            orderIndex,
+          },
+          update: {
+            startTime: questionStartTime,
           },
         });
 
@@ -214,13 +214,42 @@ class BullmqManager {
 
       if (!bodmasGame) return;
       await prisma.$transaction(async (tx) => {
-        await tx.bodmasGame.update({
+        const updatedGame = await tx.bodmasGame.update({
           where: { id: gameId },
           data: {
             status: "COMPLETED",
             updatedAt: new Date(),
           },
+          include: {
+            players: {
+              include: {
+                user: true,
+              },
+            },
+            answers: true,
+            questions: {
+              include: { question: true },
+            },
+          },
         });
+
+        const lstGame: BoadMasGame = {
+          ...updatedGame,
+          players: updatedGame.players.map((plr) => {
+            return {
+              id: plr.userId,
+              username: plr.user.userName,
+              status: plr.user.status,
+              questionCounter: plr.questionCounter,
+            };
+          }),
+          questions: updatedGame.questions.map((qs) => {
+            return qs.question;
+          }),
+          gameQuestions: updatedGame.questions,
+        };
+
+        bodmasgameManager.updateGame(lstGame);
 
         for (let [_idx, plr] of bodmasGame.players.entries()) {
           await tx.user.update({

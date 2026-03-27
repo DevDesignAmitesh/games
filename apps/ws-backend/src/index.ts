@@ -107,10 +107,13 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       if (!bodmasGame) return ws.close();
 
+      if (bodmasGame.createdBy !== ws.userId) return ws.close();
+
       bodmasgameManager.create_update_game({
         ...bodmasGame,
         answers: [],
         questions: [],
+        gameQuestions: [],
         players: [{ ...requestedBy, joinedAt: new Date() }],
       });
 
@@ -230,6 +233,13 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       // this start time should also be updated in db's questions table
 
       bodmasGame.questions.push(question);
+      bodmasGame.gameQuestions.push({
+        id: crypto.randomUUID(),
+        gameId,
+        orderIndex: counter,
+        questionId: question.id,
+        startTime: questionStartTime
+      })
       // these questions are alread updated in db so on memory loss will get from the db
 
       bullmqManager.push("bodmas:game", {
@@ -237,12 +247,11 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         payload: {
           userId: ws.userId,
           gameId,
+          gameQuestion: question,
           questionCounter: counter,
           questions: randomQuestions,
-          questionStartTimeWithId: {
-            id: question.id,
-            startTime: questionStartTime,
-          },
+          questionStartTime,
+          orderIndex: counter,
         },
       });
 
@@ -272,11 +281,24 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const presentGame = bodmasgameManager.games.get(game.id);
       if (!presentGame) return;
 
+      if (
+        presentGame.status === "CANCELLED" ||
+        presentGame.status === "EXPIRED" ||
+        presentGame.status === "COMPLETED"
+      ) {
+        return;
+      }
+
+      console.log("both games found");
+
       const allQuestions = bodmasgameManager.inmemoryQuestions.get(game.id);
+      console.log("allQuestions ", allQuestions);
       if (!allQuestions || !allQuestions.length) return;
 
       const question = allQuestions.find((qs) => qs.id === questionId);
       if (!question) return;
+
+      console.log("all questions found");
 
       const startedAt = bodmasgameManager.getQsTimer(question.id, ws.userId);
       if (!startedAt) return;
@@ -288,25 +310,18 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       );
 
       if (isAnswerExists) {
-        let updatedAnswer: BodmasGameUserAnswer = {
+        console.log("answer already exists");
+        const isCorrect = question.answer === Number(answer);
+
+        const updatedAnswer: BodmasGameUserAnswer = {
           ...isAnswerExists,
           timeSpent,
           updatedAt: new Date(),
           answeredAt: new Date(),
+          isCorrect,
         };
 
-        if (question.answer !== Number(answer)) {
-          updatedAnswer = {
-            ...isAnswerExists,
-            isCorrect: false,
-          };
-        } else {
-          updatedAnswer = {
-            ...isAnswerExists,
-            isCorrect: true,
-          };
-          bodmasgameManager.delQsTimer(question.id, ws.userId);
-        }
+        if (isCorrect) bodmasgameManager.delQsTimer(question.id, ws.userId);
 
         const updatedAnswers = presentGame.answers.filter(
           (ans) => ans.id !== isAnswerExists.id,
@@ -320,10 +335,13 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           },
         });
 
+        console.log("pushing to worker for updating ");
+
         presentGame.answers = [...updatedAnswers, updatedAnswer];
 
-        if (question.answer !== Number(answer)) return;
+        if (!isCorrect) return;
       } else {
+        console.log("creating new answer");
         const isCorrect = question.answer === Number(answer);
 
         const newAnswer: BodmasGameUserAnswer = {
@@ -343,6 +361,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
         if (isCorrect) bodmasgameManager.delQsTimer(question.id, ws.userId);
 
+        console.log("pushing in db");
+        console.log("iscorrect ", isCorrect);
         // create in the db via worker
         bullmqManager.push("bodmas:game", {
           type: "BODMAS_GAME_ANSWER",
@@ -354,14 +374,18 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       }
 
       let counter = bodmasgameManager.getQsCounter(gameId, ws.userId);
-      if (!counter) return;
+      console.log("counter ", counter);
+      if (counter === undefined) return;
 
       counter += 1;
 
       bodmasgameManager.setQsCounter(gameId, ws.userId, counter);
 
       const nextQuestion = allQuestions[counter];
+      console.log("nextQuestion ", nextQuestion);
       if (!nextQuestion) return;
+
+      console.log("increasing counter and getting next question");
 
       const questionStartTime = new Date();
       bodmasgameManager.setQsTimer(
@@ -370,26 +394,21 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         questionStartTime.valueOf(),
       );
 
+      console.log("pushing to worker");
+
       bullmqManager.push("bodmas:game", {
         type: "START_BODMAS_GAME",
         payload: {
           userId: ws.userId,
           gameId,
           questionCounter: counter,
-          questionStartTimeWithId: {
-            id: nextQuestion.id,
-            startTime: questionStartTime,
-          },
+          gameQuestion: nextQuestion,
+          questionStartTime,
+          orderIndex: counter,
         },
       });
 
-      // redisManager.publish(`bodmas:game:${gameId}`, {
-      //   type: "BODMAS_GAME_ROUND_STARTED",
-      //   question: nextQuestion,
-      // });
-
-      // TODO: last thing left to check that why the users are not receving message
-      
+      console.log("unicasting to the user");
       ws.send(
         JSON.stringify({
           type: "BODMAS_GAME_ROUND_STARTED",

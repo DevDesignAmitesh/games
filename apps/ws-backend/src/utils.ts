@@ -52,10 +52,10 @@ export const getGamesFromDb = async (): Promise<BoadMasGame[]> => {
           questionCounter: plr.questionCounter
         };
       }),
-      answers: gm.answers,
       questions: gm.questions.map((qs) => {
         return qs.question;
       }),
+      gameQuestions: gm.questions
     };
   });
 
