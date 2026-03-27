@@ -51,7 +51,8 @@ class BullmqManager {
   private handler = async (data: RedisPushData, id?: string) => {
     console.log("processing data ", JSON.stringify(data));
     if (data.type === "BODMAS_GAME_ACCEPT") {
-      const { acceptedBy, createdBy, gameId, startTime, endTime } = data.payload;
+      const { acceptedBy, createdBy, gameId, startTime, endTime } =
+        data.payload;
 
       const [acceptor, creator, bodmasGame] = await Promise.all([
         prisma.user.findFirst({
@@ -104,28 +105,34 @@ class BullmqManager {
       } = data.payload;
 
       await prisma.$transaction(async (tx) => {
-        for (let [idx, qs] of questions.entries()) {
-          const question = await tx.bodmasQuestion.create({
-            data: qs,
-          });
+        if (questions) {
+          for (let [idx, qs] of questions.entries()) {
+            const question = await tx.bodmasQuestion.create({
+              data: qs,
+            });
 
-          await tx.bodmasGameQuestion.upsert({
-            where: {
-              gameId_questionId: {
+            await tx.bodmasGameQuestion.create({
+              data: {
                 gameId,
                 questionId: question.id,
+                orderIndex: idx,
               },
-            },
-            create: {
-              gameId,
-              questionId: question.id,
-              orderIndex: idx,
-            },
-            update: {
-              startTime: questionStartTimeWithId.startTime,
-            },
-          });
+            });
+          }
         }
+
+        await tx.bodmasGameQuestion.update({
+          where: {
+            gameId_questionId: {
+              gameId,
+              questionId: questionStartTimeWithId.id,
+            },
+          },
+          data: {
+            startTime: questionStartTimeWithId.startTime,
+          },
+        });
+
         await tx.bodmasGamePlayer.update({
           where: {
             bodmasGameId_userId: {
@@ -143,15 +150,58 @@ class BullmqManager {
     if (data.type === "BODMAS_GAME_ANSWER") {
       const { answer } = data.payload;
 
-      // if already existing then update it else create
-
-      await prisma.bodmasGameUserAnswer.upsert({
+      const existingQuestion = await prisma.bodmasGameQuestion.findUnique({
         where: {
-          id: answer.id,
+          gameId_questionId: {
+            gameId: answer.gameId,
+            questionId: answer.questionId,
+          },
         },
-        create: answer,
-        update: answer,
       });
+
+      if (!existingQuestion) {
+        console.log("existing questions no found");
+        return;
+      }
+
+      const existingAnswer = await prisma.bodmasGameUserAnswer.findUnique({
+        where: {
+          gameId_userId_questionId: {
+            gameId: answer.gameId,
+            userId: answer.userId,
+            questionId: existingQuestion.id,
+          },
+        },
+      });
+
+      if (existingAnswer) {
+        await prisma.bodmasGameUserAnswer.update({
+          where: {
+            gameId_userId_questionId: {
+              gameId: answer.gameId,
+              userId: answer.userId,
+              questionId: existingQuestion.id,
+            },
+          },
+          data: {
+            isCorrect: answer.isCorrect,
+            answer: answer.answer,
+            timeSpent: answer.timeSpent,
+            answeredAt: answer.answeredAt,
+          },
+        });
+      } else {
+        await prisma.bodmasGameUserAnswer.create({
+          data: {
+            answer: answer.answer,
+            isCorrect: answer.isCorrect,
+            timeSpent: answer.timeSpent,
+            gameId: answer.gameId,
+            userId: answer.userId,
+            questionId: existingQuestion.id,
+          },
+        });
+      }
     }
 
     if (data.type === "TRACK_BODMAS_GAME") {

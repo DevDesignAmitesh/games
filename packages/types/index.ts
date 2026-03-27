@@ -70,12 +70,12 @@ export type RedisPushData =
       type: "START_BODMAS_GAME";
       payload: {
         questionCounter: number;
-        questions: BodmasQuestion[];
+        questions?: BodmasQuestion[];
         gameId: string;
         userId: string;
         questionStartTimeWithId: {
           id: string;
-          startTime: number;
+          startTime: Date;
         };
       };
     }
@@ -85,8 +85,8 @@ export type RedisPushData =
         acceptedBy: string;
         createdBy: string;
         gameId: string;
-        startTime: number
-        endTime: number
+        startTime: Date
+        endTime: Date
       };
     }
   | {

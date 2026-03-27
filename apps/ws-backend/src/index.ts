@@ -129,9 +129,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     if (parsedData.type === "BODMAS_GAME_ACCEPT") {
       const { gameId, createdBy } = parsedData.payload;
       const key = `bodmas:game:${gameId}`;
-      const lock = await redisManager.lock(key, `${ws.userId}:${Date.now()}`);
-
-      console.log("lock ", lock);
+      const value = `${ws.userId}:${Date.now()}`;
+      const lock = await redisManager.lock(key, value);
 
       if (lock === 0) {
         ws.send(
@@ -148,14 +147,22 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       if (!acceptedBy || !creator || !bodmasGame) return ws.close();
 
-      if (bodmasGame.createdBy !== creator.id) return;
-
       const bodmasGameFromDb = await prisma.bodmasGame.findFirst({
         where: { id: bodmasGame.id },
         include: { players: true },
       });
 
       if (!bodmasGameFromDb) return ws.close();
+
+      if (bodmasGame.createdBy !== creator.id) return;
+
+      if (
+        bodmasGame.status === "CANCELLED" ||
+        bodmasGame.status === "EXPIRED" ||
+        bodmasGame.status === "COMPLETED"
+      ) {
+        return;
+      }
 
       if (bodmasGameFromDb.players.length === 2) {
         ws.send(
@@ -169,8 +176,10 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       // idempotency ( already joined )
       if (bodmasGame.players.some((plr) => plr.id === ws.userId)) return;
 
-      const gameStartTime = Date.now(); // some buffer time while sync
-      const gameEndTime = gameStartTime + bodmasGame.timeLimit * 1000; // some buffer time while sync
+      const gameStartTime = new Date(); // some buffer time while sync
+      const gameEndTime = new Date(
+        gameStartTime.valueOf() + bodmasGame.timeLimit * 1000,
+      ); // some buffer time while sync
 
       bullmqManager.push("bodmas:game", {
         type: "BODMAS_GAME_ACCEPT",
@@ -179,7 +188,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           createdBy,
           gameId,
           startTime: gameStartTime,
-          endTime: gameEndTime
+          endTime: gameEndTime,
         },
       });
 
@@ -189,9 +198,9 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       bodmasgameManager.create_update_game({
         ...bodmasGame,
-        startTime: BigInt(gameStartTime),
+        startTime: gameStartTime,
         status: "IN_PROGRESS",
-        endTime: BigInt(gameEndTime),
+        endTime: gameEndTime,
         players: [
           ...bodmasGame.players,
           { ...acceptedBy, joinedAt: new Date() },
@@ -200,11 +209,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       redisManager.releaseLock(key);
 
-      console.log("here-5");
       redisManager.subscribe(`bodmas:game:${bodmasGame.id}`);
-
-      const inmemoryBodmasGame = bodmasgameManager.games.get(gameId);
-      if (!inmemoryBodmasGame) return ws.close();
 
       const counter = bodmasgameManager.getQsCounter(gameId, ws.userId) || 0;
       bodmasgameManager.setQsCounter(gameId, ws.userId, counter);
@@ -214,12 +219,17 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       bodmasgameManager.inmemoryQuestions.set(gameId, randomQuestions);
       // these questions should also be updated in db's questions table
 
-      const questionStartTime = Date.now(); // for buffer time
-      const question = randomQuestions[counter]!;
-      bodmasgameManager.setQsTimer(question.id, ws.userId, questionStartTime);
+      const questionStartTime = new Date(); // for buffer time
+      const question = randomQuestions[counter];
+      if (!question) return;
+      bodmasgameManager.setQsTimer(
+        question.id,
+        ws.userId,
+        questionStartTime.valueOf(),
+      );
       // this start time should also be updated in db's questions table
 
-      inmemoryBodmasGame.questions.push(question);
+      bodmasGame.questions.push(question);
       // these questions are alread updated in db so on memory loss will get from the db
 
       bullmqManager.push("bodmas:game", {
@@ -240,12 +250,12 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         "bodmas:game",
         {
           type: "TRACK_BODMAS_GAME",
-          payload: { gameId }
+          payload: { gameId },
         },
         bodmasGameFromDb.timeLimit * 1000 + 5000, // with some buffer time while syncing
       );
 
-      redisManager.publish(`bodmas:game:${inmemoryBodmasGame.id}`, {
+      redisManager.publish(`bodmas:game:${bodmasGame.id}`, {
         type: "BODMAS_GAME_ROUND_STARTED",
         question,
       });
@@ -282,7 +292,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           ...isAnswerExists,
           timeSpent,
           updatedAt: new Date(),
-          answeredAt: BigInt(Date.now()),
+          answeredAt: new Date(),
         };
 
         if (question.answer !== Number(answer)) {
@@ -324,7 +334,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           timeSpent,
           userId: ws.userId,
           gameId: game.id,
-          answeredAt: BigInt(Date.now()),
+          answeredAt: new Date(),
           createdAt: new Date(),
           updatedAt: new Date(),
         };
@@ -353,12 +363,39 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const nextQuestion = allQuestions[counter];
       if (!nextQuestion) return;
 
-      bodmasgameManager.setQsTimer(nextQuestion.id, ws.userId, Date.now());
+      const questionStartTime = new Date();
+      bodmasgameManager.setQsTimer(
+        nextQuestion.id,
+        ws.userId,
+        questionStartTime.valueOf(),
+      );
 
-      redisManager.publish(`bodmas:game:${gameId}`, {
-        type: "BODMAS_GAME_ROUND_STARTED",
-        question: nextQuestion,
+      bullmqManager.push("bodmas:game", {
+        type: "START_BODMAS_GAME",
+        payload: {
+          userId: ws.userId,
+          gameId,
+          questionCounter: counter,
+          questionStartTimeWithId: {
+            id: nextQuestion.id,
+            startTime: questionStartTime,
+          },
+        },
       });
+
+      // redisManager.publish(`bodmas:game:${gameId}`, {
+      //   type: "BODMAS_GAME_ROUND_STARTED",
+      //   question: nextQuestion,
+      // });
+
+      // TODO: last thing left to check that why the users are not receving message
+      
+      ws.send(
+        JSON.stringify({
+          type: "BODMAS_GAME_ROUND_STARTED",
+          question: nextQuestion,
+        }),
+      );
     }
   });
 

@@ -23,7 +23,9 @@ class RedisManager {
 
   subscribe(key: string) {
     this.client.subscribe(key, (message, channel) => {
-      console.log("running");
+      console.log("publishing ", message);
+
+      
       const parsedData = JSON.parse(message);
       if (channel === "online_users") {
         const isOnlineType = parsedData.type === "online_users";
@@ -63,16 +65,10 @@ class RedisManager {
         }
       } else if (channel.includes("bodmas:game:")) {
         const gameId = channel.split("bodmas:game:")[1];
-        if (!gameId) {
-          console.log("game id not found");
-          return;
-        }
+        if (!gameId) return;
 
         const game = bodmasgameManager.games.get(gameId);
-        if (!game) {
-          console.log("game not found");
-          return;
-        }
+        if (!game) return;
 
         game.players.forEach((plr) => {
           if (!plr.ws) return;

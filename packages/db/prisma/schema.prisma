@@ -81,8 +81,8 @@ model BodmasGame {
   createdBy String
   creator   User   @relation("bodmas_creator", fields: [createdBy], references: [id])
 
-  endTime   BigInt?
-  startTime BigInt?
+  endTime   DateTime?
+  startTime DateTime?
 
   timeLimit       Int // in seconds
   numberOfPlayers Int
@@ -122,7 +122,7 @@ model BodmasGameUserAnswer {
   answer     Int
   timeSpent  Int
   isCorrect  Boolean
-  answeredAt BigInt?
+  answeredAt DateTime?
 
   game     BodmasGame         @relation(fields: [gameId], references: [id])
   user     User               @relation(fields: [userId], references: [id])
@@ -151,7 +151,7 @@ model BodmasGameQuestion {
   gameId     String
   questionId String
   orderIndex Int
-  startTime  BigInt? // Date.now() => number
+  startTime  DateTime? // Date.now() => number
 
   game     BodmasGame     @relation(fields: [gameId], references: [id])
   question BodmasQuestion @relation(fields: [questionId], references: [id])
@@ -193,7 +193,7 @@ model FriendsMapUser {
 
   status      FriendRequestStatus @default(PENDING)
   requestedAt DateTime
-  respondedAt BigInt?
+  respondedAt DateTime?
 
   senderId String
   sender   User   @relation("user_sender", fields: [senderId], references: [id])
