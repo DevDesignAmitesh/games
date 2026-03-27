@@ -9,6 +9,7 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@repo/db": "workspace:*",
+    "@repo/bullmq": "workspace:*",
     "@repo/types": "workspace:*",
     "@repo/redis": "workspace:*",
     "@repo/common": "workspace:*"
@@ -21,6 +22,6 @@
     "ws": "^8.20.0"
   },
   "exports": {
-    "./ws-backend": "./src/index.ts"
+    "./ws-backend": "./src/exports.ts"
   }
 }

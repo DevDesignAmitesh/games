@@ -1,4 +1,4 @@
-# workers
+# bullmq
 
 To install dependencies:
 

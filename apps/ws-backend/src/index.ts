@@ -7,8 +7,9 @@ import { redisManager } from "@repo/redis/redis";
 import { prisma, type BodmasGameUserAnswer } from "@repo/db/db";
 import { bodmasgameManager } from "./gameManager";
 import { generateRandomQuesions } from "./utils";
+import { bullmqManager } from "@repo/bullmq/bullmq";
 
-const server = new WebSocketServer({ port: 8081 });
+const server = new WebSocketServer({ port: 8080 });
 
 type ExtendedWs = WebSocket & TokenPayload;
 
@@ -175,7 +176,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       // idempotency ( already joined )
       if (bodmasGame.players.some((plr) => plr.id === ws.userId)) return;
       
-      redisManager.push("bodmas:game", {
+      bullmqManager.push("bodmas:game", {
         type: "BODMAS_GAME_ACCEPT",
         payload: {
           acceptedBy: acceptedBy.id,
@@ -227,22 +228,22 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       bodmasgameManager.inmemoryQuestions.set(gameId, randomQuestions);
       // these questions should also be updated in db's questions table
 
-      const startTime = Date.now();
+      const startTime = new Date();
       const question = randomQuestions[counter]!;
-      bodmasgameManager.setQsTimer(question.id, ws.userId, startTime);
+      bodmasgameManager.setQsTimer(question.id, ws.userId, startTime.valueOf());
       // this start time should also be updated in db's questions table
 
       inmemoryBodmasGame.questions.push(question);
       // these questions are alread updated in db so on memory loss will get from the db
 
-      redisManager.push("bodmas:game", {
+      bullmqManager.push("bodmas:game", {
         type: "TRACK_BODMAS_GAME",
         payload: {
           gameId,
         },
-      });
+      }, bodmasGameFromDb.timeLimit);
 
-      redisManager.push("bodmas:game", {
+      bullmqManager.push("bodmas:game", {
         type: "START_BODMAS_GAME",
         payload: {
           userId: ws.userId,
@@ -314,7 +315,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         );
 
         // update the db via worker
-        redisManager.push("bodmas:game", {
+        bullmqManager.push("bodmas:game", {
           type: "BODMAS_GAME_ANSWER",
           payload: {
             answer: updatedAnswer,
@@ -345,7 +346,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         if (isCorrect) bodmasgameManager.delQsTimer(question.id, ws.userId);
 
         // create in the db via worker
-        redisManager.push("bodmas:game", {
+        bullmqManager.push("bodmas:game", {
           type: "BODMAS_GAME_ANSWER",
           payload: {
             answer: newAnswer,
@@ -384,6 +385,3 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     });
   });
 });
-
-export * from "./userManager";
-export * from "./gameManager";

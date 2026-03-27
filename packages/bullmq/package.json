@@ -1,0 +1,23 @@
+{
+  "name": "@repo/bullmq",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/ioredis": "^5.0.0",
+    "@repo/types": "workspace:*",
+    "@repo/db": "workspace:*",
+    "@repo/redis": "workspace:*"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "bullmq": "^5.71.1",
+    "ioredis": "^5.10.1"
+  },
+  "exports": {
+    "./bullmq": "./src/index.ts"
+  }
+}

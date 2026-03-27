@@ -75,7 +75,7 @@ export type RedisPushData =
         userId: string;
         questionStartTimeWithId: {
           id: string;
-          startTime: number;
+          startTime: Date;
         };
       };
     }

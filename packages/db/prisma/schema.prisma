@@ -151,7 +151,7 @@ model BodmasGameQuestion {
   gameId     String
   questionId String
   orderIndex Int
-  startTime  Int? // Date.now() => number
+  startTime  DateTime? // Date.now() => number
 
   game     BodmasGame     @relation(fields: [gameId], references: [id])
   question BodmasQuestion @relation(fields: [questionId], references: [id])
