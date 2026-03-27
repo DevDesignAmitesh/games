@@ -75,7 +75,7 @@ export type RedisPushData =
         userId: string;
         questionStartTimeWithId: {
           id: string;
-          startTime: Date;
+          startTime: number;
         };
       };
     }
@@ -85,6 +85,8 @@ export type RedisPushData =
         acceptedBy: string;
         createdBy: string;
         gameId: string;
+        startTime: number
+        endTime: number
       };
     }
   | {

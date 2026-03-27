@@ -39,19 +39,19 @@ class BullmqManager {
     return BullmqManager.instance;
   }
 
-  // delay = seconds
+  // delay = mili-seconds
   push = async (key: string, data: RedisPushData, delay?: number) => {
     console.log("pushing in queue");
     await this.queue.add(key, data, {
-      delay: delay ? delay * 1000 : undefined,
+      delay: delay ? delay : undefined,
     });
   };
 
   // id is from bull mq => 1, 2, 3, so on...
   private handler = async (data: RedisPushData, id?: string) => {
-    console.log("processing data ", JSON.stringify(data))
+    console.log("processing data ", JSON.stringify(data));
     if (data.type === "BODMAS_GAME_ACCEPT") {
-      const { acceptedBy, createdBy, gameId } = data.payload;
+      const { acceptedBy, createdBy, gameId, startTime, endTime } = data.payload;
 
       const [acceptor, creator, bodmasGame] = await Promise.all([
         prisma.user.findFirst({
@@ -79,7 +79,7 @@ class BullmqManager {
 
         await tx.bodmasGame.update({
           where: { id: bodmasGame.id },
-          data: { status: "IN_PROGRESS", startTime: new Date() },
+          data: { status: "IN_PROGRESS", startTime, endTime },
         });
 
         await tx.user.update({
@@ -161,14 +161,13 @@ class BullmqManager {
         where: { id: gameId },
         include: { players: true },
       });
-      
+
       if (!bodmasGame) return;
       await prisma.$transaction(async (tx) => {
         await tx.bodmasGame.update({
           where: { id: gameId },
           data: {
             status: "COMPLETED",
-            endTime: new Date(),
             updatedAt: new Date(),
           },
         });
@@ -178,22 +177,21 @@ class BullmqManager {
             where: { id: plr.userId },
             data: { status: "IDOL" },
           });
-  
+
           let correctAnswers = 0;
           let incorrectAnswers = 0;
-  
-          
+
           const answers = await prisma.bodmasGameUserAnswer.findMany({
             where: { gameId, userId: plr.userId },
           });
-  
-          for (let [_idx, ans] of answers.entries() ) {
+
+          for (let [_idx, ans] of answers.entries()) {
             if (ans.isCorrect) {
               correctAnswers += 1;
             } else {
               incorrectAnswers += 1;
             }
-          }  
+          }
           await tx.bodmasGameResult.create({
             data: {
               gameId,
