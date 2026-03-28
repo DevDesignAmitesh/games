@@ -32,7 +32,7 @@ class BodmasGameManager {
       games.flatMap((gm) =>
         gm.players.flatMap((plr) =>
           gm.gameQuestions.map((qs) => [
-            `${qs.id}-${plr.id}`,
+            `${qs.questionId}-${plr.id}`,
             plr.questionCounter || 0,
           ]),
         ),
@@ -44,20 +44,32 @@ class BodmasGameManager {
     this.games.set(game.id, game);
 
     this.inmemoryQuestions.set(game.id, game.questions);
-    
+
     for (let [_idx, plr] of game.players.entries()) {
       this.setQsCounter(game.id, plr.id, plr.questionCounter || 0);
     }
-    
-    for (let [idx, ques] of game.gameQuestions.entries()) {
+
+    for (let [_idx, ques] of game.gameQuestions.entries()) {
       this.setQsTimer(
         ques.questionId,
-        ??,
+        ques.userId,
         ques.startTime ? ques.startTime.valueOf() : Date.now(),
       );
     }
+  }
 
-    this.questionTiming;
+  clearGame(game: BoadMasGame) {
+    this.games.delete(game.id);
+
+    this.inmemoryQuestions.delete(game.id);
+
+    for (let [_idx, plr] of game.players.entries()) {
+      this.delQsCounter(game.id, plr.id);
+    }
+
+    for (let [_idx, ques] of game.gameQuestions.entries()) {
+      this.delQsTimer(ques.questionId, ques.userId);
+    }
   }
 
   static async getInstance(): Promise<BodmasGameManager> {
@@ -82,6 +94,12 @@ class BodmasGameManager {
   setQsCounter(gameId: string, userId: string, counter: number) {
     const key = `${gameId}:${userId}`;
     return this.questionCounter.set(key, counter);
+  }
+
+  // gameId-userId
+  delQsCounter(gameId: string, userId: string) {
+    const key = `${gameId}:${userId}`;
+    return this.questionCounter.delete(key);
   }
 
   // questionId-userId

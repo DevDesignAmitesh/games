@@ -60,11 +60,19 @@ export type User = {
   status: UserStatus;
 };
 
+export type BodmasQuestionWithUser = {
+  questionId: string;
+  gameId: string;
+  userId: string;
+  startTime? :Date
+  orderIndex: number
+}
+
 export interface BoadMasGame extends BodmasGame {
   players: Array<User & { joinedAt?: Date; questionCounter?: number }>;
   answers: BodmasGameUserAnswer[];
   questions: BodmasQuestion[];
-  gameQuestions: BodmasGameQuestion[];
+  gameQuestions: BodmasQuestionWithUser[];
 }
 
 export type RedisPushData =

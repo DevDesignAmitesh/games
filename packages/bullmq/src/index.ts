@@ -228,12 +228,13 @@ class BullmqManager {
             },
             answers: true,
             questions: {
-              include: { question: true },
+              include: { question: true, userAnswer: true },
             },
           },
         });
 
-        const lstGame: BoadMasGame = {
+
+        const latestGame: BoadMasGame = {
           ...updatedGame,
           players: updatedGame.players.map((plr) => {
             return {
@@ -246,10 +247,23 @@ class BullmqManager {
           questions: updatedGame.questions.map((qs) => {
             return qs.question;
           }),
-          gameQuestions: updatedGame.questions,
+          gameQuestions: updatedGame.questions.flatMap((qs) => {
+            return qs.userAnswer.map((usr) => {
+              return {
+                gameId: qs.gameId,
+                questionId: qs.questionId,
+                userId: usr.userId,
+                startTime: qs.startTime ? qs.startTime : undefined,
+                orderIndex: qs.orderIndex
+              }
+            })
+          }),
         };
 
-        bodmasgameManager.updateGame(lstGame);
+        // TODO: if the game is ended then there is no need to keep data in memory
+        // bodmasgameManager.updateGame(latestGame);
+
+        bodmasgameManager.clearGame(latestGame);
 
         for (let [_idx, plr] of bodmasGame.players.entries()) {
           await tx.user.update({

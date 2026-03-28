@@ -234,11 +234,11 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       bodmasGame.questions.push(question);
       bodmasGame.gameQuestions.push({
-        id: crypto.randomUUID(),
         gameId,
         orderIndex: counter,
         questionId: question.id,
-        startTime: questionStartTime
+        startTime: questionStartTime,
+        userId: ws.userId,
       })
       // these questions are alread updated in db so on memory loss will get from the db
 
@@ -393,6 +393,15 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         ws.userId,
         questionStartTime.valueOf(),
       );
+
+      presentGame.questions.push(nextQuestion);
+      presentGame.gameQuestions.push({
+        gameId: presentGame.id,
+        orderIndex: counter,
+        questionId: nextQuestion.id,
+        userId: user.id,
+        startTime: questionStartTime
+      })
 
       console.log("pushing to worker");
 
