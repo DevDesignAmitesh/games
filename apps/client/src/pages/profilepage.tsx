@@ -1,13 +1,32 @@
 "use client";
 
+import { httpApis } from "@/managers/http";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { FaArrowLeft } from "react-icons/fa";
 import { MdPersonAddAlt1 } from "react-icons/md";
 
 export const ProfilePage = () => {
   const router = useRouter();
+  const [userName, setUserName] = useState<string>("")
+  const [email, setEmail] = useState<string>("")
+
+  const TOKEN = `Bearer ${localStorage.getItem("token")}`;
+
+  const getData = async () => {
+    const data = await httpApis.getProfile(TOKEN);
+
+    if (!data) return;
+
+    setUserName(data.user.userName);
+    setEmail(data.user.email);
+  };
+
+  useEffect(() => {
+    getData();
+  }, []);
 
   const games = [
     { name: "mayank_saini", score: "8 - 12" },
@@ -109,10 +128,10 @@ export const ProfilePage = () => {
 
         <div className="flex flex-col w-full px-4 mt-10">
           <h3 className="w-full text-left text-lg font-extrabold font-nuni text-neutral-50">
-            Amitesh Singh
+            {userName}
           </h3>
           <p className="w-full text-left text-sm font-nuni text-neutral-500">
-            @amiteshsingh
+            {email}
           </p>
           <p className="w-full text-left text-sm font-medium mt-4 font-nuni text-[#A9F99E]">
             <span className="font-bold">1</span> Friends

@@ -5,7 +5,7 @@ export const auth = (req: Request, res: Response, next: NextFunction) => {
   try {
     console.log("extracting token from headers")
     const token = req.headers.authorization?.split("Bearer ")[1];
-
+    
     if (!token) {
       console.log("bearer token not found");
       throw "bearer token not found"

@@ -7,7 +7,6 @@ export type popupType =
   | "login"
   | "signup"
   | "login-action"
-  | "verify-otp"
   | "signup-action";
 
 export type CardLayoutProps = {

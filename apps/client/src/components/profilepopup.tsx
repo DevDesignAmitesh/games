@@ -2,11 +2,26 @@
 
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import { FiUser, FiSettings, FiLogOut } from "react-icons/fi";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { httpApis } from "@/managers/http";
 
 export const ProfilePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [userName, setUserName] = useState<string>("");
+  const TOKEN = `Bearer ${localStorage.getItem("token")}`;
+  
+  const getData = async () => {
+    const data = await httpApis.getProfile(TOKEN);
+
+    if (!data) return;
+
+    setUserName(data.user.userName);
+  };
+
+  useEffect(() => {
+    getData();
+  }, []);
 
   return (
     <div className="relative font-nuni">
@@ -21,12 +36,12 @@ export const ProfilePopup = () => {
         onMouseLeave={() => setIsOpen(false)}
       >
         <div className="h-10 w-10 rounded-full bg-purple-600 flex justify-center items-center text-lg font-bold text-white">
-          A
+          {userName?.[0] ?? "R"}
         </div>
 
         <div className="flex flex-col justify-center h-full">
           <p className="text-neutral-50 font-semibold font-nuni tracking-wide leading-tight text-sm">
-            amiteshsingh
+            {userName}
           </p>
           <p className="text-neutral-100 font-bold text-sm">896</p>
         </div>

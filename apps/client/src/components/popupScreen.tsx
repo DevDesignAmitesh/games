@@ -1,15 +1,13 @@
 import Image from "next/image";
-import {
-  GrayButton,
-  GrayIconButton,
-  GreenButton,
-  GreenIconButton,
-} from "./buttons";
+import { GrayButton, GreenButton, GreenIconButton } from "./buttons";
 import { MdOutlineMail } from "react-icons/md";
-import { FcGoogle } from "react-icons/fc";
 import { GreenInput } from "./inputs";
 import { FaLock } from "react-icons/fa";
 import { popupType } from "@/lib/types";
+import { httpApis } from "@/managers/http";
+import { useState } from "react";
+import { RegisterSchemaInput } from "@repo/types/types";
+import { useRouter } from "next/navigation";
 
 interface PopupScreenProps {
   type: popupType;
@@ -22,6 +20,27 @@ export const PopupScreen = ({
   onClick,
   handleAuthState,
 }: PopupScreenProps) => {
+  const router = useRouter();
+
+  const [formdata, setFormdata] = useState<RegisterSchemaInput>({
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (val: string, index: keyof RegisterSchemaInput) => {
+    setFormdata((prev) => ({
+      ...prev,
+      [index]: val,
+    }));
+  };
+
+  const handleAuth = () => {
+    httpApis.register(formdata, (token: string) => {
+      localStorage.setItem("token", token);
+      router.push("/home");
+    });
+  };
+
   return (
     <div
       onClick={onClick}
@@ -161,62 +180,21 @@ export const PopupScreen = ({
 
           <div className="flex flex-col justify-center items-center gap-4 w-full">
             <GreenInput
-              value=""
-              onChange={() => {}}
+              value={formdata.email}
+              onChange={(e) => handleChange(e.target.value, "email")}
               placeholder="Email"
               icon={<MdOutlineMail fill="#B1FA63" size={20} />}
             />
             <GreenInput
-              value="aaa"
-              onChange={() => {}}
+              value={formdata.password}
+              onChange={(e) => handleChange(e.target.value, "password")}
               placeholder="Password"
               type="password"
               icon={<FaLock fill="#B1FA63" size={20} />}
             />
           </div>
 
-          <GrayButton
-            label="Submit"
-            onClick={() => handleAuthState("verify-otp")}
-          />
-        </div>
-      )}
-
-      {type === "verify-otp" && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-md sm:max-w-lg
-          rounded-3xl bg-neutral-800
-          px-6 sm:px-10 py-8 sm:py-10
-          flex flex-col items-center gap-6"
-        >
-          <div className="flex flex-col justify-center items-center gap-4 w-full">
-            <h1
-              className="text-neutral-50 
-            text-3xl sm:text-4xl md:text-5xl
-            font-bebas font-bold uppercase text-center"
-            >
-              verify email
-            </h1>
-
-            <p
-              className="text-neutral-400 font-semibold 
-            text-xs text-center font-nuni uppercase"
-            >
-              Enter otp. We have sent you on your provided email.
-            </p>
-          </div>
-
-          <div className="flex flex-col justify-center items-center gap-4 w-full">
-            <GreenInput
-              value=""
-              onChange={() => {}}
-              placeholder="Otp"
-              icon={<MdOutlineMail fill="#B1FA63" size={20} />}
-            />
-          </div>
-
-          <GrayButton label="Submit" onClick={() => {}} />
+          <GrayButton label="Submit" onClick={handleAuth} />
         </div>
       )}
     </div>

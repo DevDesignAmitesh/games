@@ -2,19 +2,20 @@
 
 import { GrayButton } from "@/components/buttons";
 import { Logo } from "@/components/logo";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
 
-export const OnlineSearchPage = async () => {
+export const OnlineSearchPage = () => {
+  const router = useRouter();
+  
   const cancelSearch = () => {
     // todo: send to delete the game from db
+    router.back();
   };
 
   return (
     <div className="w-full h-screen bg-neutral-900 flex flex-col gap-20 justify-center items-center">
-      {/* <Image alt="searching" src={"/searching.png"} height={300} width={300} /> */}
-
       {/* TEXT */}
-      <p className="text-neutral-400 tracking-widest text-sm mb-10">
+      <p className="text-neutral-400 font-nuni tracking-widest text-sm mb-10">
         SEARCHING FOR OPPONENT
       </p>
 

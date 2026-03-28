@@ -15,7 +15,7 @@ export const LandingPage = () => {
   const handlePopup = (val: popupType | null) => {
     setPopup(val);
   };
-
+  
   return (
     <>
       <div className="w-full min-h-screen bg-neutral-900">

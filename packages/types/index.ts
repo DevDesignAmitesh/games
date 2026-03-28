@@ -1,12 +1,4 @@
 import z, { ZodError } from "zod";
-import {
-  FriendRequestStatus,
-  UserStatus,
-  type BodmasGame,
-  type BodmasGameQuestion,
-  type BodmasGameUserAnswer,
-  type BodmasQuestion,
-} from "@repo/db/db";
 import type { WebSocket } from "ws";
 
 export const friendReqSchema = z.object({
@@ -17,7 +9,7 @@ export type FriendReqSchema = z.infer<typeof friendReqSchema>;
 
 export const acceptFriendReqSchema = z.object({
   to: z.uuid(),
-  status: z.enum(FriendRequestStatus),
+  status: z.enum(["PENDING", "ACCEPTED", "IGNORED"]),
 });
 
 export type AcceptFriendReqSchema = z.infer<typeof acceptFriendReqSchema>;
@@ -57,22 +49,63 @@ export type User = {
   id: string;
   username: string;
   ws?: WebSocket;
-  status: UserStatus;
+  status: "IDOL" | "PLAYING" | "SEARCHING";
 };
 
 export type BodmasQuestionWithUser = {
   questionId: string;
   gameId: string;
   userId: string;
-  startTime? :Date
-  orderIndex: number
-}
+  startTime?: Date;
+  orderIndex: number;
+};
+
+export type BodmasGame = {
+  numberOfPlayers: number;
+  status:
+    | "WAITING_FOR_PLAYERS"
+    | "IN_PROGRESS"
+    | "COMPLETED"
+    | "CANCELLED"
+    | "EXPIRED";
+  id: string;
+  createdBy: string;
+  endTime: Date | null;
+  startTime: Date | null;
+  timeLimit: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export interface BoadMasGame extends BodmasGame {
   players: Array<User & { joinedAt?: Date; questionCounter?: number }>;
-  answers: BodmasGameUserAnswer[];
-  questions: BodmasQuestion[];
-  gameQuestions: BodmasQuestionWithUser[];
+  answers: {
+    id: string;
+    gameId: string;
+    userId: string;
+    questionId: string;
+    answer: number;
+    timeSpent: number;
+    isCorrect: boolean;
+    answeredAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
+  questions: {
+    id: string;
+    operation: "ADD" | "SUB" | "MUL" | "DIV";
+    operand1: number;
+    operand2: number;
+    answer: number;
+    createdAt: Date;
+  }[];
+  gameQuestions: {
+    questionId: string;
+    gameId: string;
+    userId: string;
+    startTime?: Date | undefined;
+    orderIndex: number;
+  }[];
 }
 
 export type RedisPushData =
@@ -81,11 +114,25 @@ export type RedisPushData =
       payload: {
         questionCounter: number;
         orderIndex: number;
-        questions?: BodmasQuestion[];
+        questions?: {
+          id: string;
+          operation: "ADD" | "SUB" | "MUL" | "DIV";
+          operand1: number;
+          operand2: number;
+          answer: number;
+          createdAt: Date;
+        }[];
         gameId: string;
         userId: string;
-        gameQuestion: BodmasQuestion;
-        questionStartTime: Date
+        gameQuestion: {
+          id: string;
+          operation: "ADD" | "SUB" | "MUL" | "DIV";
+          operand1: number;
+          operand2: number;
+          answer: number;
+          createdAt: Date;
+        };
+        questionStartTime: Date;
       };
     }
   | {
@@ -101,7 +148,18 @@ export type RedisPushData =
   | {
       type: "BODMAS_GAME_ANSWER";
       payload: {
-        answer: BodmasGameUserAnswer;
+        answer: {
+          id: string;
+          gameId: string;
+          userId: string;
+          questionId: string;
+          answer: number;
+          timeSpent: number;
+          isCorrect: boolean;
+          answeredAt: Date | null;
+          createdAt: Date;
+          updatedAt: Date;
+        };
       };
     }
   | {

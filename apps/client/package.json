@@ -10,15 +10,18 @@
   },
   "dependencies": {
     "@types/react-sound": "^1.2.6",
+    "axios": "^1.14.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-icons": "^5.5.0",
-    "react-sound": "^1.2.0"
+    "react-sound": "^1.2.0",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@repo/types": "workspace:*",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",

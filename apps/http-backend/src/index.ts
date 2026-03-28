@@ -13,15 +13,27 @@ import { acceptReq } from "./services/acceptReq";
 import { createGame } from "./services/createGame";
 import { getFriends } from "./services/getFriends";
 import { getResults } from "./services/getResults";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import { getProfile } from "./services/getProfile";
 
 const app = express();
-const PORT = 3000;
+const PORT = 4000;
 
 app.use(express.json());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Your Next.js app URL
+    credentials: true, // Crucial for sending/receiving cookies
+  }),
+);
 
 app.get("/", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+app.get("/profile", auth, getProfile)
 
 app.post(
   "/register",
