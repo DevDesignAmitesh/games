@@ -4,6 +4,7 @@ interface GreenInputProps {
   placeholder?: string;
   icon?: React.ReactNode;
   type?: string;
+  focus?: boolean
 }
 
 export const GreenInput = ({
@@ -12,6 +13,7 @@ export const GreenInput = ({
   placeholder,
   icon,
   type = "text",
+  focus = false
 }: GreenInputProps) => {
   return (
     <div className="relative inline-block w-60 sm:w-72 md:w-80">
@@ -31,6 +33,7 @@ export const GreenInput = ({
 
         {/* Input */}
         <input
+          autoFocus={focus}
           type={type}
           value={value}
           onChange={onChange}
