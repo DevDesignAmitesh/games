@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-bebas: var(--font-bebas);
+  --font-nuni: var(--font-nuni);
+}
+
+/* Thin and sleek scrollbar with Tailwind neutral shades */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px; /* Thin scrollbar */
+  height: 2px; /* For horizontal scrollbars */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgb(38 38 38); /* neutral-800 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(115 115 115); /* neutral-500 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(163 163 163); /* neutral-400 */
+}
+
+/* Firefox support */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(163 163 163) rgb(245 245 245); /* thumb track */
+}
+
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar {
+    scrollbar-color: rgb(115 115 115) rgb(38 38 38);
+  }
+}
