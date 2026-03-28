@@ -19,22 +19,15 @@ server.on("connection", async (ws: ExtendedWs, req) => {
   console.log("connection done");
 
   const token = req.url?.split("?token=")[1];
-  if (!token) {
-    ws.close();
-    return;
-  }
+  if (!token) return;
 
   const decoded = verifyToken(token);
-
-  if (!decoded) return ws.close();
+  if (!decoded) return;
 
   const { userId } = decoded;
 
   const user = await prisma.user.findFirst({ where: { id: userId } });
-  if (!user) {
-    ws.close();
-    return;
-  }
+  if (!user) return;
 
   ws.userId = userId;
   userManager.addUser({
@@ -73,7 +66,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const sender = userManager.users.find((usr) => usr.id === ws.userId);
       const receiver = userManager.users.find((usr) => usr.id === to);
 
-      if (!receiver || !sender) return ws.close();
+      if (!receiver || !sender) return;
 
       redisManager.publish("online_users", {
         type: parsedData.type,
@@ -87,7 +80,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       const requestedBy = userManager.users.find((usr) => usr.id === ws.userId);
 
-      if (!requestedBy) return ws.close();
+      if (!requestedBy) return;
 
       const requestedByFromDb = await prisma.user.findFirst({
         where: { id: ws.userId },
@@ -97,7 +90,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         },
       });
 
-      if (!requestedByFromDb) return ws.close();
+      if (!requestedByFromDb) return;
 
       userManager.update(requestedBy.id, { status: "SEARCHING" });
 
@@ -105,9 +98,9 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         where: { id: gameId },
       });
 
-      if (!bodmasGame) return ws.close();
+      if (!bodmasGame) return;
 
-      if (bodmasGame.createdBy !== ws.userId) return ws.close();
+      if (bodmasGame.createdBy !== ws.userId) return;
 
       bodmasgameManager.create_update_game({
         ...bodmasGame,
@@ -148,14 +141,14 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const creator = userManager.users.find((usr) => usr.id === createdBy);
       const bodmasGame = bodmasgameManager.games.get(gameId);
 
-      if (!acceptedBy || !creator || !bodmasGame) return ws.close();
+      if (!acceptedBy || !creator || !bodmasGame) return;
 
       const bodmasGameFromDb = await prisma.bodmasGame.findFirst({
         where: { id: bodmasGame.id },
         include: { players: true },
       });
 
-      if (!bodmasGameFromDb) return ws.close();
+      if (!bodmasGameFromDb) return;
 
       if (bodmasGame.createdBy !== creator.id) return;
 
@@ -239,7 +232,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         questionId: question.id,
         startTime: questionStartTime,
         userId: ws.userId,
-      })
+      });
       // these questions are alread updated in db so on memory loss will get from the db
 
       bullmqManager.push("bodmas:game", {
@@ -400,8 +393,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         orderIndex: counter,
         questionId: nextQuestion.id,
         userId: user.id,
-        startTime: questionStartTime
-      })
+        startTime: questionStartTime,
+      });
 
       console.log("pushing to worker");
 

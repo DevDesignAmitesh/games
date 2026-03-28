@@ -1,12 +1,20 @@
-import { FaHome } from "react-icons/fa";
+import { FaHome, FaUser } from "react-icons/fa";
 import { Games, LivePlayers, RatingCompProps, SideBarProps } from "./types";
 import { IoMdSettings } from "react-icons/io";
 
-export const sidebarData: SideBarProps[] = [
+// TODO: get here token driven user-name
+const userName = "amiteshsingh";
+
+export const sidebarData: Array<SideBarProps> = [
   {
     label: "Home",
     href: "/home",
     icon: FaHome,
+  },
+  {
+    label: "My Profile",
+    href: `/profile/${userName}`,
+    icon: FaUser,
   },
   {
     label: "Settings",
@@ -15,7 +23,7 @@ export const sidebarData: SideBarProps[] = [
   },
 ];
 
-export const ratingsData: RatingCompProps[] = [
+export const ratingsData: Array<RatingCompProps> = [
   {
     label: "math",
     src: "/math.png",
@@ -38,14 +46,14 @@ export const ratingsData: RatingCompProps[] = [
   },
 ];
 
-export const livePlayers: LivePlayers[] = [
+export const livePlayers: Array<LivePlayers> = [
   {
     id: "1",
     name: "You",
   },
 ];
 
-export const games: Games[] = [
+export const games: Array<Games> = [
   {
     id: 1,
     title: "ONLINE DUELS",

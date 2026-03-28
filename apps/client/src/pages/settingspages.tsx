@@ -6,10 +6,10 @@ import { MdOutlineChevronRight } from "react-icons/md";
 
 export const SettingsPage = () => {
   const router = useRouter();
-
+  
   return (
     <div className="w-full h-full">
-      <div className="w-full h-full max-w-5xl mx-auto">
+      <div className="w-full h-full max-w-2xl mx-auto">
         <header className="w-full flex gap-4 items-center py-6">
           {/* button */}
           <div
@@ -49,24 +49,23 @@ export const SettingsPage = () => {
         </header>
 
         <div className="w-full grid font-nuni mt-4">
-          {Array.from({ length: 5 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="w-full border-b border-neutral-700 py-6 cursor-pointer"
-            >
-              <div className="w-full flex justify-between items-center px-4">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm text-neutral-50 font-semibold">
-                    In game preferences
-                  </p>
-                  <p className="text-xs text-neutral-400">
-                    Sound and haptics during live chatsx
-                  </p>
-                </div>
-                <MdOutlineChevronRight className="text-neutral-50 text-2xl" />
+          <div
+            className="w-full border-b border-neutral-700 py-6 cursor-pointer"
+          >
+            <div 
+              onClick={() => router.push("/search-mathletes")}
+              className="w-full flex justify-between items-center px-4">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm text-neutral-50 font-semibold">
+                  Search friends by username
+                </p>
+                <p className="text-xs text-neutral-400">
+                  ..
+                </p>
               </div>
+              <MdOutlineChevronRight className="text-neutral-50 text-2xl" />
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </div>
