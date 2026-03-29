@@ -1,50 +1,57 @@
 "use client";
 
+import { httpApis } from "@/managers/http";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaArrowLeft, FaSearch } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 
 type User = {
   id: number;
-  name: string;
-  avatar?: string;
+  userName: string;
 };
 
-const mockUsers: User[] = [
-  { id: 1, name: "Abhinav R.12" },
-  { id: 2, name: "Abhinav Verma" },
-  { id: 3, name: "Abhinav Shukla" },
-  { id: 4, name: "Abhinav Pandey" },
-  { id: 5, name: "Abhinav Abhinav k" },
-  { id: 6, name: "abhinav kumar abhinave" },
-  { id: 7, name: "Abhinav Kumar Singh" },
-];
-
 export const SearchFriendsPage = () => {
+  if (typeof window === "undefined") return;
+
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<User[]>([]);
 
+  const router = useRouter();
+
+  const TOKEN = localStorage.getItem("token");
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
-    }, 300);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [query]);
 
   useEffect(() => {
+    if (!TOKEN) return;
+
     if (!debouncedQuery.trim()) {
       setResults([]);
       return;
     }
 
-    const filtered = mockUsers.filter((user) =>
-      user.name.toLowerCase().includes(debouncedQuery.toLowerCase()),
-    );
+    (async () => {
+      const data = await httpApis.findFriends(
+        `Bearer ${TOKEN}`,
+        debouncedQuery,
+      );
 
-    setResults(filtered);
-  }, [debouncedQuery]);
+      console.log("data ", data);
+
+      if (!data) return;
+
+      setResults(data);
+    })();
+  }, [debouncedQuery, TOKEN]);
 
   const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
@@ -53,10 +60,36 @@ export const SearchFriendsPage = () => {
       <div className="w-full h-full max-w-2xl mx-auto px-4 py-4">
         {/* HEADER */}
         <div className="flex items-center gap-3 mb-6">
-          {/* back button */}
-          <button className="p-3 rounded-xl bg-neutral-800 border border-neutral-600 text-white">
-            <FaArrowLeft />
-          </button>
+          {/* button */}
+          <div
+            onClick={() => router.back()}
+            className="relative inline-block w-auto"
+          >
+            <button
+              className="relative z-10 w-full
+                flex items-center justify-between gap-3
+                p-3
+                rounded-xl cursor-pointer
+                bg-neutral-900 border border-neutral-500
+                text-neutral-50 font-bold font-nuni
+                text-xs
+                transition-all active:translate-y-0.5"
+            >
+              {/* Left Icon */}
+              <span className="flex items-center">
+                <FaArrowLeft />
+              </span>
+            </button>
+
+            {/* Band */}
+            <div
+              className="absolute left-0 right-0
+                -bottom-1
+                h-4 sm:h-5
+                bg-neutral-500
+                rounded-full"
+            />
+          </div>
 
           {/* search bar */}
           <div className="flex-1 flex items-center gap-2 px-4 py-2 rounded-full border border-green-500 bg-neutral-800">
@@ -80,18 +113,19 @@ export const SearchFriendsPage = () => {
         {/* RESULTS */}
         <div className="flex flex-col gap-4">
           {results.map((user) => (
-            <div
+            <Link
+              href={`/profile/${user.userName}`}
               key={user.id}
               className="flex items-center font-nuni gap-4 p-2 rounded-xl hover:bg-neutral-800 transition"
             >
               {/* avatar */}
               <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-white text-sm">
-                {getInitial(user.name)}
+                {getInitial(user.userName)}
               </div>
 
               {/* name */}
-              <p className="text-neutral-200 text-sm">{user.name}</p>
-            </div>
+              <p className="text-neutral-200 text-sm">{user.userName}</p>
+            </Link>
           ))}
 
           {/* empty state */}

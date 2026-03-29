@@ -28,6 +28,11 @@ export const createGameSchema = z.object({
 });
 export type CreateGameSchema = z.infer<typeof createGameSchema>;
 
+export const findFriendsSchema = z.object({
+  input: z.string()
+});
+export type FindFriendSchema = z.infer<typeof findFriendsSchema>;
+
 type inputType = "body" | "params" | "query";
 
 export type ValidateInput = {

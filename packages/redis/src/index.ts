@@ -100,8 +100,16 @@ class RedisManager {
     return this.publisher.SETNX(key, value);
   }
 
-  set = async (key: string, data: any) => {
-    await this.publisher.SETNX(key, JSON.stringify(data));
+  set = async (key: string, data: any, ttl?: number) => {
+    if (ttl) {
+      await this.publisher.set(key, JSON.stringify(data), {
+        expiration: {
+          type: "EX",
+          value: ttl,
+        },
+      });
+    }
+    await this.publisher.set(key, JSON.stringify(data));
   };
 
   get = async (key: string) => {

@@ -32,6 +32,7 @@ export const register = async (
         message: "login done",
         token,
         userId: exitingUser.id,
+        username: exitingUser.userName,
       });
     }
 
@@ -58,6 +59,7 @@ export const register = async (
       message: "registration done",
       token,
       userId: user.id,
+      username: user.userName,
     });
   } catch (e) {
     console.log("error in register ", e);

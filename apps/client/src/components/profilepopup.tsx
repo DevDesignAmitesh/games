@@ -10,9 +10,10 @@ export const ProfilePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const TOKEN = `Bearer ${localStorage.getItem("token")}`;
+  const username = localStorage.getItem("username") ?? "";
 
   const getData = async () => {
-    const data = await httpApis.getProfile(TOKEN);
+    const data = await httpApis.getProfile(TOKEN, username);
 
     if (!data) return;
 
@@ -71,7 +72,7 @@ export const ProfilePopup = () => {
         <div className="py-2 font-nuni">
           {/* My Profile Option */}
           <Link
-            href={"/profile"}
+            href={`/profile/${username}`}
             className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-700/70 transition-all duration-150 mx-2 rounded-lg"
           >
             <FiUser className="text-neutral-300 text-lg" />

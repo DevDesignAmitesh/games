@@ -2,8 +2,8 @@
 
 import { httpApis } from "@/managers/http";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { notFound, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { FaArrowLeft } from "react-icons/fa";
 import { MdPersonAddAlt1 } from "react-icons/md";
@@ -14,23 +14,37 @@ type Game = {
   meCorrectAnswer: number | undefined;
 };
 
-export const ProfilePage = () => {
+export const ProfilePage = ({ username }: { username: string | null }) => {
   const router = useRouter();
   const [userName, setUserName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
   const [friendCount, setFriendCount] = useState<number>(0);
   const [games, setGames] = useState<Game[]>([]);
+  const [myusername, setMyUsername] = useState<string>("");
+  const [status, setStatus] = useState<
+    "PENDING" | "ACCEPTED" | "IGNORED" | undefined
+  >(undefined);
+
+  useEffect(() => {
+    setMyUsername(localStorage.getItem("username") ?? "");
+  }, []);
 
   const TOKEN = `Bearer ${localStorage.getItem("token")}`;
 
   const getData = async () => {
-    const data = await httpApis.getProfile(TOKEN);
+    if (!username) return;
+    const data = await httpApis.getProfile(TOKEN, username);
 
-    if (!data) return;
+    console.log("profile data ", data);
+
+    if (!data) notFound();
 
     setUserName(data.user.userName);
+    setUserId(data.user.id);
     setEmail(data.user.email);
     setFriendCount(data.user.count);
+    setStatus(data.status);
     setGames(data.games);
   };
 
@@ -38,8 +52,17 @@ export const ProfilePage = () => {
     getData();
   }, []);
 
-  const sendToSettingPage = () => {
+  const sendToSettingPage = useCallback(() => {
+    if (myusername !== username) return;
     router.push("/settings");
+  }, [username, myusername]);
+
+  const sendFriendReq = () => {
+    console.log(status);
+    if (myusername === username) return;
+    if (status && status === "ACCEPTED") return;
+
+    httpApis.sendFriendReq({ to: userId }, TOKEN, getData);
   };
 
   return (
@@ -157,10 +180,18 @@ export const ProfilePage = () => {
 
               {/* Label */}
               <span
-                onClick={sendToSettingPage}
+                onClick={
+                  myusername !== username ? sendFriendReq : sendToSettingPage
+                }
                 className="flex-1 text-center font-bold text-[#A9F99E]"
               >
-                ADD MORE FRIENDS
+                {status && status === "ACCEPTED"
+                  ? "ALREADY FRIENDS"
+                  : status === "IGNORED" ||
+                      status === "PENDING" ||
+                      myusername !== username
+                    ? "SEND FRIEND REQUEST"
+                    : "ADD MORE FRIENDS"}
               </span>
             </button>
 

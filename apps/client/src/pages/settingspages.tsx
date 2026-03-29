@@ -17,7 +17,6 @@ export const SettingsPage = () => {
             className="relative inline-block w-auto"
           >
             <button
-              onClick={() => {}}
               className="relative z-10 w-full
                 flex items-center justify-between gap-3
                 p-3

@@ -15,16 +15,19 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const pathName = usePathname();
 
+  const username = localStorage.getItem("username")
+  
+
   useEffect(() => {
     console.log("running");
-    if (!TOKEN) {
+    if (!TOKEN || !username) {
       setLoading(false);
       router.push("/");
       return;
     }
 
     (async () => {
-      const res = await httpApis.getProfile(`Bearer ${TOKEN}`);
+      const res = await httpApis.getProfile(`Bearer ${TOKEN}`, username);
 
       if (!res) {
         setLoading(false);

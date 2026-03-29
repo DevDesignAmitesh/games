@@ -5,25 +5,30 @@ import { redisManager } from "@repo/redis/redis";
 export const getProfile = async (req: Request, res: Response) => {
   try {
     const { userId } = req.user;
-
-    const dataFromRedis = await redisManager.get("/profile");
-
-    if (dataFromRedis) {
-      return res.json({ ...dataFromRedis, message: "profile found" });
-    }
+    const { username } = req.params as { username: string };
 
     const user = await prisma.user.findFirst({
-      where: { id: userId },
-      select: { userName: true, email: true },
+      where: { userName: username },
+      select: { userName: true, email: true, id: true },
     });
 
     if (!user) {
       return res.status(404).json({ message: "user not found" });
     }
 
+    const key = `/profile/${user.userName}`;
+    const dataFromRedis = await redisManager.get(key);
+
+    console.log("dataFromRedis");
+    console.log(dataFromRedis);
+
+    if (dataFromRedis) {
+      return res.json({ ...dataFromRedis, message: "profile found" });
+    }
+
     const friendCount = await prisma.friendsMapUser.count({
       where: {
-        OR: [{ senderId: userId }, { receiverId: userId }],
+        OR: [{ senderId: user.id }, { receiverId: user.id }],
       },
     });
 
@@ -31,7 +36,7 @@ export const getProfile = async (req: Request, res: Response) => {
       where: {
         players: {
           some: {
-            OR: [{ userId }],
+            OR: [{ userId: user.id }],
           },
         },
       },
@@ -46,9 +51,9 @@ export const getProfile = async (req: Request, res: Response) => {
     });
 
     const dataToSend = games.map((gm) => {
-      const opponent = gm.players.find((p) => p.userId !== userId);
-      const oppResult = gm.results.find((r) => r.userId !== userId);
-      const meResult = gm.results.find((r) => r.userId === userId);
+      const opponent = gm.players.find((p) => p.userId !== user.id);
+      const oppResult = gm.results.find((r) => r.userId !== user.id);
+      const meResult = gm.results.find((r) => r.userId === user.id);
 
       return {
         name: opponent?.user.userName,
@@ -57,14 +62,32 @@ export const getProfile = async (req: Request, res: Response) => {
       };
     });
 
-    await redisManager.set("/profile", {
-      games: dataToSend,
-      user: { ...user, count: friendCount },
-    });
+    let friendStatus;
+
+    if (user.id !== userId) {
+      friendStatus = await prisma.friendsMapUser.findFirst({
+        where: {
+          OR: [
+            { receiverId: userId, senderId: user.id },
+            { senderId: userId, receiverId: user.id },
+          ],
+        },
+      });
+    }
+
+    await redisManager.set(
+      key,
+      {
+        games: dataToSend,
+        user: { ...user, count: friendCount, status: friendStatus?.status },
+      },
+      60,
+    );
 
     return res.json({
       user: { ...user, count: friendCount },
       games: dataToSend,
+      status: friendStatus?.status,
       message: "profile found",
     });
   } catch (e) {

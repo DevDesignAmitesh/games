@@ -4,6 +4,7 @@ import { validate } from "./middleware/validate";
 import {
   acceptFriendReqSchema,
   createGameSchema,
+  findFriendsSchema,
   friendReqSchema,
   registerSchema,
 } from "@repo/types/types";
@@ -16,6 +17,7 @@ import { getResults } from "./services/getResults";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { getProfile } from "./services/getProfile";
+import { findFriends } from "./services/findFriends";
 
 const app = express();
 const PORT = 4000;
@@ -33,7 +35,7 @@ app.get("/", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-app.get("/profile", auth, getProfile)
+app.get("/profile/:username", auth, getProfile);
 
 app.post(
   "/register",
@@ -75,6 +77,16 @@ app.post(
 );
 
 app.get("/friends", auth, getFriends);
+
+app.get(
+  "/find-friends/:input",
+  auth,
+  validate({
+    schema: findFriendsSchema,
+    type: ["params"],
+  }),
+  findFriends,
+);
 
 app.get("/results/:gameId", auth, getResults);
 
