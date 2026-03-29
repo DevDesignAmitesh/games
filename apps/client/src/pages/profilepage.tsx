@@ -30,15 +30,24 @@ export const ProfilePage = ({ username }: { username: string | null }) => {
     setMyUsername(localStorage.getItem("username") ?? "");
   }, []);
 
-  const TOKEN = `Bearer ${localStorage.getItem("token")}`;
+  const [token, setToken] = useState<string | null>(null);
 
-  const getData = async () => {
+  useEffect(() => {
+    const t = localStorage.getItem("token");
+    if (t) setToken(`Bearer ${t}`);
+  }, []);
+
+  const getData = useCallback(async () => {
     if (!username) return;
-    const data = await httpApis.getProfile(TOKEN, username);
+    if (!token) return;
+    const data = await httpApis.getProfile(token, username);
 
     console.log("profile data ", data);
 
-    if (!data) notFound();
+    if (!data) {
+      router.push("/404");
+      return;
+    }
 
     setUserName(data.user.userName);
     setUserId(data.user.id);
@@ -46,25 +55,28 @@ export const ProfilePage = ({ username }: { username: string | null }) => {
     setFriendCount(data.user.count);
     setStatus(data.status);
     setGames(data.games);
-  };
+  }, [username, token]);
 
   useEffect(() => {
     getData();
-  }, []);
+  }, [getData]);
 
-  const sendToSettingPage = useCallback(() => {
-    if (myusername !== username) return;
+  const sendToSettingPage = () => {
     router.push("/settings");
-  }, [username, myusername]);
+  };
 
   const sendFriendReq = async () => {
     console.log(status);
+    if (!token) return;
     if (myusername === username) return;
-    if (status && status === "ACCEPTED") return;
+    if (status === "ACCEPTED" || status === "PENDING") return;
 
-    setStatus("ACCEPTED");
-    const res = await httpApis.sendFriendReq({ to: userId }, TOKEN, getData);
-    if (!res) setStatus(undefined);
+    const prevStatus = status;
+    setStatus("PENDING"); // better than ACCEPTED
+
+    const res = await httpApis.sendFriendReq({ to: userId }, token, getData);
+
+    if (!res) setStatus(prevStatus);
   };
 
   return (

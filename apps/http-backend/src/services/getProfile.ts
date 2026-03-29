@@ -18,6 +18,7 @@ export const getProfile = async (req: Request, res: Response) => {
     const friendCount = await prisma.friendsMapUser.count({
       where: {
         OR: [{ senderId: user.id }, { receiverId: user.id }],
+        status: "ACCEPTED"
       },
     });
 

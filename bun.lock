@@ -52,7 +52,6 @@
       "devDependencies": {
         "@repo/common": "workspace:*",
         "@repo/db": "workspace:*",
-        "@repo/redis": "workspace:*",
         "@repo/types": "workspace:*",
         "@types/bun": "latest",
       },

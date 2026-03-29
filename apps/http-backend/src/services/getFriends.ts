@@ -8,7 +8,6 @@ export const getFriends = async (req: Request, res: Response) => {
     const friends = await prisma.friendsMapUser.findMany({
       where: {
         OR: [{ senderId: userId }, { receiverId: userId }],
-        status: { not: "IGNORED" },
       },
       include: { receiver: true, sender: true },
     });
@@ -18,6 +17,7 @@ export const getFriends = async (req: Request, res: Response) => {
         frnd.receiverId === userId
           ? frnd.sender.userName
           : frnd.receiver.userName,
+      canAccept: frnd.receiverId === userId,
       otherId: frnd.receiverId === userId ? frnd.sender.id : frnd.receiver.id,
       status: frnd.status,
     }));

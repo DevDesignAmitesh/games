@@ -7,11 +7,10 @@
     "start": "bun run /src/index.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@repo/types": "workspace:*",
     "@repo/common": "workspace:*",
-    "@repo/redis": "workspace:*",
-    "@repo/db": "workspace:*"
+    "@repo/db": "workspace:*",
+    "@repo/types": "workspace:*",
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"

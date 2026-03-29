@@ -10,6 +10,7 @@ type Friend = {
   otherName: string;
   otherId: string;
   status: FriendRequestStatus;
+  canAccept: boolean;
 };
 
 const getInitial = (name: string) => name.charAt(0).toUpperCase();
@@ -56,57 +57,62 @@ export const FriendsPage = () => {
       <div className="w-full max-w-2xl flex flex-col gap-4">
         <h1 className="text-white text-xl font-semibold">Friends</h1>
 
-        {friends.map((friend) => (
-          <div
-            key={friend.otherId}
-            className="flex items-center justify-between bg-neutral-800 p-3 rounded-xl"
-          >
-            {/* Left side */}
-            <Link
-              href={`/profile/${friend.otherName}`}
-              className="flex items-center gap-4"
+        {friends.map((friend) => {
+          console.log("friends ", friend);
+
+          return (
+            <div
+              key={friend.otherId}
+              className="flex items-center justify-between bg-neutral-800 p-3 rounded-xl"
             >
-              {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-white text-sm">
-                {getInitial(friend.otherName)}
+              {/* Left side */}
+              <Link
+                href={`/profile/${friend.otherName}`}
+                className="flex items-center gap-4"
+              >
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-white text-sm">
+                  {getInitial(friend.otherName)}
+                </div>
+
+                {/* Name + Status */}
+                <div className="flex flex-col">
+                  <p className="text-neutral-200 text-sm">{friend.otherName}</p>
+                  <p className="text-xs text-neutral-400">{friend.status}</p>
+                </div>
+              </Link>
+
+              {/* Right side actions */}
+
+              <div className="flex items-center gap-2">
+                {friend.status === "PENDING" && friend.canAccept && (
+                  <>
+                    <button
+                      onClick={() => handleFrndReq(friend.otherId, "ACCEPTED")}
+                      className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleFrndReq(friend.otherId, "IGNORED")}
+                      className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md"
+                    >
+                      Ignore
+                    </button>
+                  </>
+                )}
+
+                {friend.status === "ACCEPTED" && (
+                  <span className="text-green-400 text-xs">Friends</span>
+                )}
+
+                {friend.status === "IGNORED" && (
+                  <span className="text-red-400 text-xs">Ignored</span>
+                )}
               </div>
-
-              {/* Name + Status */}
-              <div className="flex flex-col">
-                <p className="text-neutral-200 text-sm">{friend.otherName}</p>
-                <p className="text-xs text-neutral-400">{friend.status}</p>
-              </div>
-            </Link>
-
-            {/* Right side actions */}
-            <div className="flex items-center gap-2">
-              {friend.status === "PENDING" && (
-                <>
-                  <button
-                    onClick={() => handleFrndReq(friend.otherId, "ACCEPTED")}
-                    className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => handleFrndReq(friend.otherId, "IGNORED")}
-                    className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md"
-                  >
-                    Ignore
-                  </button>
-                </>
-              )}
-
-              {friend.status === "ACCEPTED" && (
-                <span className="text-green-400 text-xs">Friends</span>
-              )}
-
-              {friend.status === "IGNORED" && (
-                <span className="text-red-400 text-xs">Ignored</span>
-              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
