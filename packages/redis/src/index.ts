@@ -108,6 +108,7 @@ class RedisManager {
           value: ttl,
         },
       });
+      return;
     }
     await this.publisher.set(key, JSON.stringify(data));
   };

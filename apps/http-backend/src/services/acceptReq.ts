@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { type AcceptFriendReqSchema } from "@repo/types/types";
 import { prisma } from "@repo/db/db";
+import { redisManager } from "@repo/redis/redis";
 
 export const acceptReq = async (
   req: Request<{}, {}, AcceptFriendReqSchema, {}>,
@@ -22,12 +23,12 @@ export const acceptReq = async (
       return res.status(404).json({ message: "other user not found" });
     }
 
-    const isReqExist = await prisma.friendsMapUser.findUnique({
+    const isReqExist = await prisma.friendsMapUser.findFirst({
       where: {
-        receiverId_senderId: {
-          receiverId: userId,
-          senderId: to,
-        },
+        OR: [
+          { senderId: userId, receiverId: to },
+          { receiverId: userId, senderId: to },
+        ],
       },
     });
 
@@ -41,7 +42,10 @@ export const acceptReq = async (
       });
     }
 
-    console.log("updating friends req status");  
+    const key = `/profile/${userId}`;
+    const key2 = `/profile/${to}`;
+
+    console.log("updating friends req status");
     await prisma.friendsMapUser.update({
       where: { id: isReqExist.id },
       data: {
@@ -50,12 +54,15 @@ export const acceptReq = async (
       },
     });
 
+    redisManager.del(key);
+    redisManager.del(key2);
+
     return res.status(200).json({
       message: `friend request successfully ${status}`,
       to,
     });
   } catch (e) {
     console.log("error in sendreq ", e);
-    return res.status(500).json({ message: "something went wrong" })
+    return res.status(500).json({ message: "something went wrong" });
   }
 };

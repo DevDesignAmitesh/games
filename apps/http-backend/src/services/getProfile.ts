@@ -16,7 +16,7 @@ export const getProfile = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "user not found" });
     }
 
-    const key = `/profile/${user.userName}`;
+    const key = `/profile/${user.id}`;
     const dataFromRedis = await redisManager.get(key);
 
     console.log("dataFromRedis");
@@ -79,7 +79,8 @@ export const getProfile = async (req: Request, res: Response) => {
       key,
       {
         games: dataToSend,
-        user: { ...user, count: friendCount, status: friendStatus?.status },
+        user: { ...user, count: friendCount },
+        status: friendStatus?.status,
       },
       60,
     );

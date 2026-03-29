@@ -9,6 +9,11 @@ export const sidebarData: Array<SideBarProps> = [
     icon: FaHome,
   },
   {
+    label: "Friends",
+    href: "/friends",
+    icon: FaUser,
+  },
+  {
     label: "Settings",
     href: "/settings",
     icon: IoMdSettings,

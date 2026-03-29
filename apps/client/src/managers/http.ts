@@ -2,8 +2,10 @@
 
 import axios from "axios";
 import {
+  AcceptFriendReqSchema,
   FriendReqSchema,
   RegisterSchemaInput,
+  acceptFriendReqSchema,
   friendReqSchema,
   registerSchema,
   zodErrorMessage,
@@ -46,7 +48,7 @@ export const httpApis = {
 
     if (!success) {
       toast.error(zodErrorMessage({ error }));
-      return;
+      return false
     }
 
     const res = await axios.post(`${HTTP_URL}/friend-request/send`, data, {
@@ -57,10 +59,33 @@ export const httpApis = {
     if (res.status <= 201) {
       toast.success(res.data.message ?? "Registration successfull");
       handleSuccess();
-      return;
+      return true;
     }
 
     toast.error(res.data.message ?? "something went wrong");
+    return false;
+  },
+
+  acceptFriendReq: async (input: AcceptFriendReqSchema, TOKEN: string) => {
+    const { success, data, error } = acceptFriendReqSchema.safeParse(input);
+
+    if (!success) {
+      toast.error(zodErrorMessage({ error }));
+      return false;
+    }
+
+    const res = await axios.put(`${HTTP_URL}/friend-request/accept`, data, {
+      headers: { Authorization: TOKEN },
+      validateStatus: () => true,
+    });
+
+    if (res.status <= 201) {
+      toast.success(res.data.message ?? "Registration successfull");
+      return true
+    }
+
+    toast.error(res.data.message ?? "something went wrong");
+    return false;
   },
 
   getToken: async () => {
@@ -76,6 +101,19 @@ export const httpApis = {
     });
 
     if (res.status <= 201) return res.data;
+
+    return null;
+  },
+
+  getFriends: async (TOKEN: string) => {
+    const res = await axios.get(`${HTTP_URL}/friends`, {
+      headers: {
+        Authorization: TOKEN,
+      },
+      validateStatus: () => true,
+    });
+
+    if (res.status <= 201) return res.data.friends;
 
     return null;
   },

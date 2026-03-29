@@ -57,12 +57,14 @@ export const ProfilePage = ({ username }: { username: string | null }) => {
     router.push("/settings");
   }, [username, myusername]);
 
-  const sendFriendReq = () => {
+  const sendFriendReq = async () => {
     console.log(status);
     if (myusername === username) return;
     if (status && status === "ACCEPTED") return;
 
-    httpApis.sendFriendReq({ to: userId }, TOKEN, getData);
+    setStatus("ACCEPTED");
+    const res = await httpApis.sendFriendReq({ to: userId }, TOKEN, getData);
+    if (!res) setStatus(undefined);
   };
 
   return (
