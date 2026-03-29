@@ -1,5 +1,5 @@
 import { type RedisClientType, createClient } from "redis";
-import { userManager, bodmasgameManager  } from "@repo/ws-backend/ws-backend";
+import { userManager, bodmasgameManager } from "@repo/ws-backend/ws-backend";
 import { type RedisPushData } from "@repo/types/types";
 
 class RedisManager {
@@ -25,7 +25,6 @@ class RedisManager {
     this.client.subscribe(key, (message, channel) => {
       console.log("publishing ", message);
 
-      
       const parsedData = JSON.parse(message);
       if (channel === "online_users") {
         const isOnlineType = parsedData.type === "online_users";
@@ -92,14 +91,27 @@ class RedisManager {
   }
 
   async pop(key: string) {
-    return await this.publisher.rPop(key);    
+    return await this.publisher.rPop(key);
   }
 
-  async worker(key: string) {
-  }
+  async worker(key: string) {}
 
   async lock(key: string, value: string) {
     return this.publisher.SETNX(key, value);
+  }
+
+  set = async (key: string, data: any) => {
+    await this.publisher.SETNX(key, JSON.stringify(data));
+  };
+
+  get = async (key: string) => {
+    const data = await this.client.get(key);
+    if (data) return JSON.parse(data);
+    return null;
+  };
+
+  del(key: string) {
+    this.client.del(key);
   }
 
   releaseLock(key: string) {

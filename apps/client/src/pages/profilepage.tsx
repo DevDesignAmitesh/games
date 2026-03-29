@@ -8,10 +8,18 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { FaArrowLeft } from "react-icons/fa";
 import { MdPersonAddAlt1 } from "react-icons/md";
 
+type Game = {
+  name: string | undefined;
+  oppCorrectAnswer: number | undefined;
+  meCorrectAnswer: number | undefined;
+};
+
 export const ProfilePage = () => {
   const router = useRouter();
-  const [userName, setUserName] = useState<string>("")
-  const [email, setEmail] = useState<string>("")
+  const [userName, setUserName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [friendCount, setFriendCount] = useState<number>(0);
+  const [games, setGames] = useState<Game[]>([]);
 
   const TOKEN = `Bearer ${localStorage.getItem("token")}`;
 
@@ -22,19 +30,13 @@ export const ProfilePage = () => {
 
     setUserName(data.user.userName);
     setEmail(data.user.email);
+    setFriendCount(data.user.count);
+    setGames(data.games);
   };
 
   useEffect(() => {
     getData();
   }, []);
-
-  const games = [
-    { name: "mayank_saini", score: "8 - 12" },
-    { name: "abhinavsingh2448", score: "8 - 9" },
-    { name: "beee_01", score: "24 - 27" },
-    { name: "glimpo.212", score: "29 - 17" },
-    { name: "kartiikmarathe925", score: "31 - 12" },
-  ];
 
   const sendToSettingPage = () => {
     router.push("/settings");
@@ -134,7 +136,7 @@ export const ProfilePage = () => {
             {email}
           </p>
           <p className="w-full text-left text-sm font-medium mt-4 font-nuni text-[#A9F99E]">
-            <span className="font-bold">1</span> Friends
+            <span className="font-bold">{friendCount}</span> Friends
           </p>
 
           <div className="relative inline-block w-fit mt-8">
@@ -175,14 +177,16 @@ export const ProfilePage = () => {
       </div>
       {/* LAST 5 GAMES */}
       <div className="mt-10 pb-6">
-        <h3 className="text-lg font-bold text-neutral-200 mb-4">
-          Last 5 Games
-        </h3>
+        {games.length && (
+          <h3 className="text-lg font-bold text-neutral-200 mb-4">
+            Last 5 Games
+          </h3>
+        )}
 
         <div className="flex flex-col gap-4">
           {/* GAME ITEM */}
           {games.map((game, idx) => {
-            const initial = game.name.charAt(0).toUpperCase();
+            const initial = game.name?.charAt(0).toUpperCase();
 
             return (
               <div
@@ -204,7 +208,7 @@ export const ProfilePage = () => {
 
                 {/* RIGHT SIDE */}
                 <div className="px-3 py-1 rounded-md border border-neutral-600 text-sm font-semibold text-neutral-200">
-                  {game.score}
+                  {game.oppCorrectAnswer} - {game.meCorrectAnswer}
                 </div>
               </div>
             );

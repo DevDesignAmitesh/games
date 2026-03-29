@@ -1,5 +1,10 @@
+import { ProtectedRoute } from "@/managers/protectedRoute";
 import { LandingPage } from "@/pages/landingpage";
 
 export default function Home() {
-  return <LandingPage />;
+  return (
+    <ProtectedRoute>
+      <LandingPage />
+    </ProtectedRoute>
+  );
 }

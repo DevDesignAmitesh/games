@@ -10,6 +10,7 @@
     "@types/bun": "latest",
     "@repo/types": "workspace:*",
     "@repo/common": "workspace:*",
+    "@repo/redis": "workspace:*",
     "@repo/db": "workspace:*"
   },
   "peerDependencies": {

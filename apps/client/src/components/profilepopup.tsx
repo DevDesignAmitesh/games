@@ -10,7 +10,7 @@ export const ProfilePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const TOKEN = `Bearer ${localStorage.getItem("token")}`;
-  
+
   const getData = async () => {
     const data = await httpApis.getProfile(TOKEN);
 
@@ -22,6 +22,11 @@ export const ProfilePopup = () => {
   useEffect(() => {
     getData();
   }, []);
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    window.location.reload();
+  };
 
   return (
     <div className="relative font-nuni">
@@ -65,9 +70,8 @@ export const ProfilePopup = () => {
       >
         <div className="py-2 font-nuni">
           {/* My Profile Option */}
-          {/* TODO: add here token driven user-name */}
           <Link
-            href={"/profile/amiteshsingh"}
+            href={"/profile"}
             className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-700/70 transition-all duration-150 mx-2 rounded-lg"
           >
             <FiUser className="text-neutral-300 text-lg" />
@@ -84,7 +88,10 @@ export const ProfilePopup = () => {
           </Link>
 
           {/* Logout Option */}
-          <div className="flex items-center gap-3 px-4 py-3 hover:bg-red-600/20 cursor-pointer transition-all duration-150 mx-2 rounded-lg group">
+          <div
+            onClick={logout}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-red-600/20 cursor-pointer transition-all duration-150 mx-2 rounded-lg group"
+          >
             <FiLogOut className="text-neutral-300 text-lg group-hover:text-red-400 transition-colors duration-150" />
             <span className="text-white font-medium text-sm group-hover:text-red-400 transition-colors duration-150">
               Logout

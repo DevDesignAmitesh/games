@@ -1,4 +1,5 @@
 import { prisma } from "@repo/db/db";
+import { redisManager } from "@repo/redis/redis";
 import type { CreateGameSchema } from "@repo/types/types";
 import type { Request, Response } from "express";
 
@@ -26,15 +27,15 @@ export const createGame = async (
           },
         });
 
-        console.log("creating drawing game")
-        
+        console.log("creating drawing game");
+
         await tx.user.update({
           where: { id: userId },
           data: { status: "SEARCHING" },
         });
 
-        console.log("updating user status")
-        
+        console.log("updating user status");
+
         await tx.drawingGamePlayer.create({
           data: {
             userId,
@@ -42,8 +43,8 @@ export const createGame = async (
             score: 0,
           },
         });
-        
-        console.log("creating game player")
+
+        console.log("creating game player");
 
         return drawGame.id;
       });
@@ -52,8 +53,8 @@ export const createGame = async (
         message: "game created successfully",
         gameId,
       });
-    } 
-    
+    }
+
     if (gameType === "bodmas") {
       const gameId = await prisma.$transaction(async (tx) => {
         const bodmasGame = await tx.bodmasGame.create({
@@ -64,15 +65,15 @@ export const createGame = async (
           },
         });
 
-        console.log("create bodmas game")
+        console.log("create bodmas game");
 
         await tx.user.update({
           where: { id: userId },
           data: { status: "SEARCHING" },
         });
 
-        console.log("updating user status")
-        
+        console.log("updating user status");
+
         await tx.bodmasGamePlayer.create({
           data: {
             userId,
@@ -80,10 +81,12 @@ export const createGame = async (
           },
         });
 
-        console.log("creating game player")
+        console.log("creating game player");
 
         return bodmasGame.id;
       });
+
+      redisManager.del("/profile");
 
       return res.status(201).json({
         message: "game created successfully",

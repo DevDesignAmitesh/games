@@ -46,10 +46,8 @@ export const httpApis = {
       },
     });
 
-    console.log(res);
-    
     if (res.status <= 201) return res.data;
-    
+
     return null;
   },
 };
