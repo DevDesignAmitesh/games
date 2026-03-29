@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import { type AcceptFriendReqSchema } from "@repo/types/types";
 import { prisma } from "@repo/db/db";
-import { redisManager } from "@repo/redis/redis";
 
 export const acceptReq = async (
   req: Request<{}, {}, AcceptFriendReqSchema, {}>,
@@ -42,9 +41,6 @@ export const acceptReq = async (
       });
     }
 
-    const key = `/profile/${userId}`;
-    const key2 = `/profile/${to}`;
-
     console.log("updating friends req status");
     await prisma.friendsMapUser.update({
       where: { id: isReqExist.id },
@@ -53,9 +49,6 @@ export const acceptReq = async (
         respondedAt: new Date(),
       },
     });
-
-    redisManager.del(key);
-    redisManager.del(key2);
 
     return res.status(200).json({
       message: `friend request successfully ${status}`,

@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import { type FriendReqSchema } from "@repo/types/types";
 import { prisma } from "@repo/db/db";
-import { redisManager } from "@repo/redis/redis";
 
 export const sendReq = async (
   req: Request<{}, {}, FriendReqSchema, {}>,
@@ -34,9 +33,6 @@ export const sendReq = async (
       },
     });
 
-    const key = `/profile/${userId}`;
-    const key2 = `/profile/${to}`;
-
     if (alreadyFriends) {
       if (alreadyFriends.status === "PENDING") {
         return res.status(400).json({
@@ -56,9 +52,6 @@ export const sendReq = async (
           data: { status: "PENDING" },
         });
 
-        redisManager.del(key);
-        redisManager.del(key2);
-
         return res
           .status(200)
           .json({ message: "friend request sent successfully" });
@@ -74,9 +67,6 @@ export const sendReq = async (
         requestedAt: new Date(),
       },
     });
-
-    redisManager.del(key);
-    redisManager.del(key2);
 
     return res
       .status(201)

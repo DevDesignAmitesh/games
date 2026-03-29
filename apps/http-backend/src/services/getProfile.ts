@@ -1,6 +1,5 @@
 import { prisma } from "@repo/db/db";
 import type { Request, Response } from "express";
-import { redisManager } from "@repo/redis/redis";
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
@@ -14,16 +13,6 @@ export const getProfile = async (req: Request, res: Response) => {
 
     if (!user) {
       return res.status(404).json({ message: "user not found" });
-    }
-
-    const key = `/profile/${user.id}`;
-    const dataFromRedis = await redisManager.get(key);
-
-    console.log("dataFromRedis");
-    console.log(dataFromRedis);
-
-    if (dataFromRedis) {
-      return res.json({ ...dataFromRedis, message: "profile found" });
     }
 
     const friendCount = await prisma.friendsMapUser.count({
@@ -74,16 +63,6 @@ export const getProfile = async (req: Request, res: Response) => {
         },
       });
     }
-
-    await redisManager.set(
-      key,
-      {
-        games: dataToSend,
-        user: { ...user, count: friendCount },
-        status: friendStatus?.status,
-      },
-      60,
-    );
 
     return res.json({
       user: { ...user, count: friendCount },

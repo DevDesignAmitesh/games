@@ -1,5 +1,4 @@
 import { prisma } from "@repo/db/db";
-import { redisManager } from "@repo/redis/redis";
 import type { CreateGameSchema } from "@repo/types/types";
 import type { Request, Response } from "express";
 
@@ -85,8 +84,6 @@ export const createGame = async (
 
         return bodmasGame.id;
       });
-
-      redisManager.del("/profile");
 
       return res.status(201).json({
         message: "game created successfully",
