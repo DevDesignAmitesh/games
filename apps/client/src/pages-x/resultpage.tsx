@@ -2,7 +2,7 @@
 
 import { ResultCard } from "@/components/resultcard";
 
-export const ResultPage = () => {
+const ResultPage = () => {
   return (
     <div className="w-full h-screen bg-neutral-900 flex justify-center items-center">
       <ResultCard
@@ -22,3 +22,5 @@ export const ResultPage = () => {
     </div>
   );
 };
+
+export default ResultPage;

@@ -4,7 +4,7 @@ import { GrayButton } from "@/components/buttons";
 import { Logo } from "@/components/logo";
 import { useRouter } from "next/navigation";
 
-export const OnlineSearchPage = () => {
+const OnlineSearchPage = () => {
   const router = useRouter();
   
   const cancelSearch = () => {
@@ -47,3 +47,5 @@ export const OnlineSearchPage = () => {
     </div>
   );
 };
+
+export default OnlineSearchPage

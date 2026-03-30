@@ -13,14 +13,14 @@ const server = new WebSocketServer({ port: 8080 });
 
 type ExtendedWs = WebSocket & TokenPayload;
 
+redisManager.subscribe("online_users");
+
 server.on("connection", async (ws: ExtendedWs, req) => {
   ws.on("error", console.error);
 
-  console.log("connection done");
-
   const token = req.url?.split("?token=")[1];
   if (!token) return;
-
+  
   const decoded = verifyToken(token);
   if (!decoded) return;
 
@@ -36,16 +36,12 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     id: userId,
     username: user.userName,
   });
-
-  redisManager.subscribe("online_users");
-
+    
   redisManager.publish("online_users", {
     type: "online_users",
   });
-
-  ws.on("ping", () => {
-    ws.send(JSON.stringify({ status: "ok" }));
-  });
+  
+  console.log("connection done");
 
   ws.on("message", async (data) => {
     let parsedData;
@@ -55,6 +51,10 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     } catch (e) {
       console.log("parsing error ", e);
       return;
+    }
+
+    if (parsedData.type === "ping") {
+      ws.send(JSON.stringify({ status: "pong" }));
     }
 
     if (
@@ -70,8 +70,10 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       redisManager.publish("online_users", {
         type: parsedData.type,
-        to,
-        from: { name: sender.username, id: sender.id },
+        payload: {
+          to,
+          from: { name: sender.username, id: sender.id },
+        },
       });
     }
 
@@ -114,11 +116,13 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       redisManager.publish("online_users", {
         type: parsedData.type,
-        from: {
-          name: requestedByFromDb.userName,
-          id: requestedByFromDb.id,
+        payload: {
+          from: {
+            name: requestedByFromDb.userName,
+            id: requestedByFromDb.id,
+          },
+          gameId,
         },
-        gameId,
       });
     }
 
@@ -259,7 +263,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       redisManager.publish(`bodmas:game:${bodmasGame.id}`, {
         type: "BODMAS_GAME_ROUND_STARTED",
-        question,
+        payload: { question },
       });
     }
 
@@ -414,7 +418,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       ws.send(
         JSON.stringify({
           type: "BODMAS_GAME_ROUND_STARTED",
-          question: nextQuestion,
+          payload: { question: nextQuestion },
         }),
       );
     }

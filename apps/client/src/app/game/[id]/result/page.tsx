@@ -1,4 +1,4 @@
-import { ResultPage } from "@/pages/resultpage";
+import ResultPage from "@/pages-x/resultpage";
 
 export default async function profile({
   params,

@@ -9,7 +9,7 @@ import { TotalUsers } from "@/components/totalusers";
 import { popupType } from "@/lib/types";
 import { useState } from "react";
 
-export const LandingPage = () => {
+const LandingPage = () => {
   const [popup, setPopup] = useState<popupType | null>(null);
 
   const handlePopup = (val: popupType | null) => {
@@ -62,3 +62,5 @@ export const LandingPage = () => {
     </>
   );
 };
+
+export default LandingPage

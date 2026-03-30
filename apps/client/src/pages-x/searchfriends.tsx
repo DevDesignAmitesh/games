@@ -12,7 +12,7 @@ type User = {
   userName: string;
 };
 
-export const SearchFriendsPage = () => {
+const SearchFriendsPage = () => {
   if (typeof window === "undefined") return;
 
   const [query, setQuery] = useState("");
@@ -139,3 +139,5 @@ export const SearchFriendsPage = () => {
     </div>
   );
 };
+
+export default SearchFriendsPage

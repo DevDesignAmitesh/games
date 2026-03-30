@@ -1,4 +1,4 @@
-import { OnlineSearchPage } from "@/pages/onlinesearchpage";
+import OnlineSearchPage from "@/pages-x/onlinesearchpage";
 
 export default async function onlineSearch({
   params,

@@ -1,4 +1,4 @@
-import { GamePage } from "@/pages/gamepage";
+import GamePage from "@/pages-x/gamepage";
 
 export default async function profile({
   params,

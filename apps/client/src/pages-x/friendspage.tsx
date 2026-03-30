@@ -15,25 +15,25 @@ type Friend = {
 
 const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
-export const FriendsPage = () => {
-  if (typeof window === "undefined") return;
-
+const FriendsPage = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
-
-  const TOKEN = localStorage.getItem("token");
-  const Bearer_TOKEN = `Bearer ${TOKEN}`;
-
+  
   useEffect(() => {
     (async () => {
+      const TOKEN = localStorage.getItem("token");
+      const Bearer_TOKEN = `Bearer ${TOKEN}`;
       const data = await httpApis.getFriends(Bearer_TOKEN);
 
       if (!data) return;
 
       setFriends(data);
     })();
-  }, [TOKEN]);
+  }, []);
 
   const handleFrndReq = async (id: string, status: FriendRequestStatus) => {
+    const TOKEN = localStorage.getItem("token");
+    const Bearer_TOKEN = `Bearer ${TOKEN}`;
+
     setFriends((prev) =>
       prev.map((usr) => (usr.otherId === id ? { ...usr, status } : usr)),
     );
@@ -117,3 +117,5 @@ export const FriendsPage = () => {
     </div>
   );
 };
+
+export default FriendsPage;

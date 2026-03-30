@@ -3,7 +3,7 @@ import IORedis from "ioredis";
 import { type RedisPushData, type BoadMasGame } from "@repo/types/types";
 import { prisma } from "@repo/db/db";
 import { redisManager } from "@repo/redis/redis";
-import { bodmasgameManager } from "@repo/ws-backend/ws-backend";
+import { bodmasgameManager, userManager } from "@repo/ws-backend/ws-backend";
 
 class BullmqManager {
   private static connection: IORedis;
@@ -213,6 +213,7 @@ class BullmqManager {
       });
 
       if (!bodmasGame) return;
+
       await prisma.$transaction(async (tx) => {
         const updatedGame = await tx.bodmasGame.update({
           where: { id: gameId },
@@ -232,7 +233,6 @@ class BullmqManager {
             },
           },
         });
-
 
         const latestGame: BoadMasGame = {
           ...updatedGame,
@@ -254,9 +254,9 @@ class BullmqManager {
                 questionId: qs.questionId,
                 userId: usr.userId,
                 startTime: qs.startTime ? qs.startTime : undefined,
-                orderIndex: qs.orderIndex
-              }
-            })
+                orderIndex: qs.orderIndex,
+              };
+            });
           }),
         };
 
@@ -270,6 +270,8 @@ class BullmqManager {
             where: { id: plr.userId },
             data: { status: "IDOL" },
           });
+
+          userManager.update(plr.userId, { status: "IDOL" });
 
           let correctAnswers = 0;
           let incorrectAnswers = 0;

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Sound from "react-sound";
 
-export const SurprisePage = () => {
+const SurprisePage = () => {
   const [playStatus, setPlayStatus] = useState<"STOPPED" | "PLAYING">(
     "STOPPED",
   );
@@ -40,3 +40,5 @@ export const SurprisePage = () => {
     </div>
   );
 };
+
+export default SurprisePage

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bebas_Neue, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { WebSocketProvider } from "@/managers/ws";
 
 const bebasFont = Bebas_Neue({
   variable: "--font-bebas",
@@ -31,8 +32,10 @@ export default function RootLayout({
       <body
         className={`${bebasFont.variable} ${nuniFont.variable} antialiased custom-scrollbar`}
       >
-        {children}
-        <Toaster position="top-right" richColors />
+        <WebSocketProvider>
+          {children}
+          <Toaster position="top-right" richColors />
+        </WebSocketProvider>
       </body>
     </html>
   );

@@ -14,7 +14,7 @@ type Game = {
   meCorrectAnswer: number | undefined;
 };
 
-export const ProfilePage = ({ username }: { username: string | null }) => {
+const ProfilePage = ({ username }: { username: string | null }) => {
   const router = useRouter();
   const [userName, setUserName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -263,3 +263,5 @@ export const ProfilePage = ({ username }: { username: string | null }) => {
     </div>
   );
 };
+
+export default ProfilePage

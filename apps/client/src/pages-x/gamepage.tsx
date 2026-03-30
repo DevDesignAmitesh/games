@@ -3,7 +3,7 @@
 import { GreenInput } from "@/components/inputs";
 import { useCallback, useMemo, useState } from "react";
 
-export const GamePage = () => {
+const GamePage = () => {
   const [answer, setAnswer] = useState<string>("");
   const [ansStatus, setAnsStatus] = useState<"correct" | "wrong" | "default">(
     "default",
@@ -127,3 +127,5 @@ export const GamePage = () => {
     </div>
   );
 };
+
+export default GamePage;

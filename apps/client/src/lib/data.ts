@@ -43,13 +43,6 @@ export const ratingsData: Array<RatingCompProps> = [
   },
 ];
 
-export const livePlayers: Array<LivePlayers> = [
-  {
-    id: "1",
-    name: "You",
-  },
-];
-
 export const games: Array<Games> = [
   {
     id: 1,

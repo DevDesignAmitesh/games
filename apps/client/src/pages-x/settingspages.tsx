@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { FaArrowLeft } from "react-icons/fa";
 import { MdOutlineChevronRight } from "react-icons/md";
 
-export const SettingsPage = () => {
+const SettingsPage = () => {
   const router = useRouter();
   
   return (
@@ -70,3 +70,5 @@ export const SettingsPage = () => {
     </div>
   );
 };
+
+export default SettingsPage

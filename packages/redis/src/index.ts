@@ -1,18 +1,25 @@
 import { type RedisClientType, createClient } from "redis";
 import { userManager, bodmasgameManager } from "@repo/ws-backend/ws-backend";
-import { type RedisPushData } from "@repo/types/types";
 
 class RedisManager {
   private static instance: RedisManager;
   private client: RedisClientType;
+  private subscriber: RedisClientType;
   private publisher: RedisClientType;
 
   private constructor() {
     this.client = createClient();
-    this.client.connect();
+    this.subscriber = createClient();
     this.publisher = createClient();
-    this.publisher.connect();
+
+    this.init();
   }
+
+  init = async () => {
+    await this.client.connect();
+    await this.publisher.connect();
+    await this.subscriber.connect();
+  };
 
   public static getInstance(): RedisManager {
     if (!RedisManager.instance) {
@@ -21,36 +28,33 @@ class RedisManager {
     return RedisManager.instance;
   }
 
-  subscribe(key: string) {
-    this.client.subscribe(key, (message, channel) => {
-      console.log("publishing ", message);
-
+  subscribe = async (key: string) => {
+    await this.subscriber.subscribe(key, (message, channel) => {
       const parsedData = JSON.parse(message);
       if (channel === "online_users") {
         const isOnlineType = parsedData.type === "online_users";
         const users = userManager.users;
+        console.log("users.length ", users.length);
         if (
           parsedData.type === "online_users" ||
           parsedData.type === "BODMAS_GAME_REQUEST"
         ) {
           if (isOnlineType) {
             users.forEach((usr) => {
-              if (!usr.ws) return;
+              if (!usr.ws || usr.status !== "IDOL") return;
 
               usr.ws.send(
                 JSON.stringify({
                   type: parsedData.type,
-                  users: users,
+                  payload: { users: users },
                 }),
               );
             });
           } else {
             users.forEach((usr) => {
-              if (!usr.ws) return;
-
-              if (usr.id !== parsedData.from.id) {
-                usr.ws.send(message);
-              }
+              if (!usr.ws || usr.status !== "IDOL") return;
+              if (usr.id === parsedData.from.id) return;
+              usr.ws.send(message);
             });
           }
         } else if (
@@ -76,41 +80,26 @@ class RedisManager {
         });
       }
     });
+  };
+
+  publish = async (channel: string, message: any) => {
+    await this.publisher.publish(channel, JSON.stringify(message));
   }
 
-  publish(channel: string, message: any) {
-    this.publisher.publish(channel, JSON.stringify(message));
+  unsubscribe = async (channel?: string) => {
+    await this.subscriber.unsubscribe(channel);
   }
 
-  unsubscribe(channel?: string) {
-    this.client.unsubscribe(channel);
-  }
-
-  push(key: string, data: RedisPushData, delay?: number) {
-    this.publisher.lPush(key, JSON.stringify(data));
-  }
-
-  async pop(key: string) {
-    return await this.publisher.rPop(key);
-  }
-
-  async worker(key: string) {}
-
-  async lock(key: string, value: string) {
-    return this.publisher.SETNX(key, value);
+  lock = async (key: string, value: string) => {
+    return this.client.SETNX(key, value);
   }
 
   set = async (key: string, data: any, ttl?: number) => {
     if (ttl) {
-      await this.publisher.set(key, JSON.stringify(data), {
-        expiration: {
-          type: "EX",
-          value: ttl,
-        },
-      });
-      return;
+      await this.client.SETEX(key, ttl, data)
+    } else {
+      await this.client.set(key, JSON.stringify(data));
     }
-    await this.publisher.set(key, JSON.stringify(data));
   };
 
   get = async (key: string) => {
@@ -119,12 +108,12 @@ class RedisManager {
     return null;
   };
 
-  del(key: string) {
-    this.client.del(key);
+  del = async (key: string) => {
+    await this.client.del(key);
   }
 
-  releaseLock(key: string) {
-    this.publisher.DEL(key);
+  releaseLock = async (key: string) => {
+    await this.client.DEL(key);
   }
 }
 
