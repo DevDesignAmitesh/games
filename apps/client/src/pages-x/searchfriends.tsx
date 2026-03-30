@@ -21,18 +21,17 @@ const SearchFriendsPage = () => {
 
   const router = useRouter();
 
-  const TOKEN = localStorage.getItem("token");
-
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
     }, 500);
-
+    
     return () => clearTimeout(timer);
   }, [query]);
-
+  
   useEffect(() => {
-    if (!TOKEN) return;
+    const token = localStorage.getItem("token")!;
 
     if (!debouncedQuery.trim()) {
       setResults([]);
@@ -40,10 +39,7 @@ const SearchFriendsPage = () => {
     }
 
     (async () => {
-      const data = await httpApis.findFriends(
-        `Bearer ${TOKEN}`,
-        debouncedQuery,
-      );
+      const data = await httpApis.findFriends(token, debouncedQuery);
 
       console.log("data ", data);
 
@@ -51,7 +47,7 @@ const SearchFriendsPage = () => {
 
       setResults(data);
     })();
-  }, [debouncedQuery, TOKEN]);
+  }, [debouncedQuery]);
 
   const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
@@ -140,4 +136,4 @@ const SearchFriendsPage = () => {
   );
 };
 
-export default SearchFriendsPage
+export default SearchFriendsPage;

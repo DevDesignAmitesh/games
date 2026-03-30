@@ -1,6 +1,7 @@
 "use client";
 
 import { httpApis } from "@/managers/http";
+import { useWsContext } from "@/managers/ws";
 import Image from "next/image";
 import { notFound, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -25,21 +26,19 @@ const ProfilePage = ({ username }: { username: string | null }) => {
   const [status, setStatus] = useState<
     "PENDING" | "ACCEPTED" | "IGNORED" | undefined
   >(undefined);
-
-  useEffect(() => {
-    setMyUsername(localStorage.getItem("username") ?? "");
-  }, []);
-
   const [token, setToken] = useState<string | null>(null);
+
+  const { ws } = useWsContext();
 
   useEffect(() => {
     const t = localStorage.getItem("token");
-    if (t) setToken(`Bearer ${t}`);
+    if (t) setToken(t);
+
+    const u = localStorage.getItem("username");
+    if (u) setMyUsername(u);
   }, []);
 
-  const getData = useCallback(async () => {
-    if (!username) return;
-    if (!token) return;
+  const getData = async (token: string, username: string) => {
     const data = await httpApis.getProfile(token, username);
 
     console.log("profile data ", data);
@@ -55,28 +54,43 @@ const ProfilePage = ({ username }: { username: string | null }) => {
     setFriendCount(data.user.count);
     setStatus(data.status);
     setGames(data.games);
-  }, [username, token]);
+  };
 
   useEffect(() => {
-    getData();
-  }, [getData]);
+    if (!username) return;
+    if (!token) return;
+    getData(token, username);
+  }, [username, token]);
 
   const sendToSettingPage = () => {
     router.push("/settings");
   };
 
-  const sendFriendReq = async () => {
+  const sendFriendReq = async (token: string | null, username: string | null) => {
     console.log(status);
     if (!token) return;
+    if (!username) return;
     if (myusername === username) return;
     if (status === "ACCEPTED" || status === "PENDING") return;
 
     const prevStatus = status;
-    setStatus("PENDING"); // better than ACCEPTED
+    setStatus("PENDING");
 
-    const res = await httpApis.sendFriendReq({ to: userId }, token, getData);
+    const res = await httpApis.sendFriendReq({ to: userId }, token, () =>
+      getData(token, username),
+    );
 
-    if (!res) setStatus(prevStatus);
+    if (!res) {
+      setStatus(prevStatus);
+      return;
+    }
+
+    ws?.send(
+      JSON.stringify({
+        type: "FRIEND_REQUEST_SEND",
+        payload: { to: userId },
+      }),
+    );
   };
 
   return (
@@ -195,7 +209,9 @@ const ProfilePage = ({ username }: { username: string | null }) => {
               {/* Label */}
               <span
                 onClick={
-                  myusername !== username ? sendFriendReq : sendToSettingPage
+                  myusername !== username
+                    ? () => sendFriendReq(token, username)
+                    : sendToSettingPage
                 }
                 className="flex-1 text-center font-bold text-[#A9F99E]"
               >
@@ -264,4 +280,4 @@ const ProfilePage = ({ username }: { username: string | null }) => {
   );
 };
 
-export default ProfilePage
+export default ProfilePage;

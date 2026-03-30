@@ -3,6 +3,8 @@
 import { User } from "@repo/types/types";
 import React, {
   createContext,
+  Dispatch,
+  SetStateAction,
   useContext,
   useEffect,
   useRef,
@@ -11,6 +13,8 @@ import React, {
 
 type WSContextType = {
   liveUsers: User[];
+  ws: WebSocket | null;
+  setToken: Dispatch<SetStateAction<string | null>>;
 };
 
 const WebSocketContext = createContext<WSContextType | null>(null);
@@ -20,21 +24,30 @@ export const WebSocketProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  if (typeof window === "undefined") return;
+
   const wsRef = useRef<WebSocket | null>(null);
   const WS_URL = "ws://localhost:8080";
-  const hasConnected = useRef(false);
-  
-  const [liveUsers, setLiveUsers] = useState<User[]>([]);
-  
-  useEffect(() => {
-    if (hasConnected.current) return;
-    
-    const TOKEN = localStorage.getItem("token");
-    console.log("connecting to ws");
+  const [token, setToken] = useState<string | null>(null);
 
-    hasConnected.current = true;
-    const ws = new WebSocket(`${WS_URL}?token=${TOKEN}`);
+  useEffect(() => {
+    setToken(localStorage.getItem("token"));
+  }, []);
+
+  const [liveUsers, setLiveUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    if (!token) return;
+    console.log("connecting to ws", token);
+
+    const ws = new WebSocket(`${WS_URL}?token=${token}`);
     wsRef.current = ws;
+
+    console.log("runningg");
+
+    ws.onopen = () => {
+      console.log("ws connected");
+    };
 
     ws.onmessage = (event) => {
       try {
@@ -58,14 +71,43 @@ export const WebSocketProvider = ({
     };
 
     return () => {
-      console.log("ws is closed")
-      ws.close()
-    }
-    
+      console.log("ws is closed");
+      ws.close();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const ws = wsRef.current;
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "ping" }));
+      }
+    }, 10 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const interval = setTimeout(() => {
+      const ws = wsRef.current;
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
+      }
+    }, 2 * 1000);
+
+    return () => clearTimeout(interval);
   }, []);
 
   return (
-    <WebSocketContext.Provider value={{ liveUsers }}>
+    <WebSocketContext.Provider
+      value={{
+        liveUsers,
+        ws: wsRef.current,
+        setToken,
+      }}
+    >
       {children}
     </WebSocketContext.Provider>
   );

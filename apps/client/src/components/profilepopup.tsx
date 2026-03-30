@@ -5,15 +5,19 @@ import { FiUser, FiSettings, FiLogOut } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { httpApis } from "@/managers/http";
+import { useWsContext } from "@/managers/ws";
 
 export const ProfilePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
-  const TOKEN = `Bearer ${localStorage.getItem("token")}`;
-  const username = localStorage.getItem("username") ?? "";
 
+  const { ws } = useWsContext();
+  
+  
   const getData = async () => {
-    const data = await httpApis.getProfile(TOKEN, username);
+    const token = localStorage.getItem("token");
+    const username = localStorage.getItem("username");
+    const data = await httpApis.getProfile(token!, username!);
 
     if (!data) return;
 
@@ -26,7 +30,8 @@ export const ProfilePopup = () => {
 
   const logout = () => {
     localStorage.removeItem("token");
-    window.location.reload();
+    ws?.close();
+    window.location.replace("/")
   };
 
   return (
@@ -72,7 +77,7 @@ export const ProfilePopup = () => {
         <div className="py-2 font-nuni">
           {/* My Profile Option */}
           <Link
-            href={`/profile/${username}`}
+            href={`/profile/${userName}`}
             className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-700/70 transition-all duration-150 mx-2 rounded-lg"
           >
             <FiUser className="text-neutral-300 text-lg" />

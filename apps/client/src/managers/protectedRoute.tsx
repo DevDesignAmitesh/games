@@ -6,28 +6,28 @@ import { usePathname, useRouter } from "next/navigation";
 import { LoadingScreen } from "@/components/loadingScreen";
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  if (typeof window === "undefined") return <LoadingScreen />;
-
   const [loading, setLoading] = useState(true);
-
-  const TOKEN = localStorage.getItem("token");
 
   const router = useRouter();
   const pathName = usePathname();
 
-  const username = localStorage.getItem("username")
-  
-
   useEffect(() => {
-    console.log("running");
-    if (!TOKEN || !username) {
-      setLoading(false);
-      router.push("/");
-      return;
-    }
-
     (async () => {
-      const res = await httpApis.getProfile(`Bearer ${TOKEN}`, username);
+      console.log("running");
+      const token = localStorage.getItem("token");
+      const username = localStorage.getItem("username");
+
+      if (!token || !username) {
+        setLoading(false);
+        router.push("/");
+        return;
+      }
+
+      console.log("token", token)
+      console.log("username", username)
+      
+
+      const res = await httpApis.getProfile(token, username);
 
       if (!res) {
         setLoading(false);
@@ -37,14 +37,12 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
       console.log("pathName", pathName);
 
-      if (TOKEN && pathName === "/") {
+      if (pathName === "/") {
         router.push("/home");
-      } else {
-        router.push(pathName ?? "/home");
       }
       setLoading(false);
     })();
-  }, [TOKEN, pathName]);
+  }, []);
 
   if (loading) return <LoadingScreen />;
 

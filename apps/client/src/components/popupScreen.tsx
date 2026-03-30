@@ -8,6 +8,7 @@ import { httpApis } from "@/managers/http";
 import { useState } from "react";
 import { RegisterSchemaInput } from "@repo/types/types";
 import { useRouter } from "next/navigation";
+import { useWsContext } from "@/managers/ws";
 
 interface PopupScreenProps {
   type: popupType;
@@ -21,6 +22,7 @@ export const PopupScreen = ({
   handleAuthState,
 }: PopupScreenProps) => {
   const router = useRouter();
+  const { setToken } = useWsContext();
 
   const [formdata, setFormdata] = useState<RegisterSchemaInput>({
     email: "",
@@ -38,6 +40,7 @@ export const PopupScreen = ({
     httpApis.register(formdata, (token, username) => {
       localStorage.setItem("token", token);
       localStorage.setItem("username", username);
+      setToken(token)
       router.push("/home");
     });
   };
@@ -72,11 +75,11 @@ export const PopupScreen = ({
           <div className="flex flex-col justify-center items-center gap-4 mt-8">
             <GreenButton
               label="GET STARTED"
-              onClick={() => handleAuthState("signup")}
+              onClick={() => handleAuthState("signup-action")}
             />
             <GrayButton
               label="ALREADY HAVE AN ACCOUNT"
-              onClick={() => handleAuthState("login")}
+              onClick={() => handleAuthState("login-action")}
             />
           </div>
         </div>
@@ -115,45 +118,6 @@ export const PopupScreen = ({
         </div>
       )}
 
-      {(type === "login" || type === "signup") && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-md sm:max-w-lg
-          rounded-3xl bg-neutral-800
-          px-6 sm:px-10 py-8 sm:py-10
-          flex flex-col items-center gap-6"
-        >
-          <h1
-            className="text-neutral-50 
-            text-3xl sm:text-4xl md:text-5xl
-            font-bebas font-bold uppercase text-center"
-          >
-            {type === "signup" ? "SIGN UP" : "LOGIN"} TO MATIKS
-          </h1>
-
-          <div className="flex flex-col justify-center items-center gap-6 mt-8">
-            <GreenIconButton
-              label="CONTINUE WITH EMAIL"
-              onClick={() =>
-                handleAuthState(
-                  type === "signup" ? "signup-action" : "login-action",
-                )
-              }
-              icon={<MdOutlineMail fill="#B1FA63" size={20} />}
-            />
-            {/* <GrayIconButton
-              label="CONTINUE WITH GOOGLE'S EMAIL"
-              onClick={() =>
-                handleAuthState(
-                  type === "signup" ? "signup-action" : "login-action",
-                )
-              }
-              icon={<FcGoogle size={20} />}
-            /> */}
-          </div>
-        </div>
-      )}
-
       {(type === "login-action" || type === "signup-action") && (
         <div
           onClick={(e) => e.stopPropagation()}
@@ -170,13 +134,6 @@ export const PopupScreen = ({
             >
               {type === "login-action" ? "login" : "create account"}
             </h1>
-
-            <p
-              className="text-neutral-400 font-semibold 
-            text-xs text-center font-nuni uppercase"
-            >
-              Enter your email. We will send you a confirmation code there.
-            </p>
           </div>
 
           <div className="flex flex-col justify-center items-center gap-4 w-full">

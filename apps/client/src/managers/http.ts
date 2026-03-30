@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 const HTTP_URL = "http://localhost:4000";
 
+
 export const httpApis = {
   register: async (
     input: RegisterSchemaInput,
@@ -41,7 +42,7 @@ export const httpApis = {
 
   sendFriendReq: async (
     input: FriendReqSchema,
-    TOKEN: string,
+    token: string,
     handleSuccess: () => void,
   ) => {
     const { success, data, error } = friendReqSchema.safeParse(input);
@@ -52,7 +53,7 @@ export const httpApis = {
     }
 
     const res = await axios.post(`${HTTP_URL}/friend-request/send`, data, {
-      headers: { Authorization: TOKEN },
+      headers: { Authorization: `Bearer ${token}` },
       validateStatus: () => true,
     });
 
@@ -66,7 +67,7 @@ export const httpApis = {
     return false;
   },
 
-  acceptFriendReq: async (input: AcceptFriendReqSchema, TOKEN: string) => {
+  acceptFriendReq: async (input: AcceptFriendReqSchema, token: string) => {
     const { success, data, error } = acceptFriendReqSchema.safeParse(input);
 
     if (!success) {
@@ -75,13 +76,13 @@ export const httpApis = {
     }
 
     const res = await axios.put(`${HTTP_URL}/friend-request/accept`, data, {
-      headers: { Authorization: TOKEN },
+      headers: { Authorization: `Bearer ${token}` },
       validateStatus: () => true,
     });
 
     if (res.status <= 201) {
       toast.success(res.data.message ?? "Registration successfull");
-      return true
+      return true      
     }
 
     toast.error(res.data.message ?? "something went wrong");
@@ -92,10 +93,10 @@ export const httpApis = {
     const res = await axios.get(`${HTTP_URL}/token`);
   },
 
-  getProfile: async (TOKEN: string, username: string) => {
+  getProfile: async (token: string, username: string) => {
     const res = await axios.get(`${HTTP_URL}/profile/${username}`, {
       headers: {
-        Authorization: TOKEN,
+        Authorization: `Bearer ${token}`,
       },
       validateStatus: () => true,
     });
@@ -105,10 +106,10 @@ export const httpApis = {
     return null;
   },
 
-  getFriends: async (TOKEN: string) => {
+  getFriends: async (token: string) => {
     const res = await axios.get(`${HTTP_URL}/friends`, {
       headers: {
-        Authorization: TOKEN,
+        Authorization: `Bearer ${token}`,
       },
       validateStatus: () => true,
     });
@@ -118,10 +119,10 @@ export const httpApis = {
     return null;
   },
 
-  findFriends: async (TOKEN: string, input: string) => {
+  findFriends: async (token: string, input: string) => {
     const res = await axios.get(`${HTTP_URL}/find-friends/${input}`, {
       headers: {
-        Authorization: TOKEN,
+        Authorization: `Bearer ${token}`,
       },
       validateStatus: () => true,
     });

@@ -1,6 +1,7 @@
 "use client";
 
 import { httpApis } from "@/managers/http";
+import { useWsContext } from "@/managers/ws";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -17,12 +18,12 @@ const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
 const FriendsPage = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
-  
+  const { ws } = useWsContext();
+
   useEffect(() => {
     (async () => {
-      const TOKEN = localStorage.getItem("token");
-      const Bearer_TOKEN = `Bearer ${TOKEN}`;
-      const data = await httpApis.getFriends(Bearer_TOKEN);
+      const token = localStorage.getItem("token")!;
+      const data = await httpApis.getFriends(token);
 
       if (!data) return;
 
@@ -31,23 +32,29 @@ const FriendsPage = () => {
   }, []);
 
   const handleFrndReq = async (id: string, status: FriendRequestStatus) => {
-    const TOKEN = localStorage.getItem("token");
-    const Bearer_TOKEN = `Bearer ${TOKEN}`;
+    const token = localStorage.getItem("token")!;
 
     setFriends((prev) =>
       prev.map((usr) => (usr.otherId === id ? { ...usr, status } : usr)),
     );
 
-    const res = await httpApis.acceptFriendReq(
-      { status, to: id },
-      Bearer_TOKEN,
-    );
+    const res = await httpApis.acceptFriendReq({ status, to: id }, token);
 
     if (!res) {
       setFriends((prev) =>
         prev.map((usr) =>
           usr.otherId === id ? { ...usr, status: "PENDING" } : usr,
         ),
+      );
+      return;
+    }
+
+    if (status === "ACCEPTED" && res) {
+      ws?.send(
+        JSON.stringify({
+          type: "FRIEND_REQUEST_ACCEPT",
+          payload: { to: id },
+        }),
       );
     }
   };

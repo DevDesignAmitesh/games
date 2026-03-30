@@ -4,8 +4,6 @@ import { IconType } from "react-icons";
 export type popupType =
   | "play"
   | "download"
-  | "login"
-  | "signup"
   | "login-action"
   | "signup-action";
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { Games } from "@/components/games";
 import { LivePlayers } from "@/components/liveplayers";
 

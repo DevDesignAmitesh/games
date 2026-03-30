@@ -13,14 +13,12 @@ const server = new WebSocketServer({ port: 8080 });
 
 type ExtendedWs = WebSocket & TokenPayload;
 
-redisManager.subscribe("online_users");
-
 server.on("connection", async (ws: ExtendedWs, req) => {
   ws.on("error", console.error);
 
   const token = req.url?.split("?token=")[1];
   if (!token) return;
-  
+
   const decoded = verifyToken(token);
   if (!decoded) return;
 
@@ -36,11 +34,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     id: userId,
     username: user.userName,
   });
-    
-  redisManager.publish("online_users", {
-    type: "online_users",
-  });
-  
+
   console.log("connection done");
 
   ws.on("message", async (data) => {
@@ -53,8 +47,26 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       return;
     }
 
+    console.log("data from client ", parsedData);
+
     if (parsedData.type === "ping") {
       ws.send(JSON.stringify({ status: "pong" }));
+    }
+
+    if (parsedData.type === "SUBSCRIBE_ONLINE_USERS") {
+      redisManager.subscribe(ws.userId, "online_users");
+
+      redisManager.publish("online_users", {
+        type: "online_users",
+      });
+    }
+
+    if (parsedData.type === "UNSUBSCRIBE_ONLINE_USERS") {
+      redisManager.unsubscribe(ws.userId, "online_users");
+
+      redisManager.publish("online_users", {
+        type: "online_users",
+      });
     }
 
     if (
@@ -112,7 +124,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         players: [{ ...requestedBy, joinedAt: new Date() }],
       });
 
-      redisManager.subscribe(`bodmas:game:${bodmasGame.id}`);
+      redisManager.subscribe(ws.userId, `bodmas:game:${bodmasGame.id}`);
 
       redisManager.publish("online_users", {
         type: parsedData.type,
@@ -209,7 +221,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       redisManager.releaseLock(key);
 
-      redisManager.subscribe(`bodmas:game:${bodmasGame.id}`);
+      redisManager.subscribe(ws.userId, `bodmas:game:${bodmasGame.id}`);
 
       const counter = bodmasgameManager.getQsCounter(gameId, ws.userId) || 0;
       bodmasgameManager.setQsCounter(gameId, ws.userId, counter);
@@ -427,8 +439,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
   ws.on("close", () => {
     console.log("connection left");
     userManager.removeUser(userId);
-
-    redisManager.unsubscribe();
 
     redisManager.publish("online_users", {
       type: "online_users",

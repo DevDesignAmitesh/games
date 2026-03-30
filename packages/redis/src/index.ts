@@ -7,6 +7,9 @@ class RedisManager {
   private subscriber: RedisClientType;
   private publisher: RedisClientType;
 
+  // userId-roomName && roomName
+  private privateSubs: Map<string, string> = new Map();
+
   private constructor() {
     this.client = createClient();
     this.subscriber = createClient();
@@ -28,9 +31,19 @@ class RedisManager {
     return RedisManager.instance;
   }
 
-  subscribe = async (key: string) => {
+  subscribe = async (userId: string, key: string) => {
+    const findKey = `${userId}-${key}`;
+
+    const alreadySub = this.privateSubs.has(findKey);
+    if (alreadySub) return;
+
+    this.privateSubs.set(findKey, key);
     await this.subscriber.subscribe(key, (message, channel) => {
       const parsedData = JSON.parse(message);
+
+      console.log("channel ", channel);
+      console.log("data ", parsedData);
+
       if (channel === "online_users") {
         const isOnlineType = parsedData.type === "online_users";
         const users = userManager.users;
@@ -53,7 +66,7 @@ class RedisManager {
           } else {
             users.forEach((usr) => {
               if (!usr.ws || usr.status !== "IDOL") return;
-              if (usr.id === parsedData.from.id) return;
+              if (usr.id === parsedData.payload.from.id) return;
               usr.ws.send(message);
             });
           }
@@ -61,7 +74,9 @@ class RedisManager {
           parsedData.type === "FRIEND_REQUEST_SEND" ||
           parsedData.type === "FRIEND_REQUEST_ACCEPT"
         ) {
-          const user = users.find((usr) => usr.id === parsedData.to);
+          const { to } = parsedData.payload;
+
+          const user = users.find((usr) => usr.id === to);
           if (!user || !user.ws) return;
 
           user.ws.send(message);
@@ -75,8 +90,8 @@ class RedisManager {
 
         game.players.forEach((plr) => {
           if (!plr.ws) return;
-
           plr.ws.send(message);
+          this.unsubscribe(plr.id, channel);
         });
       }
     });
@@ -84,19 +99,22 @@ class RedisManager {
 
   publish = async (channel: string, message: any) => {
     await this.publisher.publish(channel, JSON.stringify(message));
-  }
+  };
 
-  unsubscribe = async (channel?: string) => {
+  unsubscribe = async (userId: string, channel: string) => {
+    const findKey = `${userId}-${channel}`;
+    this.privateSubs.delete(findKey);
+
     await this.subscriber.unsubscribe(channel);
-  }
+  };
 
   lock = async (key: string, value: string) => {
     return this.client.SETNX(key, value);
-  }
+  };
 
   set = async (key: string, data: any, ttl?: number) => {
     if (ttl) {
-      await this.client.SETEX(key, ttl, data)
+      await this.client.SETEX(key, ttl, data);
     } else {
       await this.client.set(key, JSON.stringify(data));
     }
@@ -110,11 +128,11 @@ class RedisManager {
 
   del = async (key: string) => {
     await this.client.del(key);
-  }
+  };
 
   releaseLock = async (key: string) => {
     await this.client.DEL(key);
-  }
+  };
 }
 
 export const redisManager = RedisManager.getInstance();
