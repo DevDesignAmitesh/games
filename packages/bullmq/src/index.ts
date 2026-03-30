@@ -20,10 +20,7 @@ class BullmqManager {
       { connection: BullmqManager.getConnection() },
     );
 
-    worker.on("completed", (job) => {
-      console.log("job completed ", job.id);
-      console.log("job completed ", job.data);
-    });
+    worker.on("completed", (job) => {});
   }
 
   private static getConnection() {
@@ -42,7 +39,6 @@ class BullmqManager {
 
   // delay = mili-seconds
   push = async (key: string, data: RedisPushData, delay?: number) => {
-    console.log("pushing in queue");
     await this.queue.add(key, data, {
       delay: delay ? delay : undefined,
     });
@@ -50,7 +46,6 @@ class BullmqManager {
 
   // id is from bull mq => 1, 2, 3, so on...
   private handler = async (data: RedisPushData, id?: string) => {
-    console.log("processing data ", JSON.stringify(data));
     if (data.type === "BODMAS_GAME_ACCEPT") {
       const { acceptedBy, createdBy, gameId, startTime, endTime } =
         data.payload;
@@ -160,7 +155,6 @@ class BullmqManager {
       });
 
       if (!existingQuestion) {
-        console.log("existing questions no found");
         return;
       }
 
@@ -207,13 +201,6 @@ class BullmqManager {
     if (data.type === "TRACK_BODMAS_GAME") {
       const { gameId } = data.payload;
 
-      const bodmasGame = await prisma.bodmasGame.findFirst({
-        where: { id: gameId },
-        include: { players: true },
-      });
-
-      if (!bodmasGame) return;
-
       await prisma.$transaction(async (tx) => {
         const updatedGame = await tx.bodmasGame.update({
           where: { id: gameId },
@@ -258,6 +245,7 @@ class BullmqManager {
               };
             });
           }),
+          results: [],
         };
 
         // TODO: if the game is ended then there is no need to keep data in memory
@@ -265,7 +253,7 @@ class BullmqManager {
 
         bodmasgameManager.clearGame(latestGame);
 
-        for (let [_idx, plr] of bodmasGame.players.entries()) {
+        for (let [_idx, plr] of updatedGame.players.entries()) {
           await tx.user.update({
             where: { id: plr.userId },
             data: { status: "IDOL" },
@@ -276,7 +264,7 @@ class BullmqManager {
           let correctAnswers = 0;
           let incorrectAnswers = 0;
 
-          const answers = await prisma.bodmasGameUserAnswer.findMany({
+          const answers = await tx.bodmasGameUserAnswer.findMany({
             where: { gameId, userId: plr.userId },
           });
 
@@ -300,6 +288,7 @@ class BullmqManager {
 
       redisManager.publish(`bodmas:game:${gameId}`, {
         type: "BODMAS_GAME_ENDS",
+        payload: { gameId },
       });
     }
   };

@@ -41,13 +41,9 @@ class RedisManager {
     await this.subscriber.subscribe(key, (message, channel) => {
       const parsedData = JSON.parse(message);
 
-      console.log("channel ", channel);
-      console.log("data ", parsedData);
-
       if (channel === "online_users") {
         const isOnlineType = parsedData.type === "online_users";
         const users = userManager.users;
-        console.log("users.length ", users.length);
         if (
           parsedData.type === "online_users" ||
           parsedData.type === "BODMAS_GAME_REQUEST"

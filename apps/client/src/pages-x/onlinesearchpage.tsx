@@ -9,7 +9,7 @@ const OnlineSearchPage = () => {
   
   const cancelSearch = () => {
     // todo: send to delete the game from db
-    router.back();
+    // router.back();
   };
 
   return (

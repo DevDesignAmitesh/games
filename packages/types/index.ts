@@ -29,7 +29,7 @@ export const createGameSchema = z.object({
 export type CreateGameSchema = z.infer<typeof createGameSchema>;
 
 export const findFriendsSchema = z.object({
-  input: z.string()
+  input: z.string(),
 });
 export type FindFriendSchema = z.infer<typeof findFriendsSchema>;
 
@@ -110,6 +110,14 @@ export interface BoadMasGame extends BodmasGame {
     userId: string;
     startTime?: Date | undefined;
     orderIndex: number;
+  }[];
+  results: {
+    gameId: string;
+    id: string;
+    questionId: string;
+    userId: string;
+    correctAnswers: number;
+    incorrectAnswers: number;
   }[];
 }
 

@@ -80,7 +80,7 @@ class BodmasGameManager {
     return BodmasGameManager.instance;
   }
 
-  create_update_game(data: BoadMasGame) {
+  create_update_game(data: BoadMasGame) {    
     this.games.set(data.id, data);
   }
 

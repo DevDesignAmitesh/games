@@ -18,6 +18,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import { getProfile } from "./services/getProfile";
 import { findFriends } from "./services/findFriends";
+import { getGame } from "./services/getGame";
 
 const app = express();
 const PORT = 4000;
@@ -88,6 +89,8 @@ app.get(
   findFriends,
 );
 
-app.get("/results/:gameId", auth, getResults);
+app.get("/game/results/:gameId", auth, getResults);
+
+app.get("/game/:gameId", auth, getGame);
 
 app.listen(PORT, () => console.log("code is running at ", PORT));

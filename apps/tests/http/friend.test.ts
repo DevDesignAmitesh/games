@@ -73,7 +73,6 @@ describe("POST /friend-request/accept", () => {
       { headers: { Authorization: `Bearer ${user2.token}` }, validateStatus: () => true },
     );
 
-    console.log("res.data.message ", res.data.message);
     expect(res.status).toBe(400);
     expect(res.data.message).toBe("friend request already accepted");
   });

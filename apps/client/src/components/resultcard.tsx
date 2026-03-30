@@ -1,5 +1,8 @@
+"use client";
+
 import { useCallback, useMemo } from "react";
 import { GreenButton } from "./buttons";
+import { useRouter } from "next/navigation";
 
 export const ResultCard = ({
   player1,
@@ -29,6 +32,8 @@ export const ResultCard = ({
   const total2 = useMemo(() => {
     return player2.correct + player2.wrong;
   }, [player2]);
+  
+  const router = useRouter();
   
   return (
     <div className="w-full h-screen bg-neutral-900 flex justify-center items-center text-white">
@@ -119,7 +124,7 @@ export const ResultCard = ({
 
         {/* HOME BUTTON */}
         <div className="w-full py-6 text-center">
-          <GreenButton onClick={() => {}} label="Back to home" />
+          <GreenButton onClick={() => router.push("/home")} label="Back to home" />
         </div>
       </div>
     </div>

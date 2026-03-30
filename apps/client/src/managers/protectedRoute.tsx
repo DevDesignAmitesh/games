@@ -13,7 +13,6 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     (async () => {
-      console.log("running");
       const token = localStorage.getItem("token");
       const username = localStorage.getItem("username");
 
@@ -21,11 +20,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
         setLoading(false);
         router.push("/");
         return;
-      }
-
-      console.log("token", token)
-      console.log("username", username)
-      
+      }      
 
       const res = await httpApis.getProfile(token, username);
 
@@ -34,8 +29,6 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
         router.push("/");
         return;
       }
-
-      console.log("pathName", pathName);
 
       if (pathName === "/") {
         router.push("/home");

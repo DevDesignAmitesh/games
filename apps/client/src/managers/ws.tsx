@@ -1,6 +1,7 @@
 "use client";
 
 import { User } from "@repo/types/types";
+import { useRouter } from "next/navigation";
 import React, {
   createContext,
   Dispatch,
@@ -10,11 +11,35 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { toast } from "sonner";
 
 type WSContextType = {
   liveUsers: User[];
   ws: WebSocket | null;
   setToken: Dispatch<SetStateAction<string | null>>;
+  question: BodmasQuestion | null;
+  results: Result[];
+  timeLimit: number;
+  me: User | null;
+  opponent: User | null;
+};
+
+export type BodmasQuestion = {
+  id: string;
+  operation: "ADD" | "SUB" | "MUL" | "DIV";
+  operand1: number;
+  operand2: number;
+  answer: number;
+  createdAt: Date;
+};
+
+export type Result = {
+  gameId: string;
+  id: string;
+  questionId: string;
+  userId: string;
+  correctAnswers: number;
+  incorrectAnswers: number;
 };
 
 const WebSocketContext = createContext<WSContextType | null>(null);
@@ -30,30 +55,27 @@ export const WebSocketProvider = ({
   const WS_URL = "ws://localhost:8080";
   const [token, setToken] = useState<string | null>(null);
 
+  const router = useRouter();
+
   useEffect(() => {
     setToken(localStorage.getItem("token"));
   }, []);
 
   const [liveUsers, setLiveUsers] = useState<User[]>([]);
+  const [question, setQuestion] = useState<BodmasQuestion | null>(null);
+  const [me, setMe] = useState<User | null>(null);
+  const [opponent, setOpponent] = useState<User | null>(null);
+  const [results, setResults] = useState<Result[]>([]);
+  const [timeLimit, setTimeLimit] = useState<number>(0);
 
   useEffect(() => {
     if (!token) return;
-    console.log("connecting to ws", token);
-
     const ws = new WebSocket(`${WS_URL}?token=${token}`);
     wsRef.current = ws;
-
-    console.log("runningg");
-
-    ws.onopen = () => {
-      console.log("ws connected");
-    };
 
     ws.onmessage = (event) => {
       try {
         const parsedData = JSON.parse(event.data);
-
-        console.log("data from ws ", parsedData);
 
         const { type, payload } = parsedData;
 
@@ -61,32 +83,93 @@ export const WebSocketProvider = ({
           const { users } = payload;
           setLiveUsers(users);
         }
+
+        if (type === "FRIEND_REQUEST_SEND") {
+          const { from } = payload;
+
+          toast.info(`${from.name ?? "someone"} sends you friend request`, {
+            action: {
+              onClick: () => router.push("/friends"),
+              label: "View",
+            },
+          });
+        }
+
+        if (type === "FRIEND_REQUEST_ACCEPT") {
+          const { from } = payload;
+
+          toast.info(`${from.name ?? "someone"} accepts you friend request`, {
+            action: {
+              onClick: () => router.push("/friends"),
+              label: "View",
+            },
+          });
+        }
+
+        if (type === "BODMAS_GAME_REQUEST") {
+          const { from, gameId } = payload;
+
+          toast.info(`${from.name ?? "someone"} wants to play a game`, {
+            action: {
+              onClick: () =>
+                ws.send(
+                  JSON.stringify({
+                    type: "BODMAS_GAME_ACCEPT",
+                    payload: { gameId, createdBy: from.id },
+                  }),
+                ),
+              label: "Accept",
+            },
+          });
+        }
+
+        if (type === "BODMAS_GAME_ROUND_STARTED") {
+          const { question, gameId, me, opponent, results, timeLimit } =
+            payload;
+
+          setQuestion(question);
+          setMe(me);
+          setOpponent(opponent);
+          setResults(results);
+          setTimeLimit(timeLimit);
+          router.push(`/game/${gameId}`);
+        }
+
+        if (type === "BODMAS_GAME_ANSWER") {
+          const { question, gameId, me, opponent, results, timeLimit } =
+            payload;
+
+          setQuestion(question);
+          setMe(me);
+          setOpponent(opponent);
+          setResults(results);
+          setTimeLimit(timeLimit);
+        }
+
+        if (type === "BODMAS_GAME_ENDS") {
+          const { gameId } = payload;
+          router.push(`/game/${gameId}/result`);
+        }
       } catch {
-        console.log("Invalid WS message");
       }
     };
 
-    ws.onerror = (err) => {
-      console.log("ws error", err);
-    };
-
     return () => {
-      console.log("ws is closed");
       ws.close();
     };
   }, [token]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const ws = wsRef.current;
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     const ws = wsRef.current;
 
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "ping" }));
-      }
-    }, 10 * 1000);
+  //     if (ws && ws.readyState === WebSocket.OPEN) {
+  //       ws.send(JSON.stringify({ type: "ping" }));
+  //     }
+  //   }, 10 * 1000);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   useEffect(() => {
     const interval = setTimeout(() => {
@@ -106,6 +189,11 @@ export const WebSocketProvider = ({
         liveUsers,
         ws: wsRef.current,
         setToken,
+        question,
+        results,
+        timeLimit,
+        opponent,
+        me,
       }}
     >
       {children}

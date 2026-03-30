@@ -41,8 +41,6 @@ const SearchFriendsPage = () => {
     (async () => {
       const data = await httpApis.findFriends(token, debouncedQuery);
 
-      console.log("data ", data);
-
       if (!data) return;
 
       setResults(data);

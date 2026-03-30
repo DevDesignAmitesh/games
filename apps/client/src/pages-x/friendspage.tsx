@@ -65,8 +65,6 @@ const FriendsPage = () => {
         <h1 className="text-white text-xl font-semibold">Friends</h1>
 
         {friends.map((friend) => {
-          console.log("friends ", friend);
-
           return (
             <div
               key={friend.otherId}

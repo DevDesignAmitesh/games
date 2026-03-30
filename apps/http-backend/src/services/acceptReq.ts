@@ -9,10 +9,6 @@ export const acceptReq = async (
   try {
     const { userId } = req.user;
     const { to, status } = req.body;
-    console.log(
-      "extracting req.body, req.user ",
-      JSON.stringify({ ...req.user, ...req.body }),
-    );
 
     const friendToBe = await prisma.user.findFirst({
       where: { id: to },
@@ -41,7 +37,6 @@ export const acceptReq = async (
       });
     }
 
-    console.log("updating friends req status");
     await prisma.friendsMapUser.update({
       where: { id: isReqExist.id },
       data: {

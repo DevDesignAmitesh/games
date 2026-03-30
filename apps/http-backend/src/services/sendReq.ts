@@ -9,10 +9,6 @@ export const sendReq = async (
   try {
     const { to } = req.body;
     const { userId } = req.user;
-    console.log(
-      "extracting req.body and req.user ",
-      JSON.stringify({ ...req.body, ...req.user }),
-    );
 
     const friendToBe = await prisma.user.findFirst({
       where: { id: to },
@@ -58,8 +54,6 @@ export const sendReq = async (
       }
     }
 
-    console.log("creating friend request");
-
     await prisma.friendsMapUser.create({
       data: {
         receiverId: to,
@@ -72,7 +66,6 @@ export const sendReq = async (
       .status(201)
       .json({ message: "friend request sent successfully", to });
   } catch (e) {
-    console.log("error in sendreq ", e);
     return res.status(500).json({ message: "something went wrong" });
   }
 };

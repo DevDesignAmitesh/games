@@ -3,6 +3,7 @@
 import axios from "axios";
 import {
   AcceptFriendReqSchema,
+  CreateGameSchema,
   FriendReqSchema,
   RegisterSchemaInput,
   acceptFriendReqSchema,
@@ -13,7 +14,6 @@ import {
 import { toast } from "sonner";
 
 const HTTP_URL = "http://localhost:4000";
-
 
 export const httpApis = {
   register: async (
@@ -49,7 +49,7 @@ export const httpApis = {
 
     if (!success) {
       toast.error(zodErrorMessage({ error }));
-      return false
+      return false;
     }
 
     const res = await axios.post(`${HTTP_URL}/friend-request/send`, data, {
@@ -82,7 +82,7 @@ export const httpApis = {
 
     if (res.status <= 201) {
       toast.success(res.data.message ?? "Registration successfull");
-      return true      
+      return true;
     }
 
     toast.error(res.data.message ?? "something went wrong");
@@ -128,6 +128,46 @@ export const httpApis = {
     });
 
     if (res.status <= 201) return res.data.users;
+
+    return null;
+  },
+
+  createGame: async (
+    input: CreateGameSchema,
+    token: string,
+    handleSuccess: (gameId: string) => void,
+  ) => {
+    const res = await axios.post(`${HTTP_URL}/create-game`, input, {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: () => true,
+    });
+
+    if (res.status === 201) {
+      handleSuccess(res.data.gameId);
+      return;
+    }
+
+    toast.error(res.data.message ?? "something went wrong");
+  },
+
+  getGame: async (gameId: string, token: string) => {
+    const res = await axios.get(`${HTTP_URL}/game/${gameId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: () => true,
+    });
+
+    if (res.status === 200) return res.data;
+
+    return null;
+  },
+
+  getResults: async (gameId: string, token: string) => {
+    const res = await axios.get(`${HTTP_URL}/game/results/${gameId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: () => true,
+    });
+
+    if (res.status === 200) return res.data;
 
     return null;
   },

@@ -41,8 +41,6 @@ const ProfilePage = ({ username }: { username: string | null }) => {
   const getData = async (token: string, username: string) => {
     const data = await httpApis.getProfile(token, username);
 
-    console.log("profile data ", data);
-
     if (!data) {
       router.push("/404");
       return;
@@ -67,7 +65,6 @@ const ProfilePage = ({ username }: { username: string | null }) => {
   };
 
   const sendFriendReq = async (token: string | null, username: string | null) => {
-    console.log(status);
     if (!token) return;
     if (!username) return;
     if (myusername === username) return;

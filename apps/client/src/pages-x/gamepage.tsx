@@ -1,25 +1,62 @@
 "use client";
 
 import { GreenInput } from "@/components/inputs";
-import { useCallback, useMemo, useState } from "react";
+import { httpApis } from "@/managers/http";
+import { BodmasQuestion, Result, useWsContext } from "@/managers/ws";
+import { User } from "@repo/types/types";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-const GamePage = () => {
+const GamePage = ({ gameId }: { gameId: string }) => {
   const [answer, setAnswer] = useState<string>("");
   const [ansStatus, setAnsStatus] = useState<"correct" | "wrong" | "default">(
     "default",
   );
-  const correctAnswer = "8";
 
-  const compareAnswer = useCallback(
-    (input: string) => {
-      if (input.trim() === correctAnswer) setAnsStatus("correct");
-      if (input.trim() !== correctAnswer) setAnsStatus("wrong");
-      if (!input.trim().length) setAnsStatus("default");
+  const { question, me, timeLimit, results, opponent, ws } = useWsContext();
 
-      setAnswer(input);
-    },
-    [correctAnswer],
+  const [restData, setRestData] = useState<{
+    question: BodmasQuestion | null;
+    me: User | null;
+    opponent: User | null;
+    results: Result[];
+    timeLimit: number;
+  }>({
+    question: null,
+    me: null,
+    opponent: null,
+    results: [],
+    timeLimit: 65,
+  });
+
+  const meResult = results.find((rsl) => rsl.userId === me?.id);
+  const oppsResult = results.find((rsl) => rsl.userId !== me?.id);
+
+  const getInitial = useCallback(
+    (name: string) => name.charAt(0).toUpperCase(),
+    [me, opponent],
   );
+
+  const correctAnswer = String(question!.answer);
+
+  const compareAnswer = (input: string) => {
+    if (input.trim() === correctAnswer) {
+      ws?.send(
+        JSON.stringify({
+          type: "BODMAS_GAME_ANSWER",
+          payload: {
+            questionId: question?.id,
+            gameId,
+            answer: Number(input.trim()),
+          },
+        }),
+      );
+      setAnsStatus("correct");
+    }
+    if (input.trim() !== correctAnswer) setAnsStatus("wrong");
+    if (!input.trim().length) setAnsStatus("default");
+
+    setAnswer(input);
+  };
 
   const statusUI = useMemo(() => {
     switch (ansStatus) {
@@ -34,6 +71,33 @@ const GamePage = () => {
 
   const { icon } = statusUI;
 
+  const [secondsLeft, setSecondsLeft] = useState(timeLimit ?? 65);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      setSecondsLeft((prevTime) => prevTime - 1);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [secondsLeft]);
+
+  useEffect(() => {
+    (async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await httpApis.getGame(gameId, token);
+
+      if (!res) return;
+
+      setRestData(res);
+    })();
+  }, []);
+
   return (
     <div className="w-full h-screen bg-neutral-900 flex justify-center items-center">
       <div className="w-full h-full max-w-md mx-auto flex flex-col justify-center items-center">
@@ -45,26 +109,28 @@ const GamePage = () => {
               <div className="flex items-center justify-center gap-2">
                 {/* avatar */}
                 <div className="w-10 h-10 rounded-md bg-purple-600 flex items-center justify-center text-white font-semibold">
-                  A
+                  {getInitial(me?.username ?? "R")}
                 </div>
 
                 {/* name + rating */}
                 <div className="flex flex-col leading-tight">
-                  <p className="text-sm text-white font-medium">You</p>
+                  <p className="text-sm text-white font-medium">
+                    {me?.username}
+                  </p>
                   <p className="text-xs text-neutral-400">896</p>
                 </div>
               </div>
 
               {/* score */}
               <div className="flex justify-center items-center px-6 py-1 rounded-md bg-neutral-800 text-white text-sm">
-                <p>4</p>
+                <p>{meResult?.correctAnswers}</p>
               </div>
             </div>
 
             {/* CENTER TIMER */}
             <div className="flex items-center gap-2">
               <div className="px-4 py-1 rounded-full bg-neutral-800 text-cyan-400 text-sm font-medium">
-                ⏱ 00:35
+                {secondsLeft}
               </div>
             </div>
 
@@ -73,19 +139,21 @@ const GamePage = () => {
               <div className="flex items-center gap-2">
                 {/* name + rating */}
                 <div className="flex flex-col leading-tight text-right">
-                  <p className="text-sm text-white font-medium">maya...</p>
+                  <p className="text-sm text-white font-medium">
+                    {opponent?.username}
+                  </p>
                   <p className="text-xs text-neutral-400">996</p>
                 </div>
 
                 {/* avatar */}
                 <div className="w-10 h-10 rounded-md border border-pink-500 flex items-center justify-center text-white font-semibold bg-neutral-700">
-                  M
+                  {getInitial(opponent?.username ?? "R")}
                 </div>
               </div>
 
               {/* score */}
               <div className="flex justify-center items-center px-6 py-1 rounded-md bg-neutral-800 text-white text-sm">
-                <p>4</p>
+                <p>{oppsResult?.correctAnswers}</p>
               </div>
             </div>
           </div>
@@ -98,10 +166,10 @@ const GamePage = () => {
           {/* content */}
           <div className="w-full z-10 h-full flex justify-center items-center text-3xl font-semibold text-neutral-50">
             <div className="flex justify-center items-end gap-2">
-              <p>+</p>
+              <p>{question?.operation === "ADD" && "+"}</p>
               <div className="flex flex-col">
-                <p>2</p>
-                <p>3</p>
+                <p>{question?.operand1}</p>
+                <p>{question?.operand2}</p>
               </div>
             </div>
           </div>

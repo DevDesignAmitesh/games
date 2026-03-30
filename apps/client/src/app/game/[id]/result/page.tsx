@@ -7,5 +7,5 @@ export default async function profile({
 }) {
   const id = (await params).id;
 
-  return <ResultPage />;
+  return <ResultPage gameId={id} />;
 }

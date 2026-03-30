@@ -9,7 +9,7 @@ export const getResults = async (req: Request, res: Response) => {
       where: { gameId },
       include: {
         user: {
-          select: { userName: true },
+          select: { userName: true, id: true, status: true },
         },
       },
     });
@@ -20,9 +20,12 @@ export const getResults = async (req: Request, res: Response) => {
       });
     }
 
-    return res.json({ results });
+    const player1 = results[0];
+    const player2 = results[0];
+
+    return res.json({ player1, player2 });
   } catch (e) {
     console.log("error in get results ", e);
-    return res.status(500).json({ message: "something went wrong" })
+    return res.status(500).json({ message: "something went wrong" });
   }
 };

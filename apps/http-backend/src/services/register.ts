@@ -10,19 +10,15 @@ export const register = async (
 ) => {
   try {
     const { email, password } = req.body;
-    console.log("extracting req.body ", JSON.stringify(req.body));
 
     const exitingUser = await prisma.user.findFirst({ where: { email } });
 
     if (exitingUser) {
-      console.log("existing user found");
       const isPasswordSame = await compareFn(password, exitingUser.password);
 
       if (!isPasswordSame) {
         return res.status(411).json({ message: "wrong password" });
       }
-
-      console.log("password is valid generating token");
 
       const token = signToken({ userId: exitingUser.id });
 
@@ -62,7 +58,6 @@ export const register = async (
       username: user.userName,
     });
   } catch (e) {
-    console.log("error in register ", e);
     return res.status(500).json({
       message: "something went wrong",
     });
