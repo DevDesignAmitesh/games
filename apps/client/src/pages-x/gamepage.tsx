@@ -11,49 +11,49 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   const [ansStatus, setAnsStatus] = useState<"correct" | "wrong" | "default">(
     "default",
   );
+  const [correctAnswer, setCorrectAnswer] = useState<number>(0);
 
-  const { question, me, timeLimit, results, opponent, ws } = useWsContext();
+  const { question, me, timeLimit, oppsResult, opponent, ws, meResult } =
+    useWsContext();
 
   const [restData, setRestData] = useState<{
     question: BodmasQuestion | null;
     me: User | null;
     opponent: User | null;
-    results: Result[];
+    meResult: Result | null;
+    oppsResult: Result | null;
     timeLimit: number;
   }>({
     question: null,
     me: null,
     opponent: null,
-    results: [],
+    meResult: null,
+    oppsResult: null,
     timeLimit: 65,
   });
-
-  const meResult = results.find((rsl) => rsl.userId === me?.id);
-  const oppsResult = results.find((rsl) => rsl.userId !== me?.id);
 
   const getInitial = useCallback(
     (name: string) => name.charAt(0).toUpperCase(),
     [me, opponent],
   );
 
-  const correctAnswer = String(question!.answer);
-
   const compareAnswer = (input: string) => {
-    if (input.trim() === correctAnswer) {
+    const userAns = Number(input.trim());
+    if (userAns === correctAnswer) {
       ws?.send(
         JSON.stringify({
           type: "BODMAS_GAME_ANSWER",
           payload: {
             questionId: question?.id,
             gameId,
-            answer: Number(input.trim()),
+            answer: Number(userAns),
           },
         }),
       );
       setAnsStatus("correct");
     }
-    if (input.trim() !== correctAnswer) setAnsStatus("wrong");
-    if (!input.trim().length) setAnsStatus("default");
+    if (userAns !== correctAnswer) setAnsStatus("wrong");
+    if (!userAns.toString().length) setAnsStatus("default");
 
     setAnswer(input);
   };
@@ -71,12 +71,12 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
   const { icon } = statusUI;
 
-  const [secondsLeft, setSecondsLeft] = useState(timeLimit ?? 65);
+  const [endTime, setEndTime] = useState<number | null>(null);
+
+  const [secondsLeft, setSecondsLeft] = useState(endTime ?? 0);
 
   useEffect(() => {
-    if (secondsLeft <= 0) {
-      return;
-    }
+    if (secondsLeft <= 0) return;
 
     const intervalId = setInterval(() => {
       setSecondsLeft((prevTime) => prevTime - 1);
@@ -86,6 +86,14 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   }, [secondsLeft]);
 
   useEffect(() => {
+    setEndTime(restData.timeLimit?.valueOf() ?? 65);
+  }, [restData]);
+
+  useEffect(() => {
+    setCorrectAnswer(question!.answer);
+  }, [question]);
+
+  useEffect(() => {
     (async () => {
       const token = localStorage.getItem("token");
       if (!token) return;
@@ -93,6 +101,8 @@ const GamePage = ({ gameId }: { gameId: string }) => {
       const res = await httpApis.getGame(gameId, token);
 
       if (!res) return;
+
+      console.log("data from get game ", res);
 
       setRestData(res);
     })();
@@ -109,13 +119,13 @@ const GamePage = ({ gameId }: { gameId: string }) => {
               <div className="flex items-center justify-center gap-2">
                 {/* avatar */}
                 <div className="w-10 h-10 rounded-md bg-purple-600 flex items-center justify-center text-white font-semibold">
-                  {getInitial(me?.username ?? "R")}
+                  {getInitial(restData.me?.username ?? "R")}
                 </div>
 
                 {/* name + rating */}
                 <div className="flex flex-col leading-tight">
                   <p className="text-sm text-white font-medium">
-                    {me?.username}
+                    {restData.me?.username!}
                   </p>
                   <p className="text-xs text-neutral-400">896</p>
                 </div>
@@ -123,7 +133,11 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
               {/* score */}
               <div className="flex justify-center items-center px-6 py-1 rounded-md bg-neutral-800 text-white text-sm">
-                <p>{meResult?.correctAnswers}</p>
+                <p>
+                  {meResult?.correctAnswers ??
+                    restData.meResult?.correctAnswers ??
+                    0}
+                </p>
               </div>
             </div>
 
@@ -140,20 +154,24 @@ const GamePage = ({ gameId }: { gameId: string }) => {
                 {/* name + rating */}
                 <div className="flex flex-col leading-tight text-right">
                   <p className="text-sm text-white font-medium">
-                    {opponent?.username}
+                    {restData.opponent?.username}
                   </p>
                   <p className="text-xs text-neutral-400">996</p>
                 </div>
 
                 {/* avatar */}
                 <div className="w-10 h-10 rounded-md border border-pink-500 flex items-center justify-center text-white font-semibold bg-neutral-700">
-                  {getInitial(opponent?.username ?? "R")}
+                  {getInitial(restData.opponent?.username ?? "R")}
                 </div>
               </div>
 
               {/* score */}
               <div className="flex justify-center items-center px-6 py-1 rounded-md bg-neutral-800 text-white text-sm">
-                <p>{oppsResult?.correctAnswers}</p>
+                <p>
+                  {oppsResult?.correctAnswers ??
+                    restData.oppsResult?.correctAnswers ??
+                    0}
+                </p>
               </div>
             </div>
           </div>
@@ -166,10 +184,10 @@ const GamePage = ({ gameId }: { gameId: string }) => {
           {/* content */}
           <div className="w-full z-10 h-full flex justify-center items-center text-3xl font-semibold text-neutral-50">
             <div className="flex justify-center items-end gap-2">
-              <p>{question?.operation === "ADD" && "+"}</p>
+              <p>{(question?.operation === "ADD" || restData?.question?.operation === "ADD") && "+"}</p>
               <div className="flex flex-col">
-                <p>{question?.operand1}</p>
-                <p>{question?.operand2}</p>
+                <p>{question?.operand1 ?? restData?.question?.operand1}</p>
+                <p>{question?.operand2 ?? restData?.question?.operand2}</p>
               </div>
             </div>
           </div>

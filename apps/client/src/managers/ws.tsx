@@ -18,8 +18,9 @@ type WSContextType = {
   ws: WebSocket | null;
   setToken: Dispatch<SetStateAction<string | null>>;
   question: BodmasQuestion | null;
-  results: Result[];
-  timeLimit: number;
+  oppsResult: Result | null;
+  meResult: Result | null;
+  timeLimit: Date | null;
   me: User | null;
   opponent: User | null;
 };
@@ -65,8 +66,9 @@ export const WebSocketProvider = ({
   const [question, setQuestion] = useState<BodmasQuestion | null>(null);
   const [me, setMe] = useState<User | null>(null);
   const [opponent, setOpponent] = useState<User | null>(null);
-  const [results, setResults] = useState<Result[]>([]);
-  const [timeLimit, setTimeLimit] = useState<number>(0);
+  const [oppsResult, setOppsResults] = useState<Result | null>(null);
+  const [meResult, setMeResults] = useState<Result | null>(null);
+  const [timeLimit, setTimeLimit] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -76,6 +78,8 @@ export const WebSocketProvider = ({
     ws.onmessage = (event) => {
       try {
         const parsedData = JSON.parse(event.data);
+
+        console.log("parsed data ", parsedData);
 
         const { type, payload } = parsedData;
 
@@ -124,34 +128,33 @@ export const WebSocketProvider = ({
         }
 
         if (type === "BODMAS_GAME_ROUND_STARTED") {
-          const { question, gameId, me, opponent, results, timeLimit } =
-            payload;
+          const { question, gameId } = payload;
 
           setQuestion(question);
-          setMe(me);
-          setOpponent(opponent);
-          setResults(results);
-          setTimeLimit(timeLimit);
           router.push(`/game/${gameId}`);
         }
 
-        if (type === "BODMAS_GAME_ANSWER") {
-          const { question, gameId, me, opponent, results, timeLimit } =
-            payload;
+        if (type === "BODMAS_GAME_DATA") {
+          const { me, opponent, oppsResult, meResult, timeLimit } = payload;
 
-          setQuestion(question);
           setMe(me);
           setOpponent(opponent);
-          setResults(results);
           setTimeLimit(timeLimit);
+          setOppsResults(oppsResult);
+          setMeResults(meResult);
+        }
+
+        if (type === "BODMAS_GAME_ANSWER") {
+          const { question } = payload;
+
+          setQuestion(question);
         }
 
         if (type === "BODMAS_GAME_ENDS") {
           const { gameId } = payload;
           router.push(`/game/${gameId}/result`);
         }
-      } catch {
-      }
+      } catch {}
     };
 
     return () => {
@@ -190,10 +193,11 @@ export const WebSocketProvider = ({
         ws: wsRef.current,
         setToken,
         question,
-        results,
         timeLimit,
         opponent,
         me,
+        oppsResult,
+        meResult,
       }}
     >
       {children}

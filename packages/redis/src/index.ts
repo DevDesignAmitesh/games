@@ -87,7 +87,6 @@ class RedisManager {
         game.players.forEach((plr) => {
           if (!plr.ws) return;
           plr.ws.send(message);
-          this.unsubscribe(plr.id, channel);
         });
       }
     });

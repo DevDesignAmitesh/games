@@ -154,9 +154,7 @@ class BullmqManager {
         },
       });
 
-      if (!existingQuestion) {
-        return;
-      }
+      if (!existingQuestion) return;
 
       const existingAnswer = await prisma.bodmasGameUserAnswer.findUnique({
         where: {
@@ -193,6 +191,43 @@ class BullmqManager {
             gameId: answer.gameId,
             userId: answer.userId,
             questionId: existingQuestion.id,
+          },
+        });
+      }
+
+      const existingResult = await prisma.bodmasGameResult.findUnique({
+        where: {
+          gameId_userId: {
+            gameId: answer.gameId,
+            userId: answer.userId,
+          },
+        },
+      });
+
+      if (existingResult) {
+        await prisma.bodmasGameResult.update({
+          where: {
+            gameId_userId: {
+              gameId: answer.gameId,
+              userId: answer.userId,
+            },
+          },
+          data: {
+            incorrectAnswers: answer.isCorrect
+              ? existingResult.incorrectAnswers
+              : { increment: 1 },
+            correctAnswers: answer.isCorrect
+              ? { increment: 1 }
+              : existingResult.correctAnswers,
+          },
+        });
+      } else {
+        await prisma.bodmasGameResult.create({
+          data: {
+            userId: answer.userId,
+            gameId: answer.gameId,
+            incorrectAnswers: answer.isCorrect ? 0 : 1,
+            correctAnswers: answer.isCorrect ? 1 : 0,
           },
         });
       }
@@ -275,8 +310,18 @@ class BullmqManager {
               incorrectAnswers += 1;
             }
           }
-          await tx.bodmasGameResult.create({
-            data: {
+          await tx.bodmasGameResult.upsert({
+            where: {
+              gameId_userId: {
+                gameId,
+                userId: plr.userId,
+              },
+            },
+            update: {
+              correctAnswers,
+              incorrectAnswers,
+            },
+            create: {
               gameId,
               userId: plr.userId,
               correctAnswers,

@@ -17,27 +17,37 @@ class BodmasGameManager {
   // questionId-userId and answers at (for calculating the response from the user of a particular ques.)
   questionTiming: Map<string, number>;
 
+  // gameid:questionId:userId
+  questionAnswer: Map<string, boolean>;
+
   private constructor(games: BoadMasGame[]) {
-    this.games = new Map(games.map((gm) => [gm.id, gm]));
-    this.inmemoryQuestions = new Map(games.map((gm) => [gm.id, gm.questions]));
-    this.questionCounter = new Map(
-      games.flatMap((gm) =>
-        gm.players.map((plr) => [
-          `${gm.id}-${plr.id}`,
-          plr.questionCounter || 0,
-        ]),
-      ),
-    );
-    this.questionTiming = new Map(
-      games.flatMap((gm) =>
-        gm.players.flatMap((plr) =>
-          gm.gameQuestions.map((qs) => [
-            `${qs.questionId}-${plr.id}`,
-            plr.questionCounter || 0,
-          ]),
-        ),
-      ),
-    );
+    this.games = new Map();
+    this.inmemoryQuestions = new Map();
+    this.questionCounter = new Map();
+    this.questionTiming = new Map();
+    this.questionAnswer = new Map();
+
+    // TODO: have to look into it and then will do it properly
+    // this.games = new Map(games.map((gm) => [gm.id, gm]));
+    // this.inmemoryQuestions = new Map(games.map((gm) => [gm.id, gm.questions]));
+    // this.questionCounter = new Map(
+    //   games.flatMap((gm) =>
+    //     gm.players.map((plr) => [
+    //       `${gm.id}-${plr.id}`,
+    //       plr.questionCounter || 0,
+    //     ]),
+    //   ),
+    // );
+    // this.questionTiming = new Map(
+    //   games.flatMap((gm) =>
+    //     gm.players.flatMap((plr) =>
+    //       gm.gameQuestions.map((qs) => [
+    //         `${qs.questionId}-${plr.id}`,
+    //         qs.startTime?.valueOf() || 0,
+    //       ]),
+    //     ),
+    //   ),
+    // );
   }
 
   updateGame(game: BoadMasGame) {
@@ -80,7 +90,7 @@ class BodmasGameManager {
     return BodmasGameManager.instance;
   }
 
-  create_update_game(data: BoadMasGame) {    
+  create_update_game(data: BoadMasGame) {
     this.games.set(data.id, data);
   }
 
@@ -118,6 +128,28 @@ class BodmasGameManager {
   delQsTimer(questionId: string, userId: string) {
     const key = `${questionId}:${userId}`;
     return this.questionTiming.delete(key);
+  }
+
+  // gameid:questionId:userId
+  getQuestionAnswer(gameId: string, questionId: string, userId: string) {
+    const key = `${gameId}-${questionId}-${userId}`;
+    return this.questionAnswer.get(key);
+  }
+
+  // gameid:questionId:userId
+  setQuestionAnswer(
+    gameId: string,
+    questionId: string,
+    userId: string,
+    val: boolean,
+  ) {
+    const key = `${gameId}:${questionId}:${userId}`;
+    return this.questionAnswer.set(key, val);
+  }
+
+  getTrueAndFalseValue() {
+    // TODO: fix this onlyyy
+    bodmasgameManager;
   }
 }
 

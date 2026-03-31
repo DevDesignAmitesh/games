@@ -44,6 +44,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       return;
     }
 
+    console.log("parsed data ", parsedData);
+
     if (parsedData.type === "ping") {
       ws.send(JSON.stringify({ status: "pong" }));
     }
@@ -51,7 +53,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     if (parsedData.type === "SUBSCRIBE_ONLINE_USERS") {
       redisManager.subscribe(ws.userId, "online_users");
 
-      redisManager.publish("online_users", {
+      await redisManager.publish("online_users", {
         type: "online_users",
       });
     }
@@ -59,7 +61,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     if (parsedData.type === "UNSUBSCRIBE_ONLINE_USERS") {
       redisManager.unsubscribe(ws.userId, "online_users");
 
-      redisManager.publish("online_users", {
+      await redisManager.publish("online_users", {
         type: "online_users",
       });
     }
@@ -75,7 +77,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       if (!receiver || !sender) return;
 
-      redisManager.publish("online_users", {
+      await redisManager.publish("online_users", {
         type: parsedData.type,
         payload: {
           to,
@@ -122,7 +124,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       redisManager.subscribe(ws.userId, `bodmas:game:${bodmasGame.id}`);
 
-      redisManager.publish("online_users", {
+      await redisManager.publish("online_users", {
         type: parsedData.type,
         payload: {
           from: {
@@ -226,6 +228,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       const counter = bodmasgameManager.getQsCounter(gameId, ws.userId) || 0;
       bodmasgameManager.setQsCounter(gameId, ws.userId, counter);
+      bodmasgameManager.setQsCounter(gameId, creator.id, counter);
       // this counter should be updated in db's game table
 
       const randomQuestions = generateRandomQuesions();
@@ -238,6 +241,12 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       bodmasgameManager.setQsTimer(
         question.id,
         ws.userId,
+        questionStartTime.valueOf(),
+      );
+
+      bodmasgameManager.setQsTimer(
+        question.id,
+        creator.id,
         questionStartTime.valueOf(),
       );
       // this start time should also be updated in db's questions table
@@ -274,22 +283,30 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         bodmasGameFromDb.timeLimit * 1000 + 5000, // with some buffer time while syncing
       );
 
-      redisManager.publish(`bodmas:game:${latestGame.id}`, {
+      await redisManager.publish(`bodmas:game:${latestGame.id}`, {
         type: "BODMAS_GAME_ROUND_STARTED",
         payload: {
           question,
           gameId,
+        },
+      });
+
+      await redisManager.publish(`bodmas:game:${latestGame.id}`, {
+        type: "BODMAS_GAME_DATA",
+        payload: {
           me: latestGame.players.find((usr) => usr.id === ws.userId),
           opponent: latestGame.players.find((usr) => usr.id !== ws.userId),
-          results: latestGame.results,
-          timeLimit: latestGame.timeLimit + 5, // sending 65 seconds instead of 60 sec
+          oppsResults: latestGame.results.find(
+            (rsl) => rsl.userId !== ws.userId,
+          ),
+          meResults: latestGame.results.find((rsl) => rsl.userId === ws.userId),
+          timeLimit: latestGame.endTime,
         },
       });
     }
 
     if (parsedData.type === "BODMAS_GAME_ANSWER") {
       const { gameId, questionId, answer } = parsedData.payload;
-
       const game = await prisma.bodmasGame.findFirst({
         where: { id: gameId },
       });
@@ -297,6 +314,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       const presentGame = bodmasgameManager.games.get(game.id);
       if (!presentGame) return;
+
+      console.log(1);
 
       if (
         presentGame.status === "CANCELLED" ||
@@ -322,10 +341,13 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       );
 
       const isResultExists = presentGame.results.find(
-        (ans) => ans.questionId == question.id && ans.userId === ws.userId,
+        (rsl) => rsl.questionId == question.id && rsl.userId === ws.userId,
       );
 
+      console.log(2);
+
       if (isAnswerExists && isResultExists) {
+        console.log(3);
         const isCorrect = question.answer === Number(answer);
 
         const updatedAnswer: BodmasGameUserAnswer = {
@@ -342,7 +364,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           (ans) => ans.id !== isAnswerExists.id,
         );
 
-        // update the db via worker
         bullmqManager.push("bodmas:game", {
           type: "BODMAS_GAME_ANSWER",
           payload: {
@@ -352,27 +373,38 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
         presentGame.answers = [...updatedAnswers, updatedAnswer];
 
-        let correctAnswers = 0;
-        let incorrectAnswers = 0;
-
-        for (let [_idx, ans] of presentGame.answers.entries()) {
-          if (ans.isCorrect) {
-            correctAnswers += 1;
-          } else {
-            incorrectAnswers += 1;
-          }
-        }
         const updatedResults = presentGame.results.filter(
           (rsl) => rsl.id !== isResultExists.id,
         );
 
+        for (let [_idx, ans] of presentGame.answers.entries()) {
+          bodmasgameManager.setQuestionAnswer(
+            ans.gameId,
+            ans.questionId,
+            ans.userId,
+            ans.isCorrect,
+          );
+        }
+
+        const values = Array.from(bodmasgameManager.questionAnswer.entries())
+          .filter(([key]) => key === `${gameId}:${questionId}:${ws.userId}`)
+          .map(([_, value]) => value);
+
+        const trueCount = values.filter((v) => v).length;
+        const falseCount = values.filter((v) => !v).length;
+
         presentGame.results = [
           ...updatedResults,
-          { ...isResultExists, correctAnswers, incorrectAnswers },
+          {
+            ...isResultExists,
+            correctAnswers: trueCount,
+            incorrectAnswers: falseCount,
+          },
         ];
 
         if (!isCorrect) return;
       } else {
+        console.log(4);
         const isCorrect = question.answer === Number(answer);
 
         const newAnswer: BodmasGameUserAnswer = {
@@ -390,21 +422,26 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
         presentGame.answers.push(newAnswer);
 
-        let correctAnswers = 0;
-        let incorrectAnswers = 0;
-
         for (let [_idx, ans] of presentGame.answers.entries()) {
-          if (ans.isCorrect) {
-            correctAnswers += 1;
-          } else {
-            incorrectAnswers += 1;
-          }
+          bodmasgameManager.setQuestionAnswer(
+            ans.gameId,
+            ans.questionId,
+            ans.userId,
+            ans.isCorrect,
+          );
         }
+
+        const values = Array.from(bodmasgameManager.questionAnswer.entries())
+          .filter(([key]) => key ===`${gameId}:${questionId}:${ws.userId}`)
+          .map(([_, value]) => value);
+
+        const trueCount = values.filter((v) => v).length;
+        const falseCount = values.filter((v) => !v).length;
 
         presentGame.results.push({
           id: crypto.randomUUID(),
-          incorrectAnswers,
-          correctAnswers,
+          incorrectAnswers: falseCount,
+          correctAnswers: trueCount,
           gameId,
           questionId,
           userId: ws.userId,
@@ -421,6 +458,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         });
         if (!isCorrect) return;
       }
+
+      console.log(5);
 
       let counter = bodmasgameManager.getQsCounter(gameId, ws.userId);
       if (counter === undefined) return;
@@ -448,6 +487,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         startTime: questionStartTime,
       });
 
+      console.log(6);
+
       bullmqManager.push("bodmas:game", {
         type: "START_BODMAS_GAME",
         payload: {
@@ -460,26 +501,41 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         },
       });
 
+      console.log(7);
+
       ws.send(
         JSON.stringify({
           type: "BODMAS_GAME_ROUND_STARTED",
           payload: {
             question: nextQuestion,
             gameId,
-            me: presentGame.players.find((usr) => usr.id === ws.userId),
-            opponent: presentGame.players.find((usr) => usr.id !== ws.userId),
-            results: presentGame.results,
-            timeLimit: presentGame.timeLimit + 5, // sending 65 seconds instead of 60 sec
           },
         }),
       );
+
+      console.log("presentGame ", presentGame);
+
+      await redisManager.publish(`bodmas:game:${gameId}`, {
+        type: "BODMAS_GAME_DATA",
+        payload: {
+          me: presentGame.players.find((usr) => usr.id === ws.userId),
+          opponent: presentGame.players.find((usr) => usr.id !== ws.userId),
+          oppsResults: presentGame.results.find(
+            (rsl) => rsl.userId !== ws.userId,
+          ),
+          meResults: presentGame.results.find(
+            (rsl) => rsl.userId === ws.userId,
+          ),
+          timeLimit: presentGame.endTime,
+        },
+      });
     }
   });
 
-  ws.on("close", () => {
+  ws.on("close", async () => {
     userManager.removeUser(userId);
 
-    redisManager.publish("online_users", {
+    await redisManager.publish("online_users", {
       type: "online_users",
     });
   });
