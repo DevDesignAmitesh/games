@@ -18,7 +18,7 @@ const HTTP_URL = "http://localhost:4000";
 export const httpApis = {
   register: async (
     input: RegisterSchemaInput,
-    handleSuccess: (token: string, username: string) => void,
+    handleSuccess: (token: string, username: string, userId: string) => void,
   ) => {
     const { success, data, error } = registerSchema.safeParse(input);
 
@@ -33,7 +33,7 @@ export const httpApis = {
 
     if (res.status <= 201) {
       toast.success(res.data.message ?? "Registration successfull");
-      handleSuccess(res.data.token, res.data.username);
+      handleSuccess(res.data.token, res.data.username, res.data.userId);
       return;
     }
 

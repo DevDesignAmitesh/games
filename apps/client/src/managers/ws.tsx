@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingScreen } from "@/components/loadingScreen";
 import { User } from "@repo/types/types";
 import { useRouter } from "next/navigation";
 import React, {
@@ -18,11 +19,9 @@ type WSContextType = {
   ws: WebSocket | null;
   setToken: Dispatch<SetStateAction<string | null>>;
   question: BodmasQuestion | null;
-  oppsResult: Result | null;
-  meResult: Result | null;
+  results: Result[];
   timeLimit: Date | null;
-  me: User | null;
-  opponent: User | null;
+  players: User[];
 };
 
 export type BodmasQuestion = {
@@ -50,30 +49,34 @@ export const WebSocketProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  if (typeof window === "undefined") return;
-
   const wsRef = useRef<WebSocket | null>(null);
   const WS_URL = "ws://localhost:8080";
   const [token, setToken] = useState<string | null>(null);
 
   const router = useRouter();
 
+  const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
-    setToken(localStorage.getItem("token"));
+    const token = localStorage.getItem("token");
+    setToken(token);
+    setIsReady(true);
   }, []);
 
   const [liveUsers, setLiveUsers] = useState<User[]>([]);
   const [question, setQuestion] = useState<BodmasQuestion | null>(null);
-  const [me, setMe] = useState<User | null>(null);
-  const [opponent, setOpponent] = useState<User | null>(null);
-  const [oppsResult, setOppsResults] = useState<Result | null>(null);
-  const [meResult, setMeResults] = useState<Result | null>(null);
+  const [players, setPlayers] = useState<User[]>([]);
+  const [results, setResults] = useState<Result[]>([]);
   const [timeLimit, setTimeLimit] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!token) return;
     const ws = new WebSocket(`${WS_URL}?token=${token}`);
     wsRef.current = ws;
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
+    };
 
     ws.onmessage = (event) => {
       try {
@@ -135,13 +138,11 @@ export const WebSocketProvider = ({
         }
 
         if (type === "BODMAS_GAME_DATA") {
-          const { me, opponent, oppsResult, meResult, timeLimit } = payload;
+          const { results, timeLimit, players } = payload;
 
-          setMe(me);
-          setOpponent(opponent);
           setTimeLimit(timeLimit);
-          setOppsResults(oppsResult);
-          setMeResults(meResult);
+          setResults(results);
+          setPlayers(players);
         }
 
         if (type === "BODMAS_GAME_ANSWER") {
@@ -162,6 +163,8 @@ export const WebSocketProvider = ({
     };
   }, [token]);
 
+  if (!isReady) return <LoadingScreen />;
+
   // useEffect(() => {
   //   const interval = setInterval(() => {
   //     const ws = wsRef.current;
@@ -174,17 +177,17 @@ export const WebSocketProvider = ({
   //   return () => clearInterval(interval);
   // }, []);
 
-  useEffect(() => {
-    const interval = setTimeout(() => {
-      const ws = wsRef.current;
+  // useEffect(() => {
+  //   const interval = setTimeout(() => {
+  //     const ws = wsRef.current;
 
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
-      }
-    }, 2 * 1000);
+  //     if (ws && ws.readyState === WebSocket.OPEN) {
+  //       ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
+  //     }
+  //   }, 2 * 1000);
 
-    return () => clearTimeout(interval);
-  }, []);
+  //   return () => clearTimeout(interval);
+  // }, []);
 
   return (
     <WebSocketContext.Provider
@@ -194,10 +197,8 @@ export const WebSocketProvider = ({
         setToken,
         question,
         timeLimit,
-        opponent,
-        me,
-        oppsResult,
-        meResult,
+        players,
+        results,
       }}
     >
       {children}

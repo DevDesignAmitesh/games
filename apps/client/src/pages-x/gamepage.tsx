@@ -13,24 +13,33 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   );
   const [correctAnswer, setCorrectAnswer] = useState<number>(0);
 
-  const { question, me, timeLimit, oppsResult, opponent, ws, meResult } =
-    useWsContext();
+  const { question, players, timeLimit, ws, results } = useWsContext();
 
-  const [restData, setRestData] = useState<{
-    question: BodmasQuestion | null;
-    me: User | null;
-    opponent: User | null;
-    meResult: Result | null;
-    oppsResult: Result | null;
-    timeLimit: number;
-  }>({
-    question: null,
-    me: null,
-    opponent: null,
-    meResult: null,
-    oppsResult: null,
-    timeLimit: 65,
-  });
+  const userId = useMemo(() => localStorage.getItem("userId"), []);
+
+  const isMe = (id: string) => id === userId;
+
+  const me = players.find((p) => isMe(p.id)) ?? null;
+  const opponent = players.find((p) => !isMe(p.id)) ?? null;
+
+  const meResults = results.find((r) => isMe(r.userId)) ?? null;
+  const oppsResults = results.find((r) => !isMe(r.userId)) ?? null;
+
+  // const [restData, setRestData] = useState<{
+  //   question: BodmasQuestion | null;
+  //   me: User | null;
+  //   opponent: User | null;
+  //   meResult: Result | null;
+  //   oppsResult: Result | null;
+  //   timeLimit: number;
+  // }>({
+  //   question: null,
+  //   me: null,
+  //   opponent: null,
+  //   meResult: null,
+  //   oppsResult: null,
+  //   timeLimit: 65,
+  // });
 
   const getInitial = useCallback(
     (name: string) => name.charAt(0).toUpperCase(),
@@ -86,27 +95,32 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   }, [secondsLeft]);
 
   useEffect(() => {
-    setEndTime(restData.timeLimit?.valueOf() ?? 65);
-  }, [restData]);
+    if (timeLimit?.valueOf()) {
+      setEndTime(timeLimit?.valueOf() - Date.now());
+    }
+    setEndTime(65);
+  }, []);
 
   useEffect(() => {
     setCorrectAnswer(question!.answer);
   }, [question]);
 
-  useEffect(() => {
-    (async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+  // TODO: go slowly and read the whole codee.... and then slove it properlyyy
 
-      const res = await httpApis.getGame(gameId, token);
+  // useEffect(() => {
+  //   (async () => {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) return;
 
-      if (!res) return;
+  //     const res = await httpApis.getGame(gameId, token);
 
-      console.log("data from get game ", res);
+  //     if (!res) return;
 
-      setRestData(res);
-    })();
-  }, []);
+  //     console.log("data from get game ", res);
+
+  //     setRestData(res);
+  //   })();
+  // }, []);
 
   return (
     <div className="w-full h-screen bg-neutral-900 flex justify-center items-center">
@@ -119,13 +133,13 @@ const GamePage = ({ gameId }: { gameId: string }) => {
               <div className="flex items-center justify-center gap-2">
                 {/* avatar */}
                 <div className="w-10 h-10 rounded-md bg-purple-600 flex items-center justify-center text-white font-semibold">
-                  {getInitial(restData.me?.username ?? "R")}
+                  {getInitial(me?.username ?? "R")}
                 </div>
 
                 {/* name + rating */}
                 <div className="flex flex-col leading-tight">
                   <p className="text-sm text-white font-medium">
-                    {restData.me?.username!}
+                    {me?.username!}
                   </p>
                   <p className="text-xs text-neutral-400">896</p>
                 </div>
@@ -134,9 +148,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
               {/* score */}
               <div className="flex justify-center items-center px-6 py-1 rounded-md bg-neutral-800 text-white text-sm">
                 <p>
-                  {meResult?.correctAnswers ??
-                    restData.meResult?.correctAnswers ??
-                    0}
+                  {meResults?.correctAnswers ?? meResults?.correctAnswers ?? 0}
                 </p>
               </div>
             </div>
@@ -154,22 +166,22 @@ const GamePage = ({ gameId }: { gameId: string }) => {
                 {/* name + rating */}
                 <div className="flex flex-col leading-tight text-right">
                   <p className="text-sm text-white font-medium">
-                    {restData.opponent?.username}
+                    {opponent?.username}
                   </p>
                   <p className="text-xs text-neutral-400">996</p>
                 </div>
 
                 {/* avatar */}
                 <div className="w-10 h-10 rounded-md border border-pink-500 flex items-center justify-center text-white font-semibold bg-neutral-700">
-                  {getInitial(restData.opponent?.username ?? "R")}
+                  {getInitial(opponent?.username ?? "R")}
                 </div>
               </div>
 
               {/* score */}
               <div className="flex justify-center items-center px-6 py-1 rounded-md bg-neutral-800 text-white text-sm">
                 <p>
-                  {oppsResult?.correctAnswers ??
-                    restData.oppsResult?.correctAnswers ??
+                  {oppsResults?.correctAnswers ??
+                    oppsResults?.correctAnswers ??
                     0}
                 </p>
               </div>
@@ -184,10 +196,10 @@ const GamePage = ({ gameId }: { gameId: string }) => {
           {/* content */}
           <div className="w-full z-10 h-full flex justify-center items-center text-3xl font-semibold text-neutral-50">
             <div className="flex justify-center items-end gap-2">
-              <p>{(question?.operation === "ADD" || restData?.question?.operation === "ADD") && "+"}</p>
+              <p>{question?.operation === "ADD" && "+"}</p>
               <div className="flex flex-col">
-                <p>{question?.operand1 ?? restData?.question?.operand1}</p>
-                <p>{question?.operand2 ?? restData?.question?.operand2}</p>
+                <p>{question?.operand1}</p>
+                <p>{question?.operand2}</p>
               </div>
             </div>
           </div>

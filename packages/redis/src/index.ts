@@ -7,9 +7,6 @@ class RedisManager {
   private subscriber: RedisClientType;
   private publisher: RedisClientType;
 
-  // userId-roomName && roomName
-  private privateSubs: Map<string, string> = new Map();
-
   private constructor() {
     this.client = createClient();
     this.subscriber = createClient();
@@ -32,12 +29,6 @@ class RedisManager {
   }
 
   subscribe = async (userId: string, key: string) => {
-    const findKey = `${userId}-${key}`;
-
-    const alreadySub = this.privateSubs.has(findKey);
-    if (alreadySub) return;
-
-    this.privateSubs.set(findKey, key);
     await this.subscriber.subscribe(key, (message, channel) => {
       const parsedData = JSON.parse(message);
 
@@ -98,8 +89,6 @@ class RedisManager {
 
   unsubscribe = async (userId: string, channel: string) => {
     const findKey = `${userId}-${channel}`;
-    this.privateSubs.delete(findKey);
-
     await this.subscriber.unsubscribe(channel);
   };
 

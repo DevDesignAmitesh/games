@@ -11,8 +11,6 @@ export const ProfilePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
 
-  const { ws } = useWsContext();
-  
   
   const getData = async () => {
     const token = localStorage.getItem("token");
@@ -30,7 +28,8 @@ export const ProfilePopup = () => {
 
   const logout = () => {
     localStorage.removeItem("token");
-    ws?.close();
+    localStorage.removeItem("userId");
+    localStorage.removeItem("username");
     window.location.replace("/")
   };
 

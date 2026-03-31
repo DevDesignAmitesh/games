@@ -17,7 +17,7 @@ class BullmqManager {
       async (job) => {
         this.handler(job.data, job.id);
       },
-      { connection: BullmqManager.getConnection() },
+      { connection: BullmqManager.getConnection(), concurrency: 1 },
     );
 
     worker.on("completed", (job) => {});
@@ -104,11 +104,9 @@ class BullmqManager {
 
       await prisma.$transaction(async (tx) => {
         if (questions) {
-          for (let [idx, qs] of questions.entries()) {
-            await tx.bodmasQuestion.create({
-              data: qs,
-            });
-          }
+          await tx.bodmasQuestion.createMany({
+            data: questions,
+          });
         }
 
         await tx.bodmasGameQuestion.upsert({
@@ -256,37 +254,36 @@ class BullmqManager {
           },
         });
 
-        const latestGame: BoadMasGame = {
-          ...updatedGame,
-          players: updatedGame.players.map((plr) => {
-            return {
-              id: plr.userId,
-              username: plr.user.userName,
-              status: plr.user.status,
-              questionCounter: plr.questionCounter,
-            };
-          }),
-          questions: updatedGame.questions.map((qs) => {
-            return qs.question;
-          }),
-          gameQuestions: updatedGame.questions.flatMap((qs) => {
-            return qs.userAnswer.map((usr) => {
-              return {
-                gameId: qs.gameId,
-                questionId: qs.questionId,
-                userId: usr.userId,
-                startTime: qs.startTime ? qs.startTime : undefined,
-                orderIndex: qs.orderIndex,
-              };
-            });
-          }),
-          results: [],
-        };
+        // const latestGame: BoadMasGame = {
+        //   ...updatedGame,
+        //   players: updatedGame.players.map((plr) => {
+        //     return {
+        //       id: plr.userId,
+        //       username: plr.user.userName,
+        //       status: plr.user.status,
+        //       questionCounter: plr.questionCounter,
+        //     };
+        //   }),
+        //   questions: updatedGame.questions.map((qs) => {
+        //     return qs.question;
+        //   }),
+        //   gameQuestions: updatedGame.questions.flatMap((qs) => {
+        //     return qs.userAnswer.map((usr) => {
+        //       return {
+        //         gameId: qs.gameId,
+        //         questionId: qs.questionId,
+        //         userId: usr.userId,
+        //         startTime: qs.startTime ? qs.startTime : undefined,
+        //         orderIndex: qs.orderIndex,
+        //       };
+        //     });
+        //   }),
+        //   results: [],
+        // };
 
         // TODO: if the game is ended then there is no need to keep data in memory
         // bodmasgameManager.updateGame(latestGame);
-
-        bodmasgameManager.clearGame(latestGame);
+        // bodmasgameManager.clearGame(latestGame);
 
         for (let [_idx, plr] of updatedGame.players.entries()) {
           await tx.user.update({
@@ -296,20 +293,15 @@ class BullmqManager {
 
           userManager.update(plr.userId, { status: "IDOL" });
 
-          let correctAnswers = 0;
-          let incorrectAnswers = 0;
+          const [correctAnswers, incorrectAnswers] = await Promise.all([
+            tx.bodmasGameUserAnswer.count({
+              where: { gameId, userId: plr.userId, isCorrect: true },
+            }),
+            tx.bodmasGameUserAnswer.count({
+              where: { gameId, userId: plr.userId, isCorrect: false },
+            }),
+          ]);
 
-          const answers = await tx.bodmasGameUserAnswer.findMany({
-            where: { gameId, userId: plr.userId },
-          });
-
-          for (let [_idx, ans] of answers.entries()) {
-            if (ans.isCorrect) {
-              correctAnswers += 1;
-            } else {
-              incorrectAnswers += 1;
-            }
-          }
           await tx.bodmasGameResult.upsert({
             where: {
               gameId_userId: {

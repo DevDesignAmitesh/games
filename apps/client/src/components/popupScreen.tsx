@@ -37,9 +37,10 @@ export const PopupScreen = ({
   };
 
   const handleAuth = () => {
-    httpApis.register(formdata, (token, username) => {
+    httpApis.register(formdata, (token, username, userId) => {
       localStorage.setItem("token", token);
       localStorage.setItem("username", username);
+      localStorage.setItem("userId", userId);
       setToken(token)
       router.push("/home");
     });

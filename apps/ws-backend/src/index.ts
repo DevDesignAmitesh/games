@@ -186,7 +186,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       // idempotency ( already joined )
       if (bodmasGame.players.some((plr) => plr.id === ws.userId)) return;
 
-      const gameStartTime = new Date(); // some buffer time while sync
+      const gameStartTime = new Date();
       const gameEndTime = new Date(
         gameStartTime.valueOf() + bodmasGame.timeLimit * 1000,
       ); // some buffer time while sync
@@ -294,12 +294,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       await redisManager.publish(`bodmas:game:${latestGame.id}`, {
         type: "BODMAS_GAME_DATA",
         payload: {
-          me: latestGame.players.find((usr) => usr.id === ws.userId),
-          opponent: latestGame.players.find((usr) => usr.id !== ws.userId),
-          oppsResults: latestGame.results.find(
-            (rsl) => rsl.userId !== ws.userId,
-          ),
-          meResults: latestGame.results.find((rsl) => rsl.userId === ws.userId),
+          players: latestGame.players,
+          results: latestGame.results,
           timeLimit: latestGame.endTime,
         },
       });
@@ -513,19 +509,11 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         }),
       );
 
-      console.log("presentGame ", presentGame);
-
       await redisManager.publish(`bodmas:game:${gameId}`, {
         type: "BODMAS_GAME_DATA",
         payload: {
-          me: presentGame.players.find((usr) => usr.id === ws.userId),
-          opponent: presentGame.players.find((usr) => usr.id !== ws.userId),
-          oppsResults: presentGame.results.find(
-            (rsl) => rsl.userId !== ws.userId,
-          ),
-          meResults: presentGame.results.find(
-            (rsl) => rsl.userId === ws.userId,
-          ),
+          players: presentGame.players,
+          results: presentGame.results,
           timeLimit: presentGame.endTime,
         },
       });
