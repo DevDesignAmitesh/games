@@ -8,9 +8,7 @@ import { User } from "@repo/types/types";
 import { useEffect, useState } from "react";
 
 const ResultPage = ({ gameId }: { gameId: string }) => {
-  const [me, setMe] = useState<(Result & { user: User }) | null>(
-    null,
-  );
+  const [me, setMe] = useState<(Result & { user: User }) | null>(null);
   const [opponent, setOpponent] = useState<(Result & { user: User }) | null>(
     null,
   );
@@ -21,30 +19,25 @@ const ResultPage = ({ gameId }: { gameId: string }) => {
       if (!token) return;
 
       const res = await httpApis.getResults(gameId, token);
-      console.log(res);
-
       if (!res) return;
-
-      console.log("res.player1");
-      console.log(res.player1.user);
 
       setMe(res.me);
       setOpponent(res.opponent);
     })();
   }, [gameId]);
 
-if (!me || !opponent) return <LoadingScreen />;
+  if (!me || !opponent) return <LoadingScreen />;
 
   return (
     <div className="w-full h-screen bg-neutral-900 flex justify-center items-center">
       <ResultCard
-        player1={{
+        me={{
           name: me?.user?.username ?? "",
           score: me?.correctAnswers ?? 0,
           correct: me?.correctAnswers ?? 0,
           wrong: me?.incorrectAnswers ?? 0,
         }}
-        player2={{
+        opponent={{
           name: opponent?.user?.username ?? "",
           score: opponent?.correctAnswers ?? 0,
           correct: opponent?.correctAnswers ?? 0,
