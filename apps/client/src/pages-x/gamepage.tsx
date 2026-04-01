@@ -147,9 +147,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
               {/* score */}
               <div className="flex justify-center items-center px-6 py-1 rounded-md bg-neutral-800 text-white text-sm">
-                <p>
-                  {meResults?.correctAnswers ?? meResults?.correctAnswers ?? 0}
-                </p>
+                <p>{meResults?.correctAnswers ?? 0}</p>
               </div>
             </div>
 
@@ -179,11 +177,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
               {/* score */}
               <div className="flex justify-center items-center px-6 py-1 rounded-md bg-neutral-800 text-white text-sm">
-                <p>
-                  {oppsResults?.correctAnswers ??
-                    oppsResults?.correctAnswers ??
-                    0}
-                </p>
+                <p>{oppsResults?.correctAnswers ?? 0}</p>
               </div>
             </div>
           </div>

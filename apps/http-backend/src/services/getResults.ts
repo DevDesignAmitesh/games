@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 
 export const getResults = async (req: Request, res: Response) => {
   try {
+    const { userId } = req.user;
     const { gameId } = req.params as { gameId: string | undefined };
 
     const results = await prisma.bodmasGameResult.findMany({
@@ -20,10 +21,27 @@ export const getResults = async (req: Request, res: Response) => {
       });
     }
 
-    const player1 = results[0];
-    const player2 = results[0];
+    const me = results.find((rsl) => rsl.userId === userId)
+    const opponent = results.find((rsl) => rsl.userId !== userId)
 
-    return res.json({ player1, player2 });
+    const dataToSend = {
+      me: {
+        ...me,
+        user: {
+          username: me?.user.userName,
+          ...me?.user
+        }
+      },
+      opponent: {
+        ...opponent,
+        user: {
+          username: opponent?.user.userName,
+          ...opponent?.user
+        }
+      },
+    }
+
+    return res.json(dataToSend);
   } catch (e) {
     console.log("error in get results ", e);
     return res.status(500).json({ message: "something went wrong" });

@@ -82,6 +82,14 @@ export type BodmasGame = {
   updatedAt: Date;
 };
 
+export type GameResult = {
+  gameId: string;
+  id: string;
+  userId: string;
+  correctAnswers: number;
+  incorrectAnswers: number;
+};
+
 export interface BoadMasGame extends BodmasGame {
   players: Array<User & { joinedAt?: Date; questionCounter?: number }>;
   answers: {
@@ -111,14 +119,7 @@ export interface BoadMasGame extends BodmasGame {
     startTime?: Date | undefined;
     orderIndex: number;
   }[];
-  results: {
-    gameId: string;
-    id: string;
-    questionId: string;
-    userId: string;
-    correctAnswers: number;
-    incorrectAnswers: number;
-  }[];
+  results: GameResult[];
 }
 
 export type RedisPushData =

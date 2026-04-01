@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingScreen } from "@/components/loadingScreen";
 import { ResultCard } from "@/components/resultcard";
 import { httpApis } from "@/managers/http";
 import { Result } from "@/managers/ws";
@@ -7,10 +8,10 @@ import { User } from "@repo/types/types";
 import { useEffect, useState } from "react";
 
 const ResultPage = ({ gameId }: { gameId: string }) => {
-  const [player1, setPlayer1] = useState<{ user: User; result: Result } | null>(
+  const [me, setMe] = useState<(Result & { user: User }) | null>(
     null,
   );
-  const [player2, setPlayer2] = useState<{ user: User; result: Result } | null>(
+  const [opponent, setOpponent] = useState<(Result & { user: User }) | null>(
     null,
   );
 
@@ -20,28 +21,34 @@ const ResultPage = ({ gameId }: { gameId: string }) => {
       if (!token) return;
 
       const res = await httpApis.getResults(gameId, token);
+      console.log(res);
 
       if (!res) return;
 
-      setPlayer1(res.player1);
-      setPlayer2(res.player2);
+      console.log("res.player1");
+      console.log(res.player1.user);
+
+      setMe(res.me);
+      setOpponent(res.opponent);
     })();
-  }, []);
+  }, [gameId]);
+
+if (!me || !opponent) return <LoadingScreen />;
 
   return (
     <div className="w-full h-screen bg-neutral-900 flex justify-center items-center">
       <ResultCard
         player1={{
-          name: player1?.user.username ?? "",
-          score: player1?.result.correctAnswers ?? 0,
-          correct: player1?.result.correctAnswers ?? 0,
-          wrong: player1?.result.incorrectAnswers ?? 0,
+          name: me?.user?.username ?? "",
+          score: me?.correctAnswers ?? 0,
+          correct: me?.correctAnswers ?? 0,
+          wrong: me?.incorrectAnswers ?? 0,
         }}
         player2={{
-          name: player2?.user.username ?? "",
-          score: player1?.result.correctAnswers ?? 0,
-          correct: player1?.result.correctAnswers ?? 0,
-          wrong: player1?.result.incorrectAnswers ?? 0,
+          name: opponent?.user?.username ?? "",
+          score: opponent?.correctAnswers ?? 0,
+          correct: opponent?.correctAnswers ?? 0,
+          wrong: opponent?.incorrectAnswers ?? 0,
         }}
       />
     </div>

@@ -139,11 +139,10 @@ class BodmasGameManager {
   // gameid:questionId:userId
   setQuestionAnswer(
     gameId: string,
-    questionId: string,
     userId: string,
     val: boolean,
   ) {
-    const key = `${gameId}:${questionId}:${userId}`;
+    const key = `${gameId}:${userId}`;
     return this.questionAnswer.set(key, val);
   }
 

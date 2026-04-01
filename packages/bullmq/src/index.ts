@@ -47,6 +47,8 @@ class BullmqManager {
   // id is from bull mq => 1, 2, 3, so on...
   private handler = async (data: RedisPushData, id?: string) => {
     if (data.type === "BODMAS_GAME_ACCEPT") {
+      console.log("BODMAS_GAME_ACCEPT got called");
+      
       const { acceptedBy, createdBy, gameId, startTime, endTime } =
         data.payload;
 
@@ -67,11 +69,21 @@ class BullmqManager {
       if (bodmasGame.createdBy !== creator.id) return;
 
       await prisma.$transaction(async (tx) => {
-        await tx.bodmasGamePlayer.create({
-          data: {
+        await tx.bodmasGamePlayer.upsert({
+          where: {
+            bodmasGameId_userId: {
+              userId: acceptor.id,
+              bodmasGameId: bodmasGame.id,
+            }
+          },
+          create: {
             userId: acceptor.id,
             bodmasGameId: bodmasGame.id,
           },
+          update: {
+            userId: acceptor.id,
+            bodmasGameId: bodmasGame.id,
+          }
         });
 
         await tx.bodmasGame.update({
@@ -92,6 +104,7 @@ class BullmqManager {
     }
 
     if (data.type === "START_BODMAS_GAME") {
+      console.log("START_BODMAS_GAME got called")
       const {
         questionCounter,
         questions,
@@ -101,6 +114,10 @@ class BullmqManager {
         questionStartTime,
         orderIndex,
       } = data.payload;
+
+      console.log("data.payload")
+      console.log(data.payload)
+      
 
       await prisma.$transaction(async (tx) => {
         if (questions) {
@@ -126,14 +143,19 @@ class BullmqManager {
           },
         });
 
-        await tx.bodmasGamePlayer.update({
+        await tx.bodmasGamePlayer.upsert({
           where: {
             bodmasGameId_userId: {
               bodmasGameId: gameId,
               userId,
-            },
+            }
           },
-          data: {
+          create: {
+            questionCounter,
+            bodmasGameId: gameId,
+            userId,
+          },
+          update: {
             questionCounter,
           },
         });

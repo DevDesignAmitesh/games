@@ -74,9 +74,9 @@ export const WebSocketProvider = ({
     const ws = new WebSocket(`${WS_URL}?token=${token}`);
     wsRef.current = ws;
 
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
-    };
+    // ws.onopen = () => {
+    //   ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
+    // };
 
     ws.onmessage = (event) => {
       try {
@@ -163,8 +163,6 @@ export const WebSocketProvider = ({
     };
   }, [token]);
 
-  if (!isReady) return <LoadingScreen />;
-
   // useEffect(() => {
   //   const interval = setInterval(() => {
   //     const ws = wsRef.current;
@@ -177,18 +175,20 @@ export const WebSocketProvider = ({
   //   return () => clearInterval(interval);
   // }, []);
 
-  // useEffect(() => {
-  //   const interval = setTimeout(() => {
-  //     const ws = wsRef.current;
+  useEffect(() => {
+    const interval = setTimeout(() => {
+      const ws = wsRef.current;
 
-  //     if (ws && ws.readyState === WebSocket.OPEN) {
-  //       ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
-  //     }
-  //   }, 2 * 1000);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
+      }
+    }, 2 * 1000);
 
-  //   return () => clearTimeout(interval);
-  // }, []);
+    return () => clearTimeout(interval);
+  }, []);
 
+  if (!isReady) return <LoadingScreen />;
+  
   return (
     <WebSocketContext.Provider
       value={{

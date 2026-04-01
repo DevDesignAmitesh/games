@@ -2,7 +2,7 @@ import { WebSocketServer } from "ws";
 import { userManager } from "./userManager";
 import { verifyToken } from "@repo/common/common";
 import type { WebSocket } from "ws";
-import type { TokenPayload } from "@repo/types/types";
+import type { GameResult, TokenPayload } from "@repo/types/types";
 import { redisManager } from "@repo/redis/redis";
 import { prisma, type BodmasGameUserAnswer } from "@repo/db/db";
 import { bodmasgameManager } from "./gameManager";
@@ -191,7 +191,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         gameStartTime.valueOf() + bodmasGame.timeLimit * 1000,
       ); // some buffer time while sync
 
-      bullmqManager.push("bodmas:game", {
+      await bullmqManager.push("bodmas:game", {
         type: "BODMAS_GAME_ACCEPT",
         payload: {
           acceptedBy: acceptedBy.id,
@@ -261,7 +261,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       });
       // these questions are alread updated in db so on memory loss will get from the db
 
-      bullmqManager.push("bodmas:game", {
+      await bullmqManager.push("bodmas:game", {
         type: "START_BODMAS_GAME",
         payload: {
           userId: ws.userId,
@@ -274,7 +274,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         },
       });
 
-      bullmqManager.push(
+      await bullmqManager.push(
         "bodmas:game",
         {
           type: "TRACK_BODMAS_GAME",
@@ -336,13 +336,9 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         (ans) => ans.questionId == question.id && ans.userId === ws.userId,
       );
 
-      const isResultExists = presentGame.results.find(
-        (rsl) => rsl.questionId == question.id && rsl.userId === ws.userId,
-      );
-
       console.log(2);
 
-      if (isAnswerExists && isResultExists) {
+      if (isAnswerExists) {
         console.log(3);
         const isCorrect = question.answer === Number(answer);
 
@@ -360,7 +356,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           (ans) => ans.id !== isAnswerExists.id,
         );
 
-        bullmqManager.push("bodmas:game", {
+        await bullmqManager.push("bodmas:game", {
           type: "BODMAS_GAME_ANSWER",
           payload: {
             answer: updatedAnswer,
@@ -368,36 +364,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         });
 
         presentGame.answers = [...updatedAnswers, updatedAnswer];
-
-        const updatedResults = presentGame.results.filter(
-          (rsl) => rsl.id !== isResultExists.id,
-        );
-
-        for (let [_idx, ans] of presentGame.answers.entries()) {
-          bodmasgameManager.setQuestionAnswer(
-            ans.gameId,
-            ans.questionId,
-            ans.userId,
-            ans.isCorrect,
-          );
-        }
-
-        const values = Array.from(bodmasgameManager.questionAnswer.entries())
-          .filter(([key]) => key === `${gameId}:${questionId}:${ws.userId}`)
-          .map(([_, value]) => value);
-
-        const trueCount = values.filter((v) => v).length;
-        const falseCount = values.filter((v) => !v).length;
-
-        presentGame.results = [
-          ...updatedResults,
-          {
-            ...isResultExists,
-            correctAnswers: trueCount,
-            incorrectAnswers: falseCount,
-          },
-        ];
-
         if (!isCorrect) return;
       } else {
         console.log(4);
@@ -418,35 +384,10 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
         presentGame.answers.push(newAnswer);
 
-        for (let [_idx, ans] of presentGame.answers.entries()) {
-          bodmasgameManager.setQuestionAnswer(
-            ans.gameId,
-            ans.questionId,
-            ans.userId,
-            ans.isCorrect,
-          );
-        }
-
-        const values = Array.from(bodmasgameManager.questionAnswer.entries())
-          .filter(([key]) => key ===`${gameId}:${questionId}:${ws.userId}`)
-          .map(([_, value]) => value);
-
-        const trueCount = values.filter((v) => v).length;
-        const falseCount = values.filter((v) => !v).length;
-
-        presentGame.results.push({
-          id: crypto.randomUUID(),
-          incorrectAnswers: falseCount,
-          correctAnswers: trueCount,
-          gameId,
-          questionId,
-          userId: ws.userId,
-        });
-
         if (isCorrect) bodmasgameManager.delQsTimer(question.id, ws.userId);
 
         // create in the db via worker
-        bullmqManager.push("bodmas:game", {
+        await bullmqManager.push("bodmas:game", {
           type: "BODMAS_GAME_ANSWER",
           payload: {
             answer: newAnswer,
@@ -454,6 +395,41 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         });
         if (!isCorrect) return;
       }
+
+      const index = presentGame.results.findIndex(
+        (rsl) => rsl.gameId === gameId && rsl.userId === ws.userId,
+      );
+
+      if (index !== -1) {
+        const isCorrect = question.answer === Number(answer);
+
+        if (!presentGame.results[index]) {
+          console.log("presentGame.results[index] not found");
+          return;
+        }
+
+        presentGame.results[index] = {
+          ...presentGame.results[index],
+          correctAnswers: isCorrect
+            ? presentGame.results[index]!.correctAnswers + 1
+            : presentGame.results[index]!.correctAnswers,
+          incorrectAnswers: isCorrect
+            ? presentGame.results[index]!.incorrectAnswers
+            : presentGame.results[index]!.incorrectAnswers + 1,
+        };
+      } else {
+        const isCorrect = question.answer === Number(answer);
+
+        presentGame.results.push({
+          id: crypto.randomUUID(),
+          correctAnswers: isCorrect ? 1 : 0,
+          incorrectAnswers: isCorrect ? 0 : 1,
+          gameId,
+          userId: ws.userId,
+        });
+      }
+
+      console.log("presentGame.results ", presentGame.results);
 
       console.log(5);
 
@@ -485,7 +461,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       console.log(6);
 
-      bullmqManager.push("bodmas:game", {
+      await bullmqManager.push("bodmas:game", {
         type: "START_BODMAS_GAME",
         payload: {
           userId: ws.userId,
