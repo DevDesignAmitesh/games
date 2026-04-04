@@ -47,8 +47,6 @@ class BullmqManager {
   // id is from bull mq => 1, 2, 3, so on...
   private handler = async (data: RedisPushData, id?: string) => {
     if (data.type === "BODMAS_GAME_ACCEPT") {
-      console.log("BODMAS_GAME_ACCEPT got called");
-      
       const { acceptedBy, createdBy, gameId, startTime, endTime } =
         data.payload;
 
@@ -74,7 +72,7 @@ class BullmqManager {
             bodmasGameId_userId: {
               userId: acceptor.id,
               bodmasGameId: bodmasGame.id,
-            }
+            },
           },
           create: {
             userId: acceptor.id,
@@ -83,7 +81,7 @@ class BullmqManager {
           update: {
             userId: acceptor.id,
             bodmasGameId: bodmasGame.id,
-          }
+          },
         });
 
         await tx.bodmasGame.update({
@@ -104,7 +102,6 @@ class BullmqManager {
     }
 
     if (data.type === "START_BODMAS_GAME") {
-      console.log("START_BODMAS_GAME got called")
       const {
         questionCounter,
         questions,
@@ -114,10 +111,6 @@ class BullmqManager {
         questionStartTime,
         orderIndex,
       } = data.payload;
-
-      console.log("data.payload")
-      console.log(data.payload)
-      
 
       await prisma.$transaction(async (tx) => {
         if (questions) {
@@ -148,7 +141,7 @@ class BullmqManager {
             bodmasGameId_userId: {
               bodmasGameId: gameId,
               userId,
-            }
+            },
           },
           create: {
             questionCounter,
@@ -275,37 +268,6 @@ class BullmqManager {
             },
           },
         });
-
-        // const latestGame: BoadMasGame = {
-        //   ...updatedGame,
-        //   players: updatedGame.players.map((plr) => {
-        //     return {
-        //       id: plr.userId,
-        //       username: plr.user.userName,
-        //       status: plr.user.status,
-        //       questionCounter: plr.questionCounter,
-        //     };
-        //   }),
-        //   questions: updatedGame.questions.map((qs) => {
-        //     return qs.question;
-        //   }),
-        //   gameQuestions: updatedGame.questions.flatMap((qs) => {
-        //     return qs.userAnswer.map((usr) => {
-        //       return {
-        //         gameId: qs.gameId,
-        //         questionId: qs.questionId,
-        //         userId: usr.userId,
-        //         startTime: qs.startTime ? qs.startTime : undefined,
-        //         orderIndex: qs.orderIndex,
-        //       };
-        //     });
-        //   }),
-        //   results: [],
-        // };
-
-        // TODO: if the game is ended then there is no need to keep data in memory
-        // bodmasgameManager.updateGame(latestGame);
-        // bodmasgameManager.clearGame(latestGame);
 
         for (let [_idx, plr] of updatedGame.players.entries()) {
           await tx.user.update({

@@ -30,6 +30,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
   ws.userId = userId;
   userManager.addUser({
     status: "IDOL",
+    // error: when the user leaving and rejoing it does not have ws thing to send the message so fix this
     ws,
     id: userId,
     username: user.userName,
@@ -43,8 +44,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     } catch (e) {
       return;
     }
-
-    console.log("parsed data ", parsedData);
 
     if (parsedData.type === "ping") {
       ws.send(JSON.stringify({ status: "pong" }));
@@ -311,12 +310,10 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const presentGame = bodmasgameManager.games.get(game.id);
       if (!presentGame) return;
 
-      console.log(1);
-
       if (
-        presentGame.status === "CANCELLED" ||
-        presentGame.status === "EXPIRED" ||
-        presentGame.status === "COMPLETED"
+        game.status === "CANCELLED" ||
+        game.status === "EXPIRED" ||
+        game.status === "COMPLETED"
       ) {
         return;
       }
@@ -336,10 +333,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         (ans) => ans.questionId == question.id && ans.userId === ws.userId,
       );
 
-      console.log(2);
-
       if (isAnswerExists) {
-        console.log(3);
         const isCorrect = question.answer === Number(answer);
 
         const updatedAnswer: BodmasGameUserAnswer = {
@@ -366,7 +360,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         presentGame.answers = [...updatedAnswers, updatedAnswer];
         if (!isCorrect) return;
       } else {
-        console.log(4);
         const isCorrect = question.answer === Number(answer);
 
         const newAnswer: BodmasGameUserAnswer = {
@@ -404,7 +397,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         const isCorrect = question.answer === Number(answer);
 
         if (!presentGame.results[index]) {
-          console.log("presentGame.results[index] not found");
           return;
         }
 
@@ -428,10 +420,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           userId: ws.userId,
         });
       }
-
-      console.log("presentGame.results ", presentGame.results);
-
-      console.log(5);
 
       let counter = bodmasgameManager.getQsCounter(gameId, ws.userId);
       if (counter === undefined) return;
@@ -459,8 +447,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         startTime: questionStartTime,
       });
 
-      console.log(6);
-
       await bullmqManager.push("bodmas:game", {
         type: "START_BODMAS_GAME",
         payload: {
@@ -472,8 +458,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           orderIndex: counter,
         },
       });
-
-      console.log(7);
 
       ws.send(
         JSON.stringify({

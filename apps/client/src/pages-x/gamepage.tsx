@@ -7,11 +7,25 @@ import { User } from "@repo/types/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const GamePage = ({ gameId }: { gameId: string }) => {
+  console.log("gameid  ", gameId);
+
   const [answer, setAnswer] = useState<string>("");
   const [ansStatus, setAnsStatus] = useState<"correct" | "wrong" | "default">(
     "default",
   );
   const [correctAnswer, setCorrectAnswer] = useState<number>(0);
+
+  const [restData, setRestData] = useState<{
+    question: BodmasQuestion | null;
+    players: User[];
+    results: Result[];
+    timeLimit: Date | null;
+  }>({
+    question: null,
+    results: [],
+    players: [],
+    timeLimit: null,
+  });
 
   const { question, players, timeLimit, ws, results } = useWsContext();
 
@@ -19,47 +33,49 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
   const isMe = (id: string) => id === userId;
 
-  const me = players.find((p) => isMe(p.id)) ?? null;
-  const opponent = players.find((p) => !isMe(p.id)) ?? null;
+  const me = players.find((p) => isMe(p?.id)) ?? null;
+  const opponent = players.find((p) => !isMe(p?.id)) ?? null;
 
   const meResults = results.find((r) => isMe(r.userId)) ?? null;
   const oppsResults = results.find((r) => !isMe(r.userId)) ?? null;
 
-  const [restData, setRestData] = useState<{
-    question: BodmasQuestion | null;
-    me: User | null;
-    opponent: User | null;
-    meResult: Result | null;
-    oppsResult: Result | null;
-    timeLimit: number;
-  }>({
-    question: null,
-    me: null,
-    opponent: null,
-    meResult: null,
-    oppsResult: null,
-    timeLimit: 0,
-  });
+  const restMe = restData.players.find((p) => isMe(p?.id)) ?? null;
+
+  const restOpponent = restData.players.find((p) => !isMe(p?.id)) ?? null;
+
+  const restMeResult = restData.results.find((r) => isMe(r.userId)) ?? null;
+
+  const restOppResult = restData.results.find((r) => !isMe(r.userId)) ?? null;
+
+  const finalQuestion = question ?? restData.question;
+  const finalMe = me ?? restMe;
+  const finalOpponent = opponent ?? restOpponent;
+  const finalMeResult = meResults ?? restMeResult;
+  const finalOppResult = oppsResults ?? restOppResult;
 
   const getInitial = useCallback(
     (name: string) => name.charAt(0).toUpperCase(),
-    [me, opponent],
+    [finalMe, finalOpponent],
   );
 
   const compareAnswer = (input: string) => {
+    if (!finalQuestion) return;
+
     const userAns = Number(input.trim());
     if (userAns === correctAnswer) {
       ws?.send(
         JSON.stringify({
           type: "BODMAS_GAME_ANSWER",
           payload: {
-            questionId: question?.id,
+            questionId: finalQuestion?.id,
             gameId,
             answer: Number(userAns),
           },
         }),
       );
       setAnsStatus("correct");
+      setAnswer("");
+      return;
     }
     if (userAns !== correctAnswer) setAnsStatus("wrong");
     if (!userAns.toString().length) setAnsStatus("default");
@@ -103,38 +119,34 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   }, [endTime]);
 
   useEffect(() => {
-    setCorrectAnswer(question!.answer);
-  }, [question]);
+    if (!finalQuestion) return;
+
+    setCorrectAnswer(finalQuestion.answer);
+  }, [finalQuestion]);
 
   useEffect(() => {
-    const q = question ?? restData.question;
+    const q = finalQuestion
     if (!q) return;
 
     setCorrectAnswer(q.answer);
-  }, [question, restData.question]);
+  }, [finalQuestion]);
 
-  // TODO: go slowly and read the whole codee.... and then slove it properlyyy
+  const getRestData = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const res = await httpApis.getGame(gameId, token);
+
+    if (!res) return;
+
+    console.log("data from get game ", res);
+
+    setRestData(res);
+  };
 
   useEffect(() => {
-    (async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const res = await httpApis.getGame(gameId, token);
-
-      if (!res) return;
-
-      console.log("data from get game ", res);
-
-      setRestData(res);
-    })();
+    getRestData();
   }, [gameId]);
-
-  const finalQuestion = question ?? restData.question;
-  const finalMe = me ?? restData.me;
-  const finalOpponent = opponent ?? restData.opponent;
-  const finalMeResult = meResults ?? restData.meResult;
-  const finalOppResult = oppsResults ?? restData.oppsResult;
 
   return (
     <div className="w-full h-screen bg-neutral-900 flex justify-center items-center">

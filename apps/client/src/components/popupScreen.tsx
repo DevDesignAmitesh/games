@@ -8,7 +8,6 @@ import { httpApis } from "@/managers/http";
 import { useState } from "react";
 import { RegisterSchemaInput } from "@repo/types/types";
 import { useRouter } from "next/navigation";
-import { useWsContext } from "@/managers/ws";
 
 interface PopupScreenProps {
   type: popupType;
@@ -22,7 +21,6 @@ export const PopupScreen = ({
   handleAuthState,
 }: PopupScreenProps) => {
   const router = useRouter();
-  const { setToken } = useWsContext();
 
   const [formdata, setFormdata] = useState<RegisterSchemaInput>({
     email: "",
@@ -41,7 +39,6 @@ export const PopupScreen = ({
       localStorage.setItem("token", token);
       localStorage.setItem("username", username);
       localStorage.setItem("userId", userId);
-      setToken(token)
       router.push("/home");
     });
   };

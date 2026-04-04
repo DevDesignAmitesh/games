@@ -38,10 +38,23 @@ export const getGamesFromDb = async (): Promise<BoadMasGame[]> => {
       questions: {
         include: { question: true },
       },
+      results: true,
     },
   });
 
   const bodmasGame: BoadMasGame[] = games.map((gm) => {
+    const data = gm.questions.flatMap((qs) => {
+      return gm.players.flatMap((plr) => {
+        return {
+          questionId: qs.questionId,
+          gameId: qs.gameId,
+          userId: plr.userId,
+          startTime: qs.startTime,
+          orderIndex: qs.orderIndex,
+        };
+      });
+    });
+
     return {
       ...gm,
       players: gm.players.map((plr) => {
@@ -49,13 +62,14 @@ export const getGamesFromDb = async (): Promise<BoadMasGame[]> => {
           id: plr.userId,
           username: plr.user.userName,
           status: plr.user.status,
-          questionCounter: plr.questionCounter
+          questionCounter: plr.questionCounter,
         };
       }),
       questions: gm.questions.map((qs) => {
         return qs.question;
       }),
-      gameQuestions: gm.questions
+      gameQuestions: data,
+      results: gm.results,
     };
   });
 

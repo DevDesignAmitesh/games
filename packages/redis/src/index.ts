@@ -1,11 +1,13 @@
 import { type RedisClientType, createClient } from "redis";
 import { userManager, bodmasgameManager } from "@repo/ws-backend/ws-backend";
+import { BodmasGamePlayerScalarFieldEnum } from "../../db/generated/prisma/internal/prismaNamespace";
 
 class RedisManager {
   private static instance: RedisManager;
   private client: RedisClientType;
   private subscriber: RedisClientType;
   private publisher: RedisClientType;
+  counter: number = 0;
 
   private constructor() {
     this.client = createClient();
@@ -75,6 +77,12 @@ class RedisManager {
         const game = bodmasgameManager.games.get(gameId);
         if (!game) return;
 
+        this.counter++
+
+        console.log("counter ", this.counter);
+        
+        console.log("players lenght", game.players.length)
+        
         game.players.forEach((plr) => {
           if (!plr.ws) return;
           plr.ws.send(message);
@@ -88,7 +96,6 @@ class RedisManager {
   };
 
   unsubscribe = async (userId: string, channel: string) => {
-    const findKey = `${userId}-${channel}`;
     await this.subscriber.unsubscribe(channel);
   };
 

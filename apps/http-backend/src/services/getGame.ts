@@ -27,21 +27,12 @@ export const getGame = async (req: Request, res: Response) => {
   }
 
   const question = game?.questions[gamePlr?.questionCounter]?.question;
-  const me = game.players.find((plr) => plr.userId === userId)?.user;
-  const opponent = game.players.find((plr) => plr.userId !== userId)?.user;
-  const oppsResult = game.results.find((rsl) => rsl.userId !== userId);
-  const meResult = game.results.find((rsl) => rsl.userId === userId);
   const timeLimit = game.endTime;
 
-  console.log("game ", game)
-  console.log("question ", question)
-
-  res.json({
+  return res.json({
     question,
-    me,
-    meResult,
-    oppsResult,
-    opponent,
+    results: game.results,
+    players: game.players,
     timeLimit,
   });
 };

@@ -1,6 +1,7 @@
 import type { BodmasQuestion } from "@repo/db/db";
 import type { BoadMasGame } from "@repo/types/types";
 import { getGamesFromDb } from "./utils";
+import { userManager } from "./userManager";
 
 class BodmasGameManager {
   private static instance: BodmasGameManager;
@@ -21,65 +22,11 @@ class BodmasGameManager {
   questionAnswer: Map<string, boolean>;
 
   private constructor(games: BoadMasGame[]) {
-    this.games = new Map();
+    this.games = new Map(games.map((gm) => [gm.id, gm]));
     this.inmemoryQuestions = new Map();
     this.questionCounter = new Map();
     this.questionTiming = new Map();
     this.questionAnswer = new Map();
-
-    // TODO: have to look into it and then will do it properly
-    // this.games = new Map(games.map((gm) => [gm.id, gm]));
-    // this.inmemoryQuestions = new Map(games.map((gm) => [gm.id, gm.questions]));
-    // this.questionCounter = new Map(
-    //   games.flatMap((gm) =>
-    //     gm.players.map((plr) => [
-    //       `${gm.id}-${plr.id}`,
-    //       plr.questionCounter || 0,
-    //     ]),
-    //   ),
-    // );
-    // this.questionTiming = new Map(
-    //   games.flatMap((gm) =>
-    //     gm.players.flatMap((plr) =>
-    //       gm.gameQuestions.map((qs) => [
-    //         `${qs.questionId}-${plr.id}`,
-    //         qs.startTime?.valueOf() || 0,
-    //       ]),
-    //     ),
-    //   ),
-    // );
-  }
-
-  updateGame(game: BoadMasGame) {
-    this.games.set(game.id, game);
-
-    this.inmemoryQuestions.set(game.id, game.questions);
-
-    for (let [_idx, plr] of game.players.entries()) {
-      this.setQsCounter(game.id, plr.id, plr.questionCounter || 0);
-    }
-
-    for (let [_idx, ques] of game.gameQuestions.entries()) {
-      this.setQsTimer(
-        ques.questionId,
-        ques.userId,
-        ques.startTime ? ques.startTime.valueOf() : Date.now(),
-      );
-    }
-  }
-
-  clearGame(game: BoadMasGame) {
-    this.games.delete(game.id);
-
-    this.inmemoryQuestions.delete(game.id);
-
-    for (let [_idx, plr] of game.players.entries()) {
-      this.delQsCounter(game.id, plr.id);
-    }
-
-    for (let [_idx, ques] of game.gameQuestions.entries()) {
-      this.delQsTimer(ques.questionId, ques.userId);
-    }
   }
 
   static async getInstance(): Promise<BodmasGameManager> {
@@ -137,18 +84,9 @@ class BodmasGameManager {
   }
 
   // gameid:questionId:userId
-  setQuestionAnswer(
-    gameId: string,
-    userId: string,
-    val: boolean,
-  ) {
+  setQuestionAnswer(gameId: string, userId: string, val: boolean) {
     const key = `${gameId}:${userId}`;
     return this.questionAnswer.set(key, val);
-  }
-
-  getTrueAndFalseValue() {
-    // TODO: fix this onlyyy
-    bodmasgameManager;
   }
 }
 

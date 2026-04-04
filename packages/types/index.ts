@@ -116,7 +116,7 @@ export interface BoadMasGame extends BodmasGame {
     questionId: string;
     gameId: string;
     userId: string;
-    startTime?: Date | undefined;
+    startTime?: Date | null;
     orderIndex: number;
   }[];
   results: GameResult[];
