@@ -30,7 +30,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
   ws.userId = userId;
   userManager.addUser({
     status: "IDOL",
-    // error: when the user leaving and rejoing it does not have ws thing to send the message so fix this
     ws,
     id: userId,
     username: user.userName,
