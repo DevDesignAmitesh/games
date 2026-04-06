@@ -1,9 +1,9 @@
 import { Worker, Queue } from "bullmq";
 import IORedis from "ioredis";
-import { type RedisPushData, type BoadMasGame } from "@repo/types/types";
+import { type RedisPushData } from "@repo/types/types";
 import { prisma } from "@repo/db/db";
 import { redisManager } from "@repo/redis/redis";
-import { bodmasgameManager, userManager } from "@repo/ws-backend/ws-backend";
+import { userManager } from "@repo/ws-backend/ws-backend";
 
 class BullmqManager {
   private static connection: IORedis;
@@ -304,13 +304,15 @@ class BullmqManager {
               incorrectAnswers,
             },
           });
+
         }
       });
 
-      redisManager.publish(`bodmas:game:${gameId}`, {
+      await redisManager.publish(`room:game:${gameId}`, {
         type: "BODMAS_GAME_ENDS",
         payload: { gameId },
       });
+      
     }
   };
 }

@@ -28,12 +28,24 @@ server.on("connection", async (ws: ExtendedWs, req) => {
   if (!user) return;
 
   ws.userId = userId;
-  userManager.addUser({
-    status: "IDOL",
-    ws,
-    id: userId,
-    username: user.userName,
+
+  const existingUser = userManager.users.find((usr) => usr.id === userId);
+
+  
+  await redisManager.subscribe("room:online_users");
+  
+  await redisManager.publish("room:online_users", {
+    type: "online_users",
   });
+  
+  if (!existingUser) {
+    userManager.addUser({
+      status: "IDOL",
+      ws,
+      id: userId,
+      username: user.userName,
+    });
+  }
 
   ws.on("message", async (data) => {
     let parsedData;
@@ -48,22 +60,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       ws.send(JSON.stringify({ status: "pong" }));
     }
 
-    if (parsedData.type === "SUBSCRIBE_ONLINE_USERS") {
-      redisManager.subscribe(ws.userId, "online_users");
-
-      await redisManager.publish("online_users", {
-        type: "online_users",
-      });
-    }
-
-    if (parsedData.type === "UNSUBSCRIBE_ONLINE_USERS") {
-      redisManager.unsubscribe(ws.userId, "online_users");
-
-      await redisManager.publish("online_users", {
-        type: "online_users",
-      });
-    }
-
     if (
       parsedData.type === "FRIEND_REQUEST_SEND" ||
       parsedData.type === "FRIEND_REQUEST_ACCEPT"
@@ -75,10 +71,9 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       if (!receiver || !sender) return;
 
-      await redisManager.publish("online_users", {
+      await redisManager.publish(`room:user:${to}`, {
         type: parsedData.type,
         payload: {
-          to,
           from: { name: sender.username, id: sender.id },
         },
       });
@@ -120,9 +115,9 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         results: [],
       });
 
-      redisManager.subscribe(ws.userId, `bodmas:game:${bodmasGame.id}`);
+      await redisManager.subscribe(`room:game:${bodmasGame.id}`);
 
-      await redisManager.publish("online_users", {
+      await redisManager.publish("room:online_users", {
         type: parsedData.type,
         payload: {
           from: {
@@ -220,9 +215,9 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const latestGame = bodmasgameManager.games.get(bodmasGame.id);
       if (!latestGame) return;
 
-      redisManager.releaseLock(key);
+      await redisManager.releaseLock(key);
 
-      redisManager.subscribe(ws.userId, `bodmas:game:${latestGame.id}`);
+      await redisManager.subscribe(`room:game:${latestGame.id}`);
 
       const counter = bodmasgameManager.getQsCounter(gameId, ws.userId) || 0;
       bodmasgameManager.setQsCounter(gameId, ws.userId, counter);
@@ -281,7 +276,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         bodmasGameFromDb.timeLimit * 1000 + 5000, // with some buffer time while syncing
       );
 
-      await redisManager.publish(`bodmas:game:${latestGame.id}`, {
+      await redisManager.publish(`room:game:${latestGame.id}`, {
         type: "BODMAS_GAME_ROUND_STARTED",
         payload: {
           question,
@@ -289,7 +284,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         },
       });
 
-      await redisManager.publish(`bodmas:game:${latestGame.id}`, {
+      await redisManager.publish(`room:game:${latestGame.id}`, {
         type: "BODMAS_GAME_DATA",
         payload: {
           players: latestGame.players,
@@ -468,7 +463,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         }),
       );
 
-      await redisManager.publish(`bodmas:game:${gameId}`, {
+      await redisManager.publish(`room:game:${gameId}`, {
         type: "BODMAS_GAME_DATA",
         payload: {
           players: presentGame.players,
@@ -480,9 +475,12 @@ server.on("connection", async (ws: ExtendedWs, req) => {
   });
 
   ws.on("close", async () => {
-    userManager.removeUser(userId);
+    console.log("removing user");
+    userManager.removeUser(ws.userId);
 
-    await redisManager.publish("online_users", {
+    await redisManager.unsubscribe("room:online_users");
+
+    await redisManager.publish("room:online_users", {
       type: "online_users",
     });
   });

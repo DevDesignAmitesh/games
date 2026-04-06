@@ -43,40 +43,40 @@ export type Result = {
 };
 
 const WebSocketContext = createContext<WSContextType | null>(null);
+const WS_URL = "ws://localhost:8080";
 
 export const WebSocketProvider = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
-  const wsRef = useRef<WebSocket | null>(null);
-  const WS_URL = "ws://localhost:8080";
   const [token, setToken] = useState<string | null>(null);
-
-  const router = useRouter();
-
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setToken(token);
-    setIsReady(true);
-  }, []);
-
   const [liveUsers, setLiveUsers] = useState<User[]>([]);
   const [question, setQuestion] = useState<BodmasQuestion | null>(null);
   const [players, setPlayers] = useState<User[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [timeLimit, setTimeLimit] = useState<Date | null>(null);
 
-  useEffect(() => {
-    if (!token) return;
-    const ws = new WebSocket(`${WS_URL}?token=${token}`);
-    wsRef.current = ws;
+  const [ws, setWs] = useState<WebSocket | null>(null);
 
-    // ws.onopen = () => {
-    //   ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
-    // };
+  const router = useRouter();
+
+  useEffect(() => {
+    const stored = localStorage.getItem("token");
+    if (!stored) return;
+    setToken(stored);
+  }, []);
+
+  useEffect(() => {
+    console.log("finding token");
+    if (!token) return;
+    console.log("trying to connect with websockets");
+    console.log("token ", token);
+
+    const ws = new WebSocket(`${WS_URL}?token=${token}`);
+    setWs(ws);
+
+    ws.onopen = () => console.log("connected");
 
     ws.onmessage = (event) => {
       try {
@@ -140,7 +140,7 @@ export const WebSocketProvider = ({
         if (type === "BODMAS_GAME_DATA") {
           const { results, timeLimit, players } = payload;
 
-          setTimeLimit(timeLimit);
+          setTimeLimit(new Date(timeLimit));
           setResults(results);
           setPlayers(players);
         }
@@ -155,7 +155,20 @@ export const WebSocketProvider = ({
           const { gameId } = payload;
           router.push(`/game/${gameId}/result`);
         }
+
+        if (type === "GAME_IS_FULL") {
+          toast.info("Game is already accepted by someone else.");
+        }
       } catch {}
+    };
+
+    ws.onerror = (err) => console.log(err);
+
+    ws.onclose = () => {
+      console.log("disconnected");
+      setInterval(() => {
+        setToken((prev) => prev);
+      }, 3000);
     };
 
     return () => {
@@ -175,25 +188,11 @@ export const WebSocketProvider = ({
   //   return () => clearInterval(interval);
   // }, []);
 
-  useEffect(() => {
-    const interval = setTimeout(() => {
-      const ws = wsRef.current;
-
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "SUBSCRIBE_ONLINE_USERS" }));
-      }
-    }, 2 * 1000);
-
-    return () => clearTimeout(interval);
-  }, []);
-
-  if (!isReady) return <LoadingScreen />;
-  
   return (
     <WebSocketContext.Provider
       value={{
         liveUsers,
-        ws: wsRef.current,
+        ws,
         setToken,
         question,
         timeLimit,

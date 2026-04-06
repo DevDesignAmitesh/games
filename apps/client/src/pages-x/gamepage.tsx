@@ -101,11 +101,12 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   const [secondsLeft, setSecondsLeft] = useState(endTime ?? 0);
 
   useEffect(() => {
-    if (!timeLimit) return;
+    const finalTimeLimit = timeLimit ?? restData.timeLimit;
+    if (!finalTimeLimit) return;
 
     // assume timeLimit is timestamp from server
-    setEndTime(timeLimit.valueOf());
-  }, [timeLimit]);
+    setEndTime(finalTimeLimit.valueOf());
+  }, [timeLimit, restData]);
 
   useEffect(() => {
     if (!endTime) return;
@@ -125,7 +126,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   }, [finalQuestion]);
 
   useEffect(() => {
-    const q = finalQuestion
+    const q = finalQuestion;
     if (!q) return;
 
     setCorrectAnswer(q.answer);
@@ -141,7 +142,13 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
     console.log("data from get game ", res);
 
-    setRestData(res);
+    setRestData({
+      ...res,
+      timeLimit:
+        typeof res.timeLimit === "string"
+          ? new Date(res.timeLimit)
+          : res.timeLimit,
+    });
   };
 
   useEffect(() => {
