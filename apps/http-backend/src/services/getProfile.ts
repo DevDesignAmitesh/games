@@ -49,6 +49,7 @@ export const getProfile = async (req: Request, res: Response) => {
         name: opponent?.user.userName,
         oppCorrectAnswer: oppResult?.correctAnswers,
         meCorrectAnswer: meResult?.correctAnswers,
+        id: gm.id,
       };
     });
 

@@ -18,6 +18,7 @@ export const getGame = async (req: Request, res: Response) => {
   if (!game) {
     return res.status(404).json({ message: "game not found" });
   }
+  
   const gamePlr = await prisma.bodmasGamePlayer.findFirst({
     where: { userId, bodmasGameId: gameId },
   });
@@ -27,12 +28,13 @@ export const getGame = async (req: Request, res: Response) => {
   }
 
   const question = game?.questions[gamePlr?.questionCounter]?.question;
-  const timeLimit = game.endTime;
 
   return res.json({
     question,
     results: game.results,
     players: game.players,
-    timeLimit,
+    endTime: game.endTime,
+    startTime: game.startTime,
+    status: game.status,
   });
 };

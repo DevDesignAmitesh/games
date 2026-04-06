@@ -64,10 +64,10 @@ model BodmasGamePlayer {
   id String @id @default(uuid())
 
   bodmasGameId String
-  bodmasGame   BodmasGame @relation(references: [id], fields: [bodmasGameId])
+  bodmasGame   BodmasGame @relation(references: [id], onDelete: Cascade, fields: [bodmasGameId])
 
   userId String
-  user   User   @relation(references: [id], fields: [userId])
+  user   User   @relation(references: [id], onDelete: Cascade, fields: [userId])
 
   questionCounter Int @default(0)
 
@@ -79,7 +79,7 @@ model BodmasGame {
   status GameStatus @default(WAITING_FOR_PLAYERS)
 
   createdBy String
-  creator   User   @relation("bodmas_creator", fields: [createdBy], references: [id])
+  creator   User   @relation("bodmas_creator", onDelete: Cascade, fields: [createdBy], references: [id])
 
   endTime   DateTime?
   startTime DateTime?
@@ -101,8 +101,8 @@ model BodmasGameResult {
   id     String     @id @default(uuid())
   gameId String
   userId String
-  game   BodmasGame @relation(fields: [gameId], references: [id])
-  user   User       @relation(fields: [userId], references: [id])
+  game   BodmasGame @relation(onDelete: Cascade, fields: [gameId], references: [id])
+  user   User       @relation(onDelete: Cascade, fields: [userId], references: [id])
 
   correctAnswers   Int
   incorrectAnswers Int
@@ -124,9 +124,9 @@ model BodmasGameUserAnswer {
   isCorrect  Boolean
   answeredAt DateTime?
 
-  game     BodmasGame         @relation(fields: [gameId], references: [id])
-  user     User               @relation(fields: [userId], references: [id])
-  question BodmasGameQuestion @relation(fields: [questionId], references: [id])
+  game     BodmasGame         @relation(onDelete: Cascade, fields: [gameId], references: [id])
+  user     User               @relation(onDelete: Cascade, fields: [userId], references: [id])
+  question BodmasGameQuestion @relation(onDelete: Cascade, fields: [questionId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -147,14 +147,14 @@ model BodmasQuestion {
 }
 
 model BodmasGameQuestion {
-  id         String @id @default(uuid())
+  id         String    @id @default(uuid())
   gameId     String
   questionId String
   orderIndex Int
   startTime  DateTime? // Date.now() => number
 
-  game     BodmasGame     @relation(fields: [gameId], references: [id])
-  question BodmasQuestion @relation(fields: [questionId], references: [id])
+  game     BodmasGame     @relation(onDelete: Cascade, fields: [gameId], references: [id])
+  question BodmasQuestion @relation(onDelete: Cascade, fields: [questionId], references: [id])
 
   userAnswer BodmasGameUserAnswer[]
 
@@ -165,7 +165,7 @@ model DrawingGame {
   id String @id @default(uuid())
 
   createdBy String
-  creator   User   @relation("drawing_creator", fields: [createdBy], references: [id])
+  creator   User   @relation("drawing_creator", onDelete: Cascade, fields: [createdBy], references: [id])
 
   numberOfPlayers Int // limit set by the user while creating game
   language        DrawingGameLanguage @default(en)
@@ -180,12 +180,12 @@ model DrawingGamePlayer {
   id String @id @default(uuid())
 
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(onDelete: Cascade, fields: [userId], references: [id])
 
   score Int
 
   drawingGameId String
-  drawingGame   DrawingGame @relation(references: [id], fields: [drawingGameId])
+  drawingGame   DrawingGame @relation(references: [id], onDelete: Cascade, fields: [drawingGameId])
 }
 
 model FriendsMapUser {
@@ -196,10 +196,10 @@ model FriendsMapUser {
   respondedAt DateTime?
 
   senderId String
-  sender   User   @relation("user_sender", fields: [senderId], references: [id])
+  sender   User   @relation("user_sender", onDelete: Cascade, fields: [senderId], references: [id])
 
   receiverId String
-  receiver   User   @relation("user_receiver", fields: [receiverId], references: [id])
+  receiver   User   @relation("user_receiver", onDelete: Cascade, fields: [receiverId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

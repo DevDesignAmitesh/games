@@ -120,10 +120,6 @@ class RedisManager {
   del = async (key: string) => {
     await this.client.del(key);
   };
-
-  releaseLock = async (key: string) => {
-    await this.client.DEL(key);
-  };
 }
 
 export const redisManager = await RedisManager.getInstance();

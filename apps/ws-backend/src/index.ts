@@ -181,7 +181,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       const gameStartTime = new Date();
       const gameEndTime = new Date(
-        gameStartTime.valueOf() + bodmasGame.timeLimit * 1000,
+        gameStartTime.valueOf() + bodmasGame.timeLimit * 1000 + 5000,
       ); // some buffer time while sync
 
       await bullmqManager.push("bodmas:game", {
@@ -214,8 +214,6 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       const latestGame = bodmasgameManager.games.get(bodmasGame.id);
       if (!latestGame) return;
-
-      await redisManager.releaseLock(key);
 
       await redisManager.subscribe(`room:game:${latestGame.id}`);
 
@@ -289,7 +287,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         payload: {
           players: latestGame.players,
           results: latestGame.results,
-          timeLimit: latestGame.endTime,
+          endTime: latestGame.endTime,
+          startTime: latestGame.startTime,
         },
       });
     }
@@ -468,7 +467,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         payload: {
           players: presentGame.players,
           results: presentGame.results,
-          timeLimit: presentGame.endTime,
+          endTime: presentGame.endTime,
+          startTime: presentGame.startTime,
         },
       });
     }

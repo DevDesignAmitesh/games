@@ -20,7 +20,8 @@ type WSContextType = {
   setToken: Dispatch<SetStateAction<string | null>>;
   question: BodmasQuestion | null;
   results: Result[];
-  timeLimit: Date | null;
+  endTime: Date | null;
+  startTime: Date | null;
   players: User[];
 };
 
@@ -55,7 +56,8 @@ export const WebSocketProvider = ({
   const [question, setQuestion] = useState<BodmasQuestion | null>(null);
   const [players, setPlayers] = useState<User[]>([]);
   const [results, setResults] = useState<Result[]>([]);
-  const [timeLimit, setTimeLimit] = useState<Date | null>(null);
+  const [endTime, setEndTime] = useState<Date | null>(null);
+  const [startTime, setStartTime] = useState<Date | null>(null);
 
   const [ws, setWs] = useState<WebSocket | null>(null);
 
@@ -138,9 +140,10 @@ export const WebSocketProvider = ({
         }
 
         if (type === "BODMAS_GAME_DATA") {
-          const { results, timeLimit, players } = payload;
+          const { results, endTime, players, startTime } = payload;
 
-          setTimeLimit(new Date(timeLimit));
+          setEndTime(new Date(endTime));
+          setStartTime(new Date(startTime));
           setResults(results);
           setPlayers(players);
         }
@@ -195,9 +198,10 @@ export const WebSocketProvider = ({
         ws,
         setToken,
         question,
-        timeLimit,
         players,
         results,
+        startTime,
+        endTime
       }}
     >
       {children}

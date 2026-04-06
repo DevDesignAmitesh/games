@@ -3,6 +3,7 @@
 import { httpApis } from "@/managers/http";
 import { useWsContext } from "@/managers/ws";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
@@ -10,6 +11,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import { MdPersonAddAlt1 } from "react-icons/md";
 
 type Game = {
+  id: string;
   name: string | undefined;
   oppCorrectAnswer: number | undefined;
   meCorrectAnswer: number | undefined;
@@ -247,7 +249,8 @@ const ProfilePage = ({ username }: { username: string | null }) => {
             const initial = game.name?.charAt(0).toUpperCase();
 
             return (
-              <div
+              <Link
+                href={`/game/${game.id}/result`}
                 key={idx}
                 className="flex items-center justify-between bg-neutral-900/60 px-4 py-3 rounded-xl border border-neutral-700"
               >
@@ -268,7 +271,7 @@ const ProfilePage = ({ username }: { username: string | null }) => {
                 <div className="px-3 py-1 rounded-md border border-neutral-600 text-sm font-semibold text-neutral-200">
                   {game.oppCorrectAnswer} - {game.meCorrectAnswer}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

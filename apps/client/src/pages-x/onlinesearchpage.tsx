@@ -2,15 +2,30 @@
 
 import { GrayButton } from "@/components/buttons";
 import { Logo } from "@/components/logo";
+import { httpApis } from "@/managers/http";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
-const OnlineSearchPage = () => {
+const OnlineSearchPage = ({ gameId }: { gameId: string }) => {
   const router = useRouter();
-  
-  const cancelSearch = () => {
-    // todo: send to delete the game from db
-    // router.back();
+
+  const cancelSearch = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const res = await httpApis.deleteGame(gameId, token);
+    if (!res) return;
+
+    router.back();
+    toast.info("Users not found, game cancelled");
   };
+
+  useEffect(() => {
+    const timeout = setTimeout(cancelSearch, 30 * 1000);
+
+    return () => clearTimeout(timeout);
+  });
 
   return (
     <div className="w-full h-screen bg-neutral-900 flex flex-col gap-20 justify-center items-center">
@@ -48,4 +63,4 @@ const OnlineSearchPage = () => {
   );
 };
 
-export default OnlineSearchPage
+export default OnlineSearchPage;

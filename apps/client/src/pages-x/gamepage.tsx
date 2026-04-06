@@ -4,30 +4,40 @@ import { GreenInput } from "@/components/inputs";
 import { httpApis } from "@/managers/http";
 import { BodmasQuestion, Result, useWsContext } from "@/managers/ws";
 import { User } from "@repo/types/types";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const GamePage = ({ gameId }: { gameId: string }) => {
-  console.log("gameid  ", gameId);
-
+  const router = useRouter();
+  
   const [answer, setAnswer] = useState<string>("");
   const [ansStatus, setAnsStatus] = useState<"correct" | "wrong" | "default">(
     "default",
   );
   const [correctAnswer, setCorrectAnswer] = useState<number>(0);
-
   const [restData, setRestData] = useState<{
     question: BodmasQuestion | null;
     players: User[];
     results: Result[];
-    timeLimit: Date | null;
+    endTime: Date | null;
+    startTime: Date | null;
+    status?:
+      | "WAITING_FOR_PLAYERS"
+      | "IN_PROGRESS"
+      | "COMPLETED"
+      | "CANCELLED"
+      | "EXPIRED";
   }>({
     question: null,
     results: [],
     players: [],
-    timeLimit: null,
+    endTime: null,
+    startTime: null,
   });
+  const [endTimeSec, setEndTimeSec] = useState<number | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState<number>(endTimeSec ?? 0);
 
-  const { question, players, timeLimit, ws, results } = useWsContext();
+  const { question, players, endTime, ws, results, startTime } = useWsContext();
 
   const userId = useMemo(() => localStorage.getItem("userId"), []);
 
@@ -35,16 +45,11 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
   const me = players.find((p) => isMe(p?.id)) ?? null;
   const opponent = players.find((p) => !isMe(p?.id)) ?? null;
-
   const meResults = results.find((r) => isMe(r.userId)) ?? null;
   const oppsResults = results.find((r) => !isMe(r.userId)) ?? null;
-
   const restMe = restData.players.find((p) => isMe(p?.id)) ?? null;
-
-  const restOpponent = restData.players.find((p) => !isMe(p?.id)) ?? null;
-
   const restMeResult = restData.results.find((r) => isMe(r.userId)) ?? null;
-
+  const restOpponent = restData.players.find((p) => !isMe(p?.id)) ?? null;
   const restOppResult = restData.results.find((r) => !isMe(r.userId)) ?? null;
 
   const finalQuestion = question ?? restData.question;
@@ -96,28 +101,27 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
   const { icon } = statusUI;
 
-  const [endTime, setEndTime] = useState<number | null>(null);
-
-  const [secondsLeft, setSecondsLeft] = useState(endTime ?? 0);
-
   useEffect(() => {
-    const finalTimeLimit = timeLimit ?? restData.timeLimit;
+    const finalTimeLimit = endTime ?? restData.endTime;
     if (!finalTimeLimit) return;
 
     // assume timeLimit is timestamp from server
-    setEndTime(finalTimeLimit.valueOf());
-  }, [timeLimit, restData]);
+    setEndTimeSec(finalTimeLimit.valueOf());
+  }, [endTime, restData]);
 
   useEffect(() => {
-    if (!endTime) return;
+    if (!endTimeSec) return;
 
     const interval = setInterval(() => {
-      const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+      const remaining = Math.max(
+        0,
+        Math.floor((endTimeSec - Date.now()) / 1000),
+      );
       setSecondsLeft(remaining);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [endTime]);
+  }, [endTimeSec]);
 
   useEffect(() => {
     if (!finalQuestion) return;
@@ -142,12 +146,15 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
     console.log("data from get game ", res);
 
+    if (res.status === "COMPLETED") {
+      router.push(`/game/${gameId}/result`);
+      return;
+    }
+
     setRestData({
       ...res,
-      timeLimit:
-        typeof res.timeLimit === "string"
-          ? new Date(res.timeLimit)
-          : res.timeLimit,
+      endTime:
+        typeof res.endTime === "string" ? new Date(res.endTime) : res.endTime,
     });
   };
 

@@ -7,5 +7,5 @@ export default async function onlineSearch({
 }) {
   const id = (await params).id;
 
-  return <OnlineSearchPage />;
+  return <OnlineSearchPage gameId={id} />;
 }

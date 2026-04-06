@@ -150,6 +150,17 @@ export const httpApis = {
     toast.error(res.data.message ?? "something went wrong");
   },
 
+  deleteGame: async (gameId: string, token: string) => {
+    const res = await axios.delete(`${HTTP_URL}/game/${gameId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: () => true,
+    });
+
+    if (res.status === 200) return true;
+
+    return false;
+  },
+
   getGame: async (gameId: string, token: string) => {
     const res = await axios.get(`${HTTP_URL}/game/${gameId}`, {
       headers: { Authorization: `Bearer ${token}` },
