@@ -13,7 +13,10 @@ import {
 } from "@repo/types/types";
 import { toast } from "sonner";
 
-const HTTP_URL = "http://localhost:3001";
+const HTTP_URL =
+  process.env.NEXT_PUBLIC_NODE_ENV === "development"
+    ? "http://localhost:3001"
+    : "https://games-http-be.amitesh.work";
 
 export const httpApis = {
   register: async (

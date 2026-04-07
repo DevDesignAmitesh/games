@@ -45,7 +45,10 @@ export type Result = {
 
 const WebSocketContext = createContext<WSContextType | null>(null);
 
-const WS_URL = "ws://localhost:3002";
+const WS_URL =
+  process.env.NEXT_PUBLIC_NODE_ENV === "development"
+    ? "ws://localhost:3002"
+    : "wss://games-ws-be.amitesh.work";
 
 export const WebSocketProvider = ({
   children,

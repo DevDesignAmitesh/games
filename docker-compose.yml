@@ -38,14 +38,14 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     ports:
       - 3002:8080
-  client:
-    build:
-      context: .
-      dockerfile: "./dockerfiles/client.dockerfile"
-    depends_on:
-      - ws
-      - http
-      - postgres
-      - redis
-    ports:
-      - 3000:3000
+  # client:
+  #   build:
+  #     context: .
+  #     dockerfile: "./dockerfiles/client.dockerfile"
+  #   depends_on:
+  #     - ws
+  #     - http
+  #     - postgres
+  #     - redis
+  #   ports:
+  #     - 3000:3000
