@@ -22,7 +22,7 @@ services:
       - redis
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/games
-      - JWT_SECRET=1001001010AJAJAJJA
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - 3001:4000
   ws:
@@ -35,7 +35,7 @@ services:
       - redis
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/games
-      - JWT_SECRET=1001001010AJAJAJJA
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - 3002:8080
   client:
