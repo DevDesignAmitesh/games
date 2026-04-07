@@ -22,7 +22,11 @@ ENV NODE_ENV=production
 # Docker
 ENV DOCKER_CONTAINER=true
 
+# ensure executable inside container
+RUN chmod +x /usr/src/app/http-entry.sh
+
 # run the app
 EXPOSE 4000
 
-ENTRYPOINT ["./http-entry.sh"]
+# absolute path
+ENTRYPOINT ["/usr/src/app/http-entry.sh"]

@@ -22,7 +22,11 @@ ENV NODE_ENV=production
 # Docker
 ENV DOCKER_CONTAINER=true
 
+# ensure executable inside container
+RUN chmod +x /usr/src/app/ws-entry.sh
+
 # run the app
 EXPOSE 8080
 
-ENTRYPOINT ["./ws-entry.sh"]
+# absolute path
+ENTRYPOINT ["/usr/src/app/ws-entry.sh"]
