@@ -11,31 +11,37 @@ export const createGame = async (
     const { drawTime, numberOfPlayers, rounds, gameType } = req.body;
 
     if (gameType === "drawing") {
-      const gameId = await prisma.$transaction(async (tx) => {
-        const drawGame = await tx.drawingGame.create({
-          data: {
-            createdBy: userId,
-            drawTime,
-            numberOfPlayers,
-            rounds,
-          },
-        });
+      const gameId = await prisma.$transaction(
+        async (tx) => {
+          const drawGame = await tx.drawingGame.create({
+            data: {
+              createdBy: userId,
+              drawTime,
+              numberOfPlayers,
+              rounds,
+            },
+          });
 
-        await tx.user.update({
-          where: { id: userId },
-          data: { status: "SEARCHING" },
-        });
+          await tx.user.update({
+            where: { id: userId },
+            data: { status: "SEARCHING" },
+          });
 
-        await tx.drawingGamePlayer.create({
-          data: {
-            userId,
-            drawingGameId: drawGame.id,
-            score: 0,
-          },
-        });
+          await tx.drawingGamePlayer.create({
+            data: {
+              userId,
+              drawingGameId: drawGame.id,
+              score: 0,
+            },
+          });
 
-        return drawGame.id;
-      });
+          return drawGame.id;
+        },
+        {
+          maxWait: 5000, // Time to wait for a connection (default 2s)
+          timeout: 10000, // Time for the entire transaction (default 5s)
+        },
+      );
 
       return res.status(201).json({
         message: "game created successfully",
@@ -44,29 +50,35 @@ export const createGame = async (
     }
 
     if (gameType === "bodmas") {
-      const gameId = await prisma.$transaction(async (tx) => {
-        const bodmasGame = await tx.bodmasGame.create({
-          data: {
-            createdBy: userId,
-            numberOfPlayers: 2,
-            timeLimit: 60,
-          },
-        });
+      const gameId = await prisma.$transaction(
+        async (tx) => {
+          const bodmasGame = await tx.bodmasGame.create({
+            data: {
+              createdBy: userId,
+              numberOfPlayers: 2,
+              timeLimit: 60,
+            },
+          });
 
-        await tx.user.update({
-          where: { id: userId },
-          data: { status: "SEARCHING" },
-        });
+          await tx.user.update({
+            where: { id: userId },
+            data: { status: "SEARCHING" },
+          });
 
-        await tx.bodmasGamePlayer.create({
-          data: {
-            userId,
-            bodmasGameId: bodmasGame.id,
-          },
-        });
+          await tx.bodmasGamePlayer.create({
+            data: {
+              userId,
+              bodmasGameId: bodmasGame.id,
+            },
+          });
 
-        return bodmasGame.id;
-      });
+          return bodmasGame.id;
+        },
+        {
+          maxWait: 5000, // Time to wait for a connection (default 2s)
+          timeout: 10000, // Time for the entire transaction (default 5s)
+        },
+      );
 
       return res.status(201).json({
         message: "game created successfully",

@@ -9,7 +9,7 @@ import { bodmasgameManager } from "./gameManager";
 import { generateRandomQuesions } from "./utils";
 import { bullmqManager } from "@repo/bullmq/bullmq";
 
-const server = new WebSocketServer({ port: 8080 });
+const server = new WebSocketServer({ port: 3002 });
 
 type ExtendedWs = WebSocket & TokenPayload;
 

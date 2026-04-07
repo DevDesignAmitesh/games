@@ -1,10 +1,7 @@
 import { type RedisClientType, createClient } from "redis";
 import { userManager, bodmasgameManager } from "@repo/ws-backend/ws-backend";
 
-const REDIS_URL =
-  process.env.DOCKER_CONTAINER === "true"
-    ? "redis://redis:6379"
-    : "redis://localhost:6379";
+const REDIS_URL = process.env.REDIS_URL!;
 
 class RedisManager {
   private static instance: RedisManager;

@@ -5,10 +5,7 @@ import { prisma } from "@repo/db/db";
 import { redisManager } from "@repo/redis/redis";
 import { userManager } from "@repo/ws-backend/ws-backend";
 
-const REDIS_URL =
-  process.env.DOCKER_CONTAINER === "true"
-    ? "redis://redis:6379"
-    : "redis://localhost:6379";
+const REDIS_URL = process.env.REDIS_URL!;
 
 class BullmqManager {
   private static connection: IORedis;
@@ -17,7 +14,7 @@ class BullmqManager {
 
   private constructor() {
     this.queue = new Queue("game", {
-      connection: BullmqManager.getConnection()
+      connection: BullmqManager.getConnection(),
     });
     const worker = new Worker(
       "game",
@@ -32,9 +29,9 @@ class BullmqManager {
 
   private static getConnection() {
     if (!BullmqManager.connection) {
-      BullmqManager.connection = new IORedis(REDIS_URL, { 
-        maxRetriesPerRequest: null
-       });
+      BullmqManager.connection = new IORedis(REDIS_URL, {
+        maxRetriesPerRequest: null,
+      });
     }
     return BullmqManager.connection;
   }
@@ -75,39 +72,45 @@ class BullmqManager {
 
       if (bodmasGame.createdBy !== creator.id) return;
 
-      await prisma.$transaction(async (tx) => {
-        await tx.bodmasGamePlayer.upsert({
-          where: {
-            bodmasGameId_userId: {
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.bodmasGamePlayer.upsert({
+            where: {
+              bodmasGameId_userId: {
+                userId: acceptor.id,
+                bodmasGameId: bodmasGame.id,
+              },
+            },
+            create: {
               userId: acceptor.id,
               bodmasGameId: bodmasGame.id,
             },
-          },
-          create: {
-            userId: acceptor.id,
-            bodmasGameId: bodmasGame.id,
-          },
-          update: {
-            userId: acceptor.id,
-            bodmasGameId: bodmasGame.id,
-          },
-        });
+            update: {
+              userId: acceptor.id,
+              bodmasGameId: bodmasGame.id,
+            },
+          });
 
-        await tx.bodmasGame.update({
-          where: { id: bodmasGame.id },
-          data: { status: "IN_PROGRESS", startTime, endTime },
-        });
+          await tx.bodmasGame.update({
+            where: { id: bodmasGame.id },
+            data: { status: "IN_PROGRESS", startTime, endTime },
+          });
 
-        await tx.user.update({
-          where: { id: acceptor.id },
-          data: { status: "PLAYING" },
-        });
+          await tx.user.update({
+            where: { id: acceptor.id },
+            data: { status: "PLAYING" },
+          });
 
-        await tx.user.update({
-          where: { id: creator.id },
-          data: { status: "PLAYING" },
-        });
-      });
+          await tx.user.update({
+            where: { id: creator.id },
+            data: { status: "PLAYING" },
+          });
+        },
+        {
+          maxWait: 5000, // Time to wait for a connection (default 2s)
+          timeout: 10000, // Time for the entire transaction (default 5s)
+        },
+      );
     }
 
     if (data.type === "START_BODMAS_GAME") {
@@ -121,47 +124,53 @@ class BullmqManager {
         orderIndex,
       } = data.payload;
 
-      await prisma.$transaction(async (tx) => {
-        if (questions) {
-          await tx.bodmasQuestion.createMany({
-            data: questions,
-          });
-        }
+      await prisma.$transaction(
+        async (tx) => {
+          if (questions) {
+            await tx.bodmasQuestion.createMany({
+              data: questions,
+            });
+          }
 
-        await tx.bodmasGameQuestion.upsert({
-          where: {
-            gameId_questionId: {
+          await tx.bodmasGameQuestion.upsert({
+            where: {
+              gameId_questionId: {
+                gameId,
+                questionId: gameQuestion.id,
+              },
+            },
+            create: {
               gameId,
               questionId: gameQuestion.id,
+              orderIndex,
             },
-          },
-          create: {
-            gameId,
-            questionId: gameQuestion.id,
-            orderIndex,
-          },
-          update: {
-            startTime: questionStartTime,
-          },
-        });
+            update: {
+              startTime: questionStartTime,
+            },
+          });
 
-        await tx.bodmasGamePlayer.upsert({
-          where: {
-            bodmasGameId_userId: {
+          await tx.bodmasGamePlayer.upsert({
+            where: {
+              bodmasGameId_userId: {
+                bodmasGameId: gameId,
+                userId,
+              },
+            },
+            create: {
+              questionCounter,
               bodmasGameId: gameId,
               userId,
             },
-          },
-          create: {
-            questionCounter,
-            bodmasGameId: gameId,
-            userId,
-          },
-          update: {
-            questionCounter,
-          },
-        });
-      });
+            update: {
+              questionCounter,
+            },
+          });
+        },
+        {
+          maxWait: 5000, // Time to wait for a connection (default 2s)
+          timeout: 10000, // Time for the entire transaction (default 5s)
+        },
+      );
     }
 
     if (data.type === "BODMAS_GAME_ANSWER") {
@@ -258,70 +267,74 @@ class BullmqManager {
     if (data.type === "TRACK_BODMAS_GAME") {
       const { gameId } = data.payload;
 
-      await prisma.$transaction(async (tx) => {
-        const updatedGame = await tx.bodmasGame.update({
-          where: { id: gameId },
-          data: {
-            status: "COMPLETED",
-            updatedAt: new Date(),
-          },
-          include: {
-            players: {
-              include: {
-                user: true,
+      await prisma.$transaction(
+        async (tx) => {
+          const updatedGame = await tx.bodmasGame.update({
+            where: { id: gameId },
+            data: {
+              status: "COMPLETED",
+              updatedAt: new Date(),
+            },
+            include: {
+              players: {
+                include: {
+                  user: true,
+                },
+              },
+              answers: true,
+              questions: {
+                include: { question: true, userAnswer: true },
               },
             },
-            answers: true,
-            questions: {
-              include: { question: true, userAnswer: true },
-            },
-          },
-        });
-
-        for (let [_idx, plr] of updatedGame.players.entries()) {
-          await tx.user.update({
-            where: { id: plr.userId },
-            data: { status: "IDOL" },
           });
 
-          userManager.update(plr.userId, { status: "IDOL" });
+          for (let [_idx, plr] of updatedGame.players.entries()) {
+            await tx.user.update({
+              where: { id: plr.userId },
+              data: { status: "IDOL" },
+            });
 
-          const [correctAnswers, incorrectAnswers] = await Promise.all([
-            tx.bodmasGameUserAnswer.count({
-              where: { gameId, userId: plr.userId, isCorrect: true },
-            }),
-            tx.bodmasGameUserAnswer.count({
-              where: { gameId, userId: plr.userId, isCorrect: false },
-            }),
-          ]);
+            userManager.update(plr.userId, { status: "IDOL" });
 
-          await tx.bodmasGameResult.upsert({
-            where: {
-              gameId_userId: {
+            const [correctAnswers, incorrectAnswers] = await Promise.all([
+              tx.bodmasGameUserAnswer.count({
+                where: { gameId, userId: plr.userId, isCorrect: true },
+              }),
+              tx.bodmasGameUserAnswer.count({
+                where: { gameId, userId: plr.userId, isCorrect: false },
+              }),
+            ]);
+
+            await tx.bodmasGameResult.upsert({
+              where: {
+                gameId_userId: {
+                  gameId,
+                  userId: plr.userId,
+                },
+              },
+              update: {
+                correctAnswers,
+                incorrectAnswers,
+              },
+              create: {
                 gameId,
                 userId: plr.userId,
+                correctAnswers,
+                incorrectAnswers,
               },
-            },
-            update: {
-              correctAnswers,
-              incorrectAnswers,
-            },
-            create: {
-              gameId,
-              userId: plr.userId,
-              correctAnswers,
-              incorrectAnswers,
-            },
-          });
-
-        }
-      });
+            });
+          }
+        },
+        {
+          maxWait: 5000, // Time to wait for a connection (default 2s)
+          timeout: 10000, // Time for the entire transaction (default 5s)
+        },
+      );
 
       await redisManager.publish(`room:game:${gameId}`, {
         type: "BODMAS_GAME_ENDS",
         payload: { gameId },
       });
-      
     }
   };
 }
