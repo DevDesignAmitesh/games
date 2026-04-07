@@ -45,7 +45,7 @@ export type Result = {
 
 const WebSocketContext = createContext<WSContextType | null>(null);
 
-const WS_URL = "ws://localhost:8080";
+const WS_URL = "ws://localhost:3002";
 
 export const WebSocketProvider = ({
   children,

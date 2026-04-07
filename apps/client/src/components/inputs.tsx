@@ -13,7 +13,7 @@ export const GreenInput = ({
   placeholder,
   icon,
   type = "text",
-  focus = false
+  focus = true
 }: GreenInputProps) => {
   return (
     <div className="relative inline-block w-60 sm:w-72 md:w-80">

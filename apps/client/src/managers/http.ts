@@ -13,7 +13,7 @@ import {
 } from "@repo/types/types";
 import { toast } from "sonner";
 
-const HTTP_URL = "http://localhost:4000";
+const HTTP_URL = "http://localhost:3001";
 
 export const httpApis = {
   register: async (

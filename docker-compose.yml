@@ -24,7 +24,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/games
       - JWT_SECRET=1001001010AJAJAJJA
     ports:
-      - 4000:4000
+      - 3001:4000
   ws:
     build:
       context: .
@@ -37,7 +37,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/games
       - JWT_SECRET=1001001010AJAJAJJA
     ports:
-      - 8080:8080
+      - 3002:8080
   client:
     build:
       context: .
