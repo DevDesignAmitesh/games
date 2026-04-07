@@ -5,6 +5,8 @@ import { prisma } from "@repo/db/db";
 import { redisManager } from "@repo/redis/redis";
 import { userManager } from "@repo/ws-backend/ws-backend";
 
+const REDIS_URL = process.env.REDIS_URL ? process.env.REDIS_URL : "redis://localhost:6379"
+
 class BullmqManager {
   private static connection: IORedis;
   private queue: Queue;
@@ -25,7 +27,10 @@ class BullmqManager {
 
   private static getConnection() {
     if (!BullmqManager.connection) {
-      BullmqManager.connection = new IORedis({ maxRetriesPerRequest: null });
+      BullmqManager.connection = new IORedis(REDIS_URL, { 
+        maxRetriesPerRequest: null
+
+       });
     }
     return BullmqManager.connection;
   }

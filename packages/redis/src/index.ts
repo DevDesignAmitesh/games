@@ -1,6 +1,7 @@
 import { type RedisClientType, createClient } from "redis";
 import { userManager, bodmasgameManager } from "@repo/ws-backend/ws-backend";
-import type { User } from "@repo/types/types";
+
+const REDIS_URL = process.env.REDIS_URL ? process.env.REDIS_URL : "redis://localhost:6379"
 
 class RedisManager {
   private static instance: RedisManager;
@@ -9,9 +10,15 @@ class RedisManager {
   private publisher: RedisClientType;
 
   private constructor() {
-    this.client = createClient();
-    this.subscriber = createClient();
-    this.publisher = createClient();
+    this.client = createClient({
+      url: REDIS_URL
+    });
+    this.subscriber = createClient({
+      url: REDIS_URL
+    });
+    this.publisher = createClient({
+      url: REDIS_URL
+    });
   }
 
   init = async () => {
