@@ -144,8 +144,6 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
     if (!res) return;
 
-    console.log("data from get game ", res);
-
     if (res.status === "COMPLETED") {
       router.push(`/game/${gameId}/result`);
       return;

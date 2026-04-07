@@ -7,7 +7,5 @@ export default async function profile({
 }) {
   const id = (await params).id;
 
-  console.log("id ", id)
-  
   return <GamePage gameId={id} />;
 }

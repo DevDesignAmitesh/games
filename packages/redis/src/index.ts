@@ -6,11 +6,6 @@ const REDIS_URL =
     ? "redis://redis:6379"
     : "redis://localhost:6379";
 
-
-console.log(`------------------------REDIS_URL=${REDIS_URL}-------------------------`)
-    
-    
-
 class RedisManager {
   private static instance: RedisManager;
   private client: RedisClientType;
@@ -99,7 +94,6 @@ class RedisManager {
         game.players.forEach((plr) => {
           const user = userManager.users.find((usr) => usr.id === plr.id);
           if (!user || !user.ws) return;
-          console.log("sending gamea related message", game.players.length);
           user.ws.send(message);
         });
       }

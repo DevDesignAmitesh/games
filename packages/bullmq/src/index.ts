@@ -10,11 +10,6 @@ const REDIS_URL =
     ? "redis://redis:6379"
     : "redis://localhost:6379";
 
-
-console.log(`------------------------REDIS_URL=${REDIS_URL}-------------------------`)
-    
-    
-
 class BullmqManager {
   private static connection: IORedis;
   private queue: Queue;

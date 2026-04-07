@@ -71,10 +71,7 @@ export const WebSocketProvider = ({
   }, []);
 
   useEffect(() => {
-    console.log("finding token");
     if (!token) return;
-    console.log("trying to connect with websockets");
-    console.log("token ", token);
 
     const ws = new WebSocket(`${WS_URL}?token=${token}`);
     setWs(ws);
@@ -84,8 +81,6 @@ export const WebSocketProvider = ({
     ws.onmessage = (event) => {
       try {
         const parsedData = JSON.parse(event.data);
-
-        console.log("parsed data ", parsedData);
 
         const { type, payload } = parsedData;
 
@@ -180,17 +175,15 @@ export const WebSocketProvider = ({
     };
   }, [token]);
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     const ws = wsRef.current;
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "ping" }));
+      }
+    }, 10 * 1000);
 
-  //     if (ws && ws.readyState === WebSocket.OPEN) {
-  //       ws.send(JSON.stringify({ type: "ping" }));
-  //     }
-  //   }, 10 * 1000);
-
-  //   return () => clearInterval(interval);
-  // }, []);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <WebSocketContext.Provider
