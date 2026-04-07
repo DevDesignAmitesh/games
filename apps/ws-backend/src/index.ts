@@ -13,7 +13,22 @@ const server = new WebSocketServer({ port: 8080 });
 
 type ExtendedWs = WebSocket & TokenPayload;
 
+const allowedOrigins = ["http://localhost:3000", "https://games-ws-be.amitesh.work"];
+
 server.on("connection", async (ws: ExtendedWs, req) => {
+  const origin = req.headers.origin;
+
+  if (!origin) {
+    ws.close();
+    return;
+  }
+
+  if (!allowedOrigins.includes(origin)) {
+    console.log(`Connection denied from origin: ${origin}`);
+    ws.close(1008, "Unauthorized"); // Close with a policy violation code
+    return;
+  }
+
   ws.on("error", console.error);
 
   const token = req.url?.split("?token=")[1];
@@ -31,13 +46,12 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
   const existingUser = userManager.users.find((usr) => usr.id === userId);
 
-  
   await redisManager.subscribe("room:online_users");
-  
+
   await redisManager.publish("room:online_users", {
     type: "online_users",
   });
-  
+
   if (!existingUser) {
     userManager.addUser({
       status: "IDOL",

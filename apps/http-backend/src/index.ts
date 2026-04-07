@@ -28,7 +28,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:3000", // Your Next.js app URL
+    origin: ["http://localhost:3000", "https://games-http-be.amitesh.work"], // Your Next.js app URL
     credentials: true, // Crucial for sending/receiving cookies
   }),
 );
