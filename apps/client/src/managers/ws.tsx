@@ -44,6 +44,7 @@ export type Result = {
 };
 
 const WebSocketContext = createContext<WSContextType | null>(null);
+
 const WS_URL = "ws://localhost:8080";
 
 export const WebSocketProvider = ({
@@ -201,7 +202,7 @@ export const WebSocketProvider = ({
         players,
         results,
         startTime,
-        endTime
+        endTime,
       }}
     >
       {children}

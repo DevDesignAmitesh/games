@@ -22,7 +22,7 @@ import { getGame } from "./services/getGame";
 import { deleteGame } from "./services/deleteGame";
 
 const app = express();
-const PORT = 3001;
+const PORT = 4000;
 
 console.log("database_url ", process.env.DATABASE_URL)
 

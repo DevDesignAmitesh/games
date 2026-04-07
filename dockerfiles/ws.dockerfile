@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 # copy neccessayr package.jsons and lock file
 COPY /package.json /
 COPY /bun.lock /
-COPY /apps/http-backend/package.json /apps/http-backend
+COPY /apps/ws-backend/package.json /apps/ws-backend
 COPY /packages/bullmq/package.json /packages/bullmq
 COPY /packages/common/package.json /packages/common
 COPY /packages/db/package.json /packages/db
@@ -23,6 +23,6 @@ ENV NODE_ENV=production
 ENV DOCKER_CONTAINER=true
 
 # run the app
-EXPOSE 4000
+EXPOSE 8080
 
-ENTRYPOINT ["./http-entry.sh"]
+ENTRYPOINT ["./ws-entry.sh"]

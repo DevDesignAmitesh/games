@@ -8,9 +8,10 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "http:be": "cd apps/http-backend && bun start",
-    "ws:be": "cd apps/ws-backend && bun start",
-    "next:fe": "cd apps/client && bun start",
-    "generate:client": "cd packages/db && bun i && bunx --bun prisma generate",
+    "ws:be": "cd apps/ws-backend && bun i && bun start",
+    "client:fe": "cd apps/client && bun start",
+    "build:client": "cd apps/client && bun i && bun run build",
+    "generate:client": "cd packages/db && bunx --bun prisma generate",
     "migrate:client": "cd packages/db && bun i && bunx --bun prisma migrate dev -n 'init'"
   },
   "devDependencies": {

@@ -5,7 +5,15 @@ import { prisma } from "@repo/db/db";
 import { redisManager } from "@repo/redis/redis";
 import { userManager } from "@repo/ws-backend/ws-backend";
 
-const REDIS_URL = process.env.REDIS_URL ? process.env.REDIS_URL : "redis://localhost:6379"
+const REDIS_URL =
+  process.env.DOCKER_CONTAINER === "true"
+    ? "redis://redis:6379"
+    : "redis://localhost:6379";
+
+
+console.log(`------------------------REDIS_URL=${REDIS_URL}-------------------------`)
+    
+    
 
 class BullmqManager {
   private static connection: IORedis;
@@ -13,7 +21,9 @@ class BullmqManager {
   private static instance: BullmqManager;
 
   private constructor() {
-    this.queue = new Queue("game");
+    this.queue = new Queue("game", {
+      connection: BullmqManager.getConnection()
+    });
     const worker = new Worker(
       "game",
       async (job) => {
@@ -29,7 +39,6 @@ class BullmqManager {
     if (!BullmqManager.connection) {
       BullmqManager.connection = new IORedis(REDIS_URL, { 
         maxRetriesPerRequest: null
-
        });
     }
     return BullmqManager.connection;
