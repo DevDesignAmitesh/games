@@ -6,22 +6,23 @@ export const getGame = async (req: Request, res: Response) => {
 
   const { gameId } = req.params as { gameId: string };
 
-  const game = await prisma.bodmasGame.findFirst({
-    where: { id: gameId },
-    include: {
-      players: { include: { user: true } },
-      results: true,
-      questions: { include: { question: true } },
-    },
-  });
+  const [game, gamePlr] = await Promise.all([
+    prisma.bodmasGame.findFirst({
+      where: { id: gameId },
+      include: {
+        players: { include: { user: true } },
+        results: true,
+        questions: { include: { question: true } },
+      },
+    }),
+    prisma.bodmasGamePlayer.findFirst({
+      where: { userId, bodmasGameId: gameId },
+    }),
+  ]);
 
   if (!game) {
     return res.status(404).json({ message: "game not found" });
   }
-  
-  const gamePlr = await prisma.bodmasGamePlayer.findFirst({
-    where: { userId, bodmasGameId: gameId },
-  });
 
   if (!gamePlr) {
     return res.status(404).json({ message: "game player not found" });

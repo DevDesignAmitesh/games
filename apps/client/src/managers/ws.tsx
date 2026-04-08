@@ -86,6 +86,8 @@ export const WebSocketProvider = ({
 
         const { type, payload } = parsedData;
 
+        console.log("data from the server ", parsedData);
+        
         if (type === "online_users") {
           const { users } = payload;
           setLiveUsers(users);

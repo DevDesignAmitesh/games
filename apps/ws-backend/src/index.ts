@@ -71,6 +71,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       return;
     }
 
+    console.log("data from the client ", parsedData);
+    
     if (parsedData.type === "ping") {
       ws.send(JSON.stringify({ status: "pong" }));
     }
@@ -310,23 +312,19 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
     if (parsedData.type === "BODMAS_GAME_ANSWER") {
       const { gameId, questionId, answer } = parsedData.payload;
-      const game = await prisma.bodmasGame.findFirst({
-        where: { id: gameId },
-      });
-      if (!game) return;
 
-      const presentGame = bodmasgameManager.games.get(game.id);
+      const presentGame = bodmasgameManager.games.get(gameId);
       if (!presentGame) return;
 
       if (
-        game.status === "CANCELLED" ||
-        game.status === "EXPIRED" ||
-        game.status === "COMPLETED"
+        presentGame.status === "CANCELLED" ||
+        presentGame.status === "EXPIRED" ||
+        presentGame.status === "COMPLETED"
       ) {
         return;
       }
 
-      const allQuestions = bodmasgameManager.inmemoryQuestions.get(game.id);
+      const allQuestions = bodmasgameManager.inmemoryQuestions.get(presentGame.id);
       if (!allQuestions || !allQuestions.length) return;
 
       const question = allQuestions.find((qs) => qs.id === questionId);
@@ -377,7 +375,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
           isCorrect,
           timeSpent,
           userId: ws.userId,
-          gameId: game.id,
+          gameId: presentGame.id,
           answeredAt: new Date(),
           createdAt: new Date(),
           updatedAt: new Date(),

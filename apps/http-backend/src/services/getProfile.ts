@@ -15,30 +15,32 @@ export const getProfile = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "user not found" });
     }
 
-    const friendCount = await prisma.friendsMapUser.count({
-      where: {
-        OR: [{ senderId: user.id }, { receiverId: user.id }],
-        status: "ACCEPTED"
-      },
-    });
+    const [friendCount, games] = await Promise.all([
+      prisma.friendsMapUser.count({
+        where: {
+          OR: [{ senderId: user.id }, { receiverId: user.id }],
+          status: "ACCEPTED",
+        },
+      }),
 
-    const games = await prisma.bodmasGame.findMany({
-      where: {
-        players: {
-          some: {
-            OR: [{ userId: user.id }],
+      prisma.bodmasGame.findMany({
+        where: {
+          players: {
+            some: {
+              OR: [{ userId: user.id }],
+            },
           },
         },
-      },
-      include: {
-        results: true,
-        players: {
-          include: { user: true },
+        include: {
+          results: true,
+          players: {
+            include: { user: true },
+          },
         },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    });
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+    ]);
 
     const dataToSend = games.map((gm) => {
       const opponent = gm.players.find((p) => p.userId !== user.id);

@@ -10,22 +10,23 @@ export const acceptReq = async (
     const { userId } = req.user;
     const { to, status } = req.body;
 
-    const friendToBe = await prisma.user.findFirst({
-      where: { id: to },
-    });
+    const [friendToBe, isReqExist] = await Promise.all([
+      prisma.user.findFirst({
+        where: { id: to },
+      }),
+      prisma.friendsMapUser.findFirst({
+        where: {
+          OR: [
+            { senderId: userId, receiverId: to },
+            { receiverId: userId, senderId: to },
+          ],
+        },
+      }),
+    ]);
 
     if (!friendToBe) {
       return res.status(404).json({ message: "other user not found" });
     }
-
-    const isReqExist = await prisma.friendsMapUser.findFirst({
-      where: {
-        OR: [
-          { senderId: userId, receiverId: to },
-          { receiverId: userId, senderId: to },
-        ],
-      },
-    });
 
     if (!isReqExist) {
       return res.status(404).json({ message: "friend request not found" });

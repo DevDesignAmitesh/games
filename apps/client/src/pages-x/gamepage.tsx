@@ -59,6 +59,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   const finalOpponent = opponent ?? restOpponent;
   const finalMeResult = meResults ?? restMeResult;
   const finalOppResult = oppsResults ?? restOppResult;
+  const finalTimeLimit = endTime ?? restData.endTime;
 
   const getInitial = useCallback(
     (name: string) => name.charAt(0).toUpperCase(),
@@ -68,6 +69,8 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   const compareAnswer = (input: string) => {
     if (!finalQuestion) return;
 
+    console.log("sending answerrrr", finalQuestion);
+    
     const userAns = Number(input.trim());
     if (userAns === correctAnswer) {
       ws?.send(
@@ -104,7 +107,6 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   const { icon } = statusUI;
 
   useEffect(() => {
-    const finalTimeLimit = endTime ?? restData.endTime;
     if (!finalTimeLimit) return;
 
     // assume timeLimit is timestamp from server
@@ -129,13 +131,6 @@ const GamePage = ({ gameId }: { gameId: string }) => {
     if (!finalQuestion) return;
 
     setCorrectAnswer(finalQuestion.answer);
-  }, [finalQuestion]);
-
-  useEffect(() => {
-    const q = finalQuestion;
-    if (!q) return;
-
-    setCorrectAnswer(q.answer);
   }, [finalQuestion]);
 
   const getRestData = async () => {
