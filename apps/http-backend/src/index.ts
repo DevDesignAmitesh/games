@@ -31,7 +31,7 @@ app.use(
 );
 
 app.get("/", (_req, res) => {
-  res.json({ status: "ok" });
+  res.json({ status: "OK" });
 });
 
 app.get("/profile/:username", auth, getProfile);
