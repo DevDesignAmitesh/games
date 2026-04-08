@@ -15,7 +15,7 @@ type ExtendedWs = WebSocket & TokenPayload;
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://games-ws-be.amitesh.work",
+  "https://games.amitesh.work",
 ];
 
 server.on("connection", async (ws: ExtendedWs, req) => {
