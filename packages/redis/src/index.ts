@@ -41,6 +41,9 @@ class RedisManager {
   // room:user:userId (to)
   // room:game:gameId (running game)
   subscribe = async (room: string) => {
+    const users = userManager.users;
+    const games = bodmasgameManager.games;
+    
     await this.subscriber.subscribe(room, (message, channel) => {
       const parsedData = JSON.parse(message);
 
@@ -50,14 +53,18 @@ class RedisManager {
 
       if (room === "room:online_users") {
         if (type === "online_users") {
-          userManager.users.forEach((usr) => {
+          console.log("users length ", users.length);
+
+          users.forEach((usr) => {
             if (!usr.ws || usr.status !== "IDOL") return;
 
+            console.log("sending to users")
+            
             usr.ws.send(
               JSON.stringify({
                 type,
                 payload: {
-                  users: userManager.users,
+                  users,
                 },
               }),
             );
@@ -65,7 +72,7 @@ class RedisManager {
         } else if (type === "BODMAS_GAME_REQUEST") {
           const { from } = payload;
 
-          userManager.users.forEach((usr) => {
+          users.forEach((usr) => {
             if (!usr || !usr.ws || usr.id === from.id) return;
             usr.ws.send(message);
           });
@@ -74,7 +81,7 @@ class RedisManager {
 
       if (room.startsWith("room:user:")) {
         const userId = room.split("room:user:")[1];
-        const user = userManager.users.find((u) => u.id === userId);
+        const user = users.find((u) => u.id === userId);
 
         if (!user?.ws) return;
 
@@ -85,12 +92,15 @@ class RedisManager {
         const gameId = channel.split("room:game:")[1];
         if (!gameId) return;
 
-        const game = bodmasgameManager.games.get(gameId);
+        const game = games.get(gameId);
         if (!game) return;
 
+        console.log("games players length ", game.players.length);
+        
         game.players.forEach((plr) => {
-          const user = userManager.users.find((usr) => usr.id === plr.id);
+          const user = users.find((usr) => usr.id === plr.id);
           if (!user || !user.ws) return;
+          console.log("sending to game players");
           user.ws.send(message);
         });
       }

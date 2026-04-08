@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const GamePage = ({ gameId }: { gameId: string }) => {
+  if (typeof window === "undefined") return;
+  
   const router = useRouter();
   
   const [answer, setAnswer] = useState<string>("");

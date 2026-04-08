@@ -33,34 +33,35 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
   const token = req.url?.split("?token=")[1];
   if (!token) return;
-
+  console.log("token found")
+  
   const decoded = verifyToken(token);
   if (!decoded) return;
-
+  console.log("token decoded")
+  
   const { userId } = decoded;
-
+  
   const user = await prisma.user.findFirst({ where: { id: userId } });
   if (!user) return;
-
+  console.log("user found")
+  
   ws.userId = userId;
-
-  const existingUser = userManager.users.find((usr) => usr.id === userId);
-
+  
+  userManager.addUser({
+    status: "IDOL",
+    ws,
+    id: userId,
+    username: user.userName,
+  });
+  console.log("total users ", userManager.users.length);
+  
   await redisManager.subscribe("room:online_users");
-
+  
   await redisManager.publish("room:online_users", {
     type: "online_users",
   });
-
-  if (!existingUser) {
-    userManager.addUser({
-      status: "IDOL",
-      ws,
-      id: userId,
-      username: user.userName,
-    });
-  }
-
+  console.log("user subsribed and published")
+  
   ws.on("message", async (data) => {
     let parsedData;
 

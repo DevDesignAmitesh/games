@@ -1,6 +1,5 @@
 "use client";
 
-import { LoadingScreen } from "@/components/loadingScreen";
 import { User } from "@repo/types/types";
 import { useRouter } from "next/navigation";
 import React, {
@@ -179,6 +178,8 @@ export const WebSocketProvider = ({
   }, [token]);
 
   useEffect(() => {
+    if (!ws) return;
+    
     const interval = setInterval(() => {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "ping" }));
@@ -186,7 +187,7 @@ export const WebSocketProvider = ({
     }, 10 * 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [ws]);
 
   return (
     <WebSocketContext.Provider
