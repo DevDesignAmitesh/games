@@ -11,12 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout repo
-        uses: actions/checkout@v4
-
-      - name: setup nodejs
-        uses: actions/setup-node@v4
-    
       - name: deploy via SSH
         uses: appleboy/ssh-action@v1.2.5
         with:
@@ -24,9 +18,10 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd games
-            git pull origin main
-            npm i -g bun pm2
-            bun install
-            bun run generate:client
-            pm2 restart 1 2
+            bash -lc '
+              cd games
+              git pull origin main
+              bun install
+              bun run generate:client
+              pm2 restart 1 2
+            '
