@@ -8,7 +8,7 @@ jobs:
 
   deploy:
     name: deploy to EC2
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: deploy via SSH
