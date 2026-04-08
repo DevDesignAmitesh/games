@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: checkout repo
         uses: actions/checkout@v4
+
+      - name: setup nodejs
+        uses: actions/setup-node@v4
     
       - name: deploy via SSH
         uses: appleboy/ssh-action@v1.2.5
