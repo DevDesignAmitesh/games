@@ -18,10 +18,9 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            bash -lc '
-              cd games
-              git pull origin main
-              bun install
-              bun run generate:client
-              pm2 restart 1 2
-            '
+            cd games
+            git pull origin main
+            bun install
+            bun run generate:client
+            pm2 restart 1 2
+            
