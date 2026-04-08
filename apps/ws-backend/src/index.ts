@@ -13,7 +13,10 @@ const server = new WebSocketServer({ port: 3002 });
 
 type ExtendedWs = WebSocket & TokenPayload;
 
-const allowedOrigins = ["http://localhost:3000", "https://games-ws-be.amitesh.work"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://games-ws-be.amitesh.work",
+];
 
 server.on("connection", async (ws: ExtendedWs, req) => {
   const origin = req.headers.origin;
@@ -33,20 +36,20 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
   const token = req.url?.split("?token=")[1];
   if (!token) return;
-  console.log("token found")
-  
+  console.log("token found");
+
   const decoded = verifyToken(token);
   if (!decoded) return;
-  console.log("token decoded")
-  
+  console.log("token decoded");
+
   const { userId } = decoded;
-  
+
   const user = await prisma.user.findFirst({ where: { id: userId } });
   if (!user) return;
-  console.log("user found")
-  
+  console.log("user found");
+
   ws.userId = userId;
-  
+
   const existingUser = userManager.users.find((usr) => usr.id === userId);
 
   if (!existingUser) {
@@ -58,14 +61,14 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     });
     console.log("total users ", userManager.users.length);
   }
-  
+
   await redisManager.subscribe("room:online_users");
-  
+
   await redisManager.publish("room:online_users", {
     type: "online_users",
   });
-  console.log("user subsribed and published")
-  
+  console.log("user subsribed and published");
+
   ws.on("message", async (data) => {
     let parsedData;
 
@@ -76,7 +79,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     }
 
     console.log("data from the client ", parsedData);
-    
+
     if (parsedData.type === "ping") {
       ws.send(JSON.stringify({ status: "pong" }));
     }
@@ -321,9 +324,9 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       if (!presentGame) return;
 
       await redisManager.subscribe(`room:game:${gameId}`);
-      
+
       console.log("present game ", presentGame.status);
-      
+
       if (
         presentGame.status === "CANCELLED" ||
         presentGame.status === "EXPIRED" ||
@@ -332,19 +335,21 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         return;
       }
 
-      const allQuestions = bodmasgameManager.inmemoryQuestions.get(presentGame.id);
+      const allQuestions = bodmasgameManager.inmemoryQuestions.get(
+        presentGame.id,
+      );
       if (!allQuestions || !allQuestions.length) return;
 
-      console.log(1)
-      
+      console.log(1);
+
       const question = allQuestions.find((qs) => qs.id === questionId);
       if (!question) return;
-      
-      console.log(2)
-      
+
+      console.log(2);
+
       const startedAt = bodmasgameManager.getQsTimer(question.id, ws.userId);
       if (!startedAt) return;
-      console.log(3)
+      console.log(3);
 
       const timeSpent = Date.now() - startedAt;
 
@@ -408,7 +413,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         if (!isCorrect) return;
       }
 
-      console.log(4)
+      console.log(4);
 
       const index = presentGame.results.findIndex(
         (rsl) => rsl.gameId === gameId && rsl.userId === ws.userId,
@@ -442,8 +447,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         });
       }
 
-      console.log(5)
-      
+      console.log(5);
+
       let counter = bodmasgameManager.getQsCounter(gameId, ws.userId);
       if (counter === undefined) return;
 
@@ -451,8 +456,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       bodmasgameManager.setQsCounter(gameId, ws.userId, counter);
 
-      console.log(6)
-      
+      console.log(6);
+
       const nextQuestion = allQuestions[counter];
       if (!nextQuestion) return;
 
@@ -472,8 +477,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         startTime: questionStartTime,
       });
 
-      console.log(7)
-      
+      console.log(7);
+
       await bullmqManager.push("bodmas:game", {
         type: "START_BODMAS_GAME",
         payload: {

@@ -4,28 +4,40 @@ import { GrayButton } from "@/components/buttons";
 import { Logo } from "@/components/logo";
 import { httpApis } from "@/managers/http";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const OnlineSearchPage = ({ gameId }: { gameId: string }) => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const cancelSearch = async () => {
+    if (loading) return;
+
+    setLoading(true);
+
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
     const res = await httpApis.deleteGame(gameId, token);
-    if (!res) return;
 
-    router.back();
+    if (!res) {
+      setLoading(false);
+      return;
+    }
+
     toast.info("Users not found, game cancelled");
+    router.back();
   };
 
   useEffect(() => {
     const timeout = setTimeout(cancelSearch, 30 * 1000);
 
     return () => clearTimeout(timeout);
-  });
+  }, []);
 
   return (
     <div className="w-full h-screen bg-neutral-900 flex flex-col gap-20 justify-center items-center">
@@ -33,7 +45,6 @@ const OnlineSearchPage = ({ gameId }: { gameId: string }) => {
       <p className="text-neutral-400 font-nuni tracking-widest text-sm mb-10">
         SEARCHING FOR OPPONENT
       </p>
-
       {/* RADAR */}
       <div className="relative w-64 h-64 flex items-center justify-center">
         {/* grid background */}
@@ -57,8 +68,10 @@ const OnlineSearchPage = ({ gameId }: { gameId: string }) => {
         {/* center logo */}
         <Logo type="header" />
       </div>
-
-      <GrayButton onClick={cancelSearch} label="Cancel search" />
+      <GrayButton
+        onClick={cancelSearch}
+        label={loading ? "Cancelling..." : "Cancel search"}
+      />
     </div>
   );
 };

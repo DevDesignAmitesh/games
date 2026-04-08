@@ -27,9 +27,10 @@ export const PopupScreen = ({
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const { setToken }  = useWsContext();
-  
+  const { setToken } = useWsContext();
+
   const handleChange = (val: string, index: keyof RegisterSchemaInput) => {
     setFormdata((prev) => ({
       ...prev,
@@ -37,14 +38,21 @@ export const PopupScreen = ({
     }));
   };
 
-  const handleAuth = () => {
-    httpApis.register(formdata, (token, username, userId) => {
-      localStorage.setItem("token", token);
-      localStorage.setItem("username", username);
-      localStorage.setItem("userId", userId);
-      setToken(token)
-      router.push("/home");
-    });
+  const handleAuth = async () => {
+    if (loading) return;
+    
+    setLoading(true);
+    try {
+      httpApis.register(formdata, (token, username, userId) => {
+        localStorage.setItem("token", token);
+        localStorage.setItem("username", username);
+        localStorage.setItem("userId", userId);
+        setToken(token);
+        router.push("/home");
+      });
+    } catch {
+      setLoading(false)
+    }
   };
 
   return (
@@ -154,7 +162,10 @@ export const PopupScreen = ({
             />
           </div>
 
-          <GrayButton label="Submit" onClick={handleAuth} />
+          <GrayButton
+            label={loading ? "Processing...." : "Submit"}
+            onClick={handleAuth}
+          />
         </div>
       )}
     </div>

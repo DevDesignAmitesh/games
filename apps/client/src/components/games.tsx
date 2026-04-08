@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { games } from "@/lib/data";
 import { httpApis } from "@/managers/http";
 import { useWsContext } from "@/managers/ws";
@@ -6,37 +9,55 @@ import { useRouter } from "next/navigation";
 
 export const Games = () => {
   const router = useRouter();
-
   const { ws } = useWsContext();
 
-  const handleCreateGame = async () => {
-    const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(false);
 
+  const handleCreateGame = async () => {
+    if (loading) return;
+
+    const token = localStorage.getItem("token");
     if (!token) return;
 
-    await httpApis.createGame(
-      {
-        drawTime: 60,
-        gameType: "bodmas",
-        numberOfPlayers: 2,
-        rounds: 4,
-      },
-      token,
-      (gameId) => {
-        ws?.send(
-          JSON.stringify({ type: "BODMAS_GAME_REQUEST", payload: { gameId } }),
-        );
-        router.push(`/game/${gameId}/search`);
-      },
-    );
+    setLoading(true);
+
+    try {
+      await httpApis.createGame(
+        {
+          drawTime: 60,
+          gameType: "bodmas",
+          numberOfPlayers: 2,
+          rounds: 4,
+        },
+        token,
+        (gameId) => {
+          ws?.send(
+            JSON.stringify({
+              type: "BODMAS_GAME_REQUEST",
+              payload: { gameId },
+            }),
+          );
+
+          router.push(`/game/${gameId}/search`);
+        },
+      );
+    } catch (err) {
+      console.error(err);
+      setLoading(false); // reset if failed
+    }
   };
 
   return (
-    <div className="mt-10">
+    <div className="mt-10 relative">
       <h1 className="w-full text-left font-extrabold font-bebas text-2xl text-neutral-100 tracking-widest mb-5 uppercase">
         ONLINE MULTIPLAYER GAMES
       </h1>
-      <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <div
+        className={`w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${
+          loading ? "pointer-events-none opacity-60" : ""
+        }`}
+      >
         {games.map((game) => (
           <div
             onClick={handleCreateGame}

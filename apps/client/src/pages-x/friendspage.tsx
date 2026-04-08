@@ -18,6 +18,9 @@ const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
 const FriendsPage = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
   const { ws } = useWsContext();
 
   useEffect(() => {
@@ -25,15 +28,18 @@ const FriendsPage = () => {
       const token = localStorage.getItem("token")!;
       const data = await httpApis.getFriends(token);
 
-      if (!data) return;
+      if (data) setFriends(data);
 
-      setFriends(data);
+      setPageLoading(false);
     })();
   }, []);
 
   const handleFrndReq = async (id: string, status: FriendRequestStatus) => {
     const token = localStorage.getItem("token")!;
 
+    setActionLoadingId(id);
+
+    // optimistic update
     setFriends((prev) =>
       prev.map((usr) => (usr.otherId === id ? { ...usr, status } : usr)),
     );
@@ -41,15 +47,17 @@ const FriendsPage = () => {
     const res = await httpApis.acceptFriendReq({ status, to: id }, token);
 
     if (!res) {
+      // rollback
       setFriends((prev) =>
         prev.map((usr) =>
           usr.otherId === id ? { ...usr, status: "PENDING" } : usr,
         ),
       );
+      setActionLoadingId(null);
       return;
     }
 
-    if (status === "ACCEPTED" && res) {
+    if (status === "ACCEPTED") {
       ws?.send(
         JSON.stringify({
           type: "FRIEND_REQUEST_ACCEPT",
@@ -57,6 +65,8 @@ const FriendsPage = () => {
         }),
       );
     }
+
+    setActionLoadingId(null);
   };
 
   return (
@@ -64,60 +74,78 @@ const FriendsPage = () => {
       <div className="w-full max-w-2xl flex flex-col gap-4">
         <h1 className="text-white text-xl font-semibold">Friends</h1>
 
-        {friends.map((friend) => {
-          return (
-            <div
-              key={friend.otherId}
-              className="flex items-center justify-between bg-neutral-800 p-3 rounded-xl"
-            >
-              {/* Left side */}
-              <Link
-                href={`/profile/${friend.otherName}`}
-                className="flex items-center gap-4"
+        {/* Page Loader */}
+        {pageLoading && (
+          <div className="flex justify-center items-center py-10">
+            <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!pageLoading && friends.length === 0 && (
+          <p className="text-neutral-400 text-sm">No friends yet</p>
+        )}
+
+        {!pageLoading &&
+          friends.map((friend) => {
+            const isLoading = actionLoadingId === friend.otherId;
+
+            return (
+              <div
+                key={friend.otherId}
+                className="flex items-center justify-between bg-neutral-800 p-3 rounded-xl"
               >
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-white text-sm">
-                  {getInitial(friend.otherName)}
+                {/* Left side */}
+                <Link
+                  href={`/profile/${friend.otherName}`}
+                  className="flex items-center gap-4"
+                >
+                  <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-white text-sm">
+                    {getInitial(friend.otherName)}
+                  </div>
+
+                  <div className="flex flex-col">
+                    <p className="text-neutral-200 text-sm">
+                      {friend.otherName}
+                    </p>
+                    <p className="text-xs text-neutral-400">{friend.status}</p>
+                  </div>
+                </Link>
+
+                {/* Right side */}
+                <div className="flex items-center gap-2">
+                  {friend.status === "PENDING" && friend.canAccept && (
+                    <>
+                      <button
+                        disabled={isLoading}
+                        onClick={() =>
+                          handleFrndReq(friend.otherId, "ACCEPTED")
+                        }
+                        className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md disabled:opacity-50"
+                      >
+                        {isLoading ? "..." : "Accept"}
+                      </button>
+
+                      <button
+                        disabled={isLoading}
+                        onClick={() => handleFrndReq(friend.otherId, "IGNORED")}
+                        className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md disabled:opacity-50"
+                      >
+                        {isLoading ? "..." : "Ignore"}
+                      </button>
+                    </>
+                  )}
+
+                  {friend.status === "ACCEPTED" && (
+                    <span className="text-green-400 text-xs">Friends</span>
+                  )}
+
+                  {friend.status === "IGNORED" && (
+                    <span className="text-red-400 text-xs">Ignored</span>
+                  )}
                 </div>
-
-                {/* Name + Status */}
-                <div className="flex flex-col">
-                  <p className="text-neutral-200 text-sm">{friend.otherName}</p>
-                  <p className="text-xs text-neutral-400">{friend.status}</p>
-                </div>
-              </Link>
-
-              {/* Right side actions */}
-
-              <div className="flex items-center gap-2">
-                {friend.status === "PENDING" && friend.canAccept && (
-                  <>
-                    <button
-                      onClick={() => handleFrndReq(friend.otherId, "ACCEPTED")}
-                      className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() => handleFrndReq(friend.otherId, "IGNORED")}
-                      className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md"
-                    >
-                      Ignore
-                    </button>
-                  </>
-                )}
-
-                {friend.status === "ACCEPTED" && (
-                  <span className="text-green-400 text-xs">Friends</span>
-                )}
-
-                {friend.status === "IGNORED" && (
-                  <span className="text-red-400 text-xs">Ignored</span>
-                )}
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
     </div>
   );

@@ -267,6 +267,8 @@ class BullmqManager {
     if (data.type === "TRACK_BODMAS_GAME") {
       const { gameId } = data.payload;
 
+      const players: string[] = [];
+
       await prisma.$transaction(
         async (tx) => {
           const updatedGame = await tx.bodmasGame.update({
@@ -293,6 +295,8 @@ class BullmqManager {
               where: { id: plr.userId },
               data: { status: "IDOL" },
             });
+
+            players.push(plr.userId);
 
             userManager.update(plr.userId, { status: "IDOL" });
 
@@ -335,9 +339,6 @@ class BullmqManager {
         type: "BODMAS_GAME_ENDS",
         payload: { gameId },
       });
-
-      await redisManager.unsubscribe(`room:game:${gameId}`);
-      
     }
   };
 }

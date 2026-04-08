@@ -83,7 +83,9 @@ export const WebSocketProvider = ({
 
         const { type, payload } = parsedData;
 
-        console.log("data from the server ", parsedData);
+        if (process.env.NEXT_PUBLIC_NODE_ENV === "development") {
+          console.log("data from the server ", parsedData);
+        }
 
         if (type === "online_users") {
           const { users } = payload;
