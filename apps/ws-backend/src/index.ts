@@ -47,13 +47,17 @@ server.on("connection", async (ws: ExtendedWs, req) => {
   
   ws.userId = userId;
   
-  userManager.addUser({
-    status: "IDOL",
-    ws,
-    id: userId,
-    username: user.userName,
-  });
-  console.log("total users ", userManager.users.length);
+  const existingUser = userManager.users.find((usr) => usr.id === userId);
+
+  if (!existingUser) {
+    userManager.addUser({
+      status: "IDOL",
+      ws,
+      id: userId,
+      username: user.userName,
+    });
+    console.log("total users ", userManager.users.length);
+  }
   
   await redisManager.subscribe("room:online_users");
   
@@ -316,6 +320,10 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const presentGame = bodmasgameManager.games.get(gameId);
       if (!presentGame) return;
 
+      await redisManager.subscribe(`room:game:${gameId}`);
+      
+      console.log("present game ", presentGame.status);
+      
       if (
         presentGame.status === "CANCELLED" ||
         presentGame.status === "EXPIRED" ||
@@ -327,11 +335,16 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       const allQuestions = bodmasgameManager.inmemoryQuestions.get(presentGame.id);
       if (!allQuestions || !allQuestions.length) return;
 
+      console.log(1)
+      
       const question = allQuestions.find((qs) => qs.id === questionId);
       if (!question) return;
-
+      
+      console.log(2)
+      
       const startedAt = bodmasgameManager.getQsTimer(question.id, ws.userId);
       if (!startedAt) return;
+      console.log(3)
 
       const timeSpent = Date.now() - startedAt;
 
@@ -395,6 +408,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         if (!isCorrect) return;
       }
 
+      console.log(4)
+
       const index = presentGame.results.findIndex(
         (rsl) => rsl.gameId === gameId && rsl.userId === ws.userId,
       );
@@ -427,6 +442,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         });
       }
 
+      console.log(5)
+      
       let counter = bodmasgameManager.getQsCounter(gameId, ws.userId);
       if (counter === undefined) return;
 
@@ -434,6 +451,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       bodmasgameManager.setQsCounter(gameId, ws.userId, counter);
 
+      console.log(6)
+      
       const nextQuestion = allQuestions[counter];
       if (!nextQuestion) return;
 
@@ -453,6 +472,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
         startTime: questionStartTime,
       });
 
+      console.log(7)
+      
       await bullmqManager.push("bodmas:game", {
         type: "START_BODMAS_GAME",
         payload: {

@@ -95,7 +95,7 @@ class RedisManager {
         const game = games.get(gameId);
         if (!game) return;
 
-        console.log("games players length ", game.players.length);
+        console.log("games players length ", users.length);
         
         game.players.forEach((plr) => {
           const user = users.find((usr) => usr.id === plr.id);

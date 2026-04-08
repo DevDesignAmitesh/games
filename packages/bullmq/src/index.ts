@@ -335,6 +335,9 @@ class BullmqManager {
         type: "BODMAS_GAME_ENDS",
         payload: { gameId },
       });
+
+      await redisManager.unsubscribe(`room:game:${gameId}`);
+      
     }
   };
 }

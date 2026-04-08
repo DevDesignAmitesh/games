@@ -73,10 +73,7 @@ export const WebSocketProvider = ({
   }, []);
 
   useEffect(() => {
-    if (!token) return;
-
-    const ws = new WebSocket(`${WS_URL}?token=${token}`);
-    setWs(ws);
+    if (!ws) return;
 
     ws.onopen = () => console.log("connected");
 
@@ -87,7 +84,7 @@ export const WebSocketProvider = ({
         const { type, payload } = parsedData;
 
         console.log("data from the server ", parsedData);
-        
+
         if (type === "online_users") {
           const { users } = payload;
           setLiveUsers(users);
@@ -165,23 +162,32 @@ export const WebSocketProvider = ({
       } catch {}
     };
 
-    ws.onerror = (err) => console.log(err);
+    ws.onerror = (err) => {
+      console.log(err)
+    };
 
     ws.onclose = () => {
       console.log("disconnected");
-      setInterval(() => {
-        setToken((prev) => prev);
-      }, 3000);
     };
 
     return () => {
       ws.close();
     };
+  }, [ws]);
+
+  const connect = () => {
+    if (!token) return;
+    const ws = new WebSocket(`${WS_URL}?token=${token}`);
+    setWs(ws);
+  };
+  
+  useEffect(() => {
+    connect()
   }, [token]);
 
   useEffect(() => {
     if (!ws) return;
-    
+
     const interval = setInterval(() => {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "ping" }));
