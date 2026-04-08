@@ -8,7 +8,7 @@ jobs:
 
   deploy:
     name: deploy to EC2
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: deploy via SSH
@@ -23,4 +23,3 @@ jobs:
             bun install
             bun run generate:client
             pm2 restart 1 2
-            
