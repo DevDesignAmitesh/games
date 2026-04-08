@@ -20,6 +20,7 @@ jobs:
           script: |
             cd games
             git pull origin main
+            npm i -g bun pm2
             bun install
             bun run generate:client
             pm2 restart 1 2
