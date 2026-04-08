@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd home/ubuntu/games
+            cd games
             git pull origin main
             bun install
             bun run generate:client
