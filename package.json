@@ -9,10 +9,10 @@
     "check-types": "turbo run check-types",
     "http:be": "cd apps/http-backend && bun start",
     "ws:be": "cd apps/ws-backend && bun start",
-    "client:fe": "cd apps/client && bun start",
-    "build:client": "cd apps/client && bun run build",
-    "generate:client": "cd packages/db && bunx --bun prisma generate",
-    "migrate:client": "cd packages/db && bunx --bun prisma migrate dev -n 'init'"
+    "client:fe": "cd /usr/src/app/apps/client && bun start",
+    "build:client": "cd /usr/src/app/apps/client && bun run build",
+    "generate:client": "cd /usr/src/app/packages/db && bunx --bun prisma generate",
+    "migrate:client": "cd /usr/src/app/packages/db && bunx --bun prisma migrate dev -n 'init'"
   },
   "devDependencies": {
     "prettier": "^3.7.4",
