@@ -3,8 +3,7 @@ FROM oven/bun:1
 WORKDIR /usr/src/app
 
 # copy neccessayr package.jsons and lock file
-COPY /package.json /
-COPY /bun.lock /
+COPY package.json bun.lock ./
 COPY /apps/ws-backend/package.json /apps/ws-backend
 COPY /packages/bullmq/package.json /packages/bullmq
 COPY /packages/common/package.json /packages/common

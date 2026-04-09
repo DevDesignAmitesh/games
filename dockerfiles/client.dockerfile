@@ -3,8 +3,7 @@ FROM oven/bun:1
 WORKDIR /usr/src/app
 
 # copy neccessayr package.jsons and lock file
-COPY /package.json /
-COPY /bun.lock /
+COPY package.json bun.lock ./
 COPY /apps/client/package.json /apps/client
 COPY /packages/bullmq/package.json /packages/bullmq
 COPY /packages/common/package.json /packages/common
@@ -13,7 +12,7 @@ COPY /packages/redis/package.json /packages/redis
 COPY /packages/types/package.json /packages/types
 
 # install dependencies
-RUN bun install --forzen-file
+RUN bun install --frozen-file
 
 COPY . .
 
