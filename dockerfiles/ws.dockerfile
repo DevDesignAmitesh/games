@@ -17,12 +17,10 @@ RUN bun install --forzen-file
 
 COPY . .
 
-# [optional] tests & build
 ENV NODE_ENV=production
-# Docker
 ENV DOCKER_CONTAINER=true
 
-# ensure executable inside container
+# ensure executable inside linux
 RUN chmod +x /usr/src/app/ws-entry.sh
 
 # run the app

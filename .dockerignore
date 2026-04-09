@@ -8,6 +8,7 @@ node_modules
 
 # Local environment files (never copy secrets into Docker)
 .env
+**/.env
 .env.local
 .env.development.local
 .env.test.local
@@ -22,11 +23,13 @@ yarn-error.log
 .DS_Store
 
 # Git
+**/.git
 .git
+**/.gitignore
 .gitignore
 
 # Docker itself
-Dockerfile
+dockerfiles
 .dockerignore
 
 # Editor configs

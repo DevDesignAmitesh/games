@@ -2,7 +2,7 @@ FROM oven/bun:1
 
 WORKDIR /usr/src/app
 
-# copy neccessayr package.jsons and lock file
+# copy neccessary package.jsons and lock file
 COPY /package.json /
 COPY /bun.lock /
 COPY /apps/http-backend/package.json /apps/http-backend
@@ -17,12 +17,10 @@ RUN bun install --forzen-file
 
 COPY . .
 
-# [optional] tests & build
 ENV NODE_ENV=production
-# Docker
 ENV DOCKER_CONTAINER=true
 
-# ensure executable inside container
+# ensure executable inside linux
 RUN chmod +x /usr/src/app/http-entry.sh
 
 # run the app
