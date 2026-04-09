@@ -12,7 +12,7 @@ COPY /packages/redis/package.json /packages/redis
 COPY /packages/types/package.json /packages/types
 
 # install dependencies
-RUN bun install --frozen-file
+RUN bun install --frozen-lockfile
 
 COPY . .
 
