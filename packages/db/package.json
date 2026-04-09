@@ -4,15 +4,15 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "prisma": "^7.5.0",
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "@prisma/client": "^7.5.0",
-    "@prisma/adapter-pg": "^7.5.0"
+    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/client": "^7.7.0",
+    "prisma": "^7.7.0"
   },
   "exports": {
     "./db": "./index.ts"
