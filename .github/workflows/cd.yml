@@ -35,6 +35,14 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/games-ws-be:latest
 
+      - name: build fe and push to docker hub
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./dockerfiles/client.dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/games-fe:latest
+
       # - name: deploy via SSH
       #   uses: appleboy/ssh-action@master
       #   with:

@@ -20,6 +20,7 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=${REDIS_URL}
   ws:
     image: amitesh252/games-ws-be:latest
     ports:
@@ -27,15 +28,11 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=${REDIS_URL}
 
-  # client:
-  #   build:
-  #     context: .
-  #     dockerfile: "./dockerfiles/client.dockerfile"
-  #   depends_on:
-  #     - ws
-  #     - http
-  #     - postgres
-  #     - redis
-  #   ports:
-  #     - 3000:3000
+  client:
+    image: amitesh252/games-fe:latest
+    ports:
+      - 3000:3000
+    environment:
+      - NEXT_PUBLIC_NODE_ENV=${NEXT_PUBLIC_NODE_ENV}
