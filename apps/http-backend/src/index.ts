@@ -19,6 +19,7 @@ import { getProfile } from "./services/getProfile";
 import { findFriends } from "./services/findFriends";
 import { getGame } from "./services/getGame";
 import { deleteGame } from "./services/deleteGame";
+import { getUserCount } from "./services/getUserCount";
 
 const app = express();
 const PORT = 3001;
@@ -90,6 +91,9 @@ app.get(
 app.get("/game/results/:gameId", auth, getResults);
 
 app.get("/game/:gameId", auth, getGame);
+
+app.get("/total-users", getUserCount);
+
 app.delete("/game/:gameId", auth, deleteGame);
 
 app.listen(PORT, () => console.log("code is running at ", PORT));

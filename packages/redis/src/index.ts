@@ -44,7 +44,7 @@ class RedisManager {
     const users = userManager.users;
     const games = bodmasgameManager.games;
     
-    await this.subscriber.subscribe(room, (message, channel) => {
+    await this.subscriber.subscribe(room, async (message, channel) => {
       const parsedData = JSON.parse(message);
 
       const { type, payload } = parsedData;
@@ -83,9 +83,11 @@ class RedisManager {
         const userId = room.split("room:user:")[1];
         const user = users.find((u) => u.id === userId);
 
-        if (!user?.ws) return;
+        if (!user || !user.ws) return;
+        console.log("user found in freiend req thing ", user?.username);
 
         user.ws.send(message);
+        await redisManager.unsubscribe(`room:user:${userId}`);
       }
 
       if (room.startsWith("room:game:")) {

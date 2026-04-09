@@ -95,6 +95,8 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       if (!receiver || !sender) return;
 
+      await redisManager.subscribe(`room:user:${to}`);
+      
       await redisManager.publish(`room:user:${to}`, {
         type: parsedData.type,
         payload: {
@@ -181,12 +183,12 @@ server.on("connection", async (ws: ExtendedWs, req) => {
 
       if (!bodmasGameFromDb) return;
 
-      if (bodmasGame.createdBy !== creator.id) return;
+      if (bodmasGameFromDb.createdBy !== creator.id) return;
 
       if (
-        bodmasGame.status === "CANCELLED" ||
-        bodmasGame.status === "EXPIRED" ||
-        bodmasGame.status === "COMPLETED"
+        bodmasGameFromDb.status === "CANCELLED" ||
+        bodmasGameFromDb.status === "EXPIRED" ||
+        bodmasGameFromDb.status === "COMPLETED"
       ) {
         return;
       }

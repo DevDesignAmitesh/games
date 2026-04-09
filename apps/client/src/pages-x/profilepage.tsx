@@ -4,7 +4,7 @@ import { httpApis } from "@/managers/http";
 import { useWsContext } from "@/managers/ws";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { FaArrowLeft } from "react-icons/fa";
@@ -62,11 +62,17 @@ const ProfilePage = ({ username }: { username: string | null }) => {
     getData(token, username);
   }, [username, token]);
 
-  const sendToSettingPage = () => {
-    router.push("/settings");
-  };
+  const sendToSettingPage = useCallback(() => {
+    console.log("myusername ", myusername);
+    console.log("username ", username);
 
-  const sendFriendReq = async (token: string | null, username: string | null) => {
+    router.push("/settings");
+  }, [myusername, username]);
+
+  const sendFriendReq = async (
+    token: string | null,
+    username: string | null,
+  ) => {
     if (!token) return;
     if (!username) return;
     if (myusername === username) return;
@@ -185,9 +191,12 @@ const ProfilePage = ({ username }: { username: string | null }) => {
           <p className="w-full text-left text-sm font-nuni text-neutral-500">
             {email}
           </p>
-          <p className="w-full text-left text-sm font-medium mt-4 font-nuni text-[#A9F99E]">
+          <Link
+            href={"/friends"}
+            className="text-left hover:underline text-sm font-medium mt-4 font-nuni text-[#A9F99E]"
+          >
             <span className="font-bold">{friendCount}</span> Friends
-          </p>
+          </Link>
 
           <div className="relative inline-block w-fit mt-8">
             <button

@@ -185,4 +185,14 @@ export const httpApis = {
 
     return null;
   },
+
+  getUsersCount: async () => {
+    const res = await axios.get(`${HTTP_URL}/total-users`, {
+      validateStatus: () => true,
+    });
+
+    if (res.status === 200) return res.data.totalUsers;
+
+    return null;
+  },
 };

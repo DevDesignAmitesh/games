@@ -49,7 +49,7 @@ const SettingsPage = () => {
 
         <div className="w-full grid font-nuni mt-4">
           <div
-            className="w-full border-b border-neutral-700 py-6 cursor-pointer"
+            className="w-full border rounded-md border-neutral-700 py-6 cursor-pointer"
           >
             <div 
               onClick={() => router.push("/search-mathletes")}
@@ -57,9 +57,6 @@ const SettingsPage = () => {
               <div className="flex flex-col gap-1">
                 <p className="text-sm text-neutral-50 font-semibold">
                   Search friends by username
-                </p>
-                <p className="text-xs text-neutral-400">
-                  ..
                 </p>
               </div>
               <MdOutlineChevronRight className="text-neutral-50 text-2xl" />

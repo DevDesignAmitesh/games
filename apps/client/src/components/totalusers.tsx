@@ -1,6 +1,22 @@
-export const TotalUsers = () => {
-  const digits = [9, 0, 4, 0, 8, 2];
+import { httpApis } from "@/managers/http";
+import { useEffect, useState } from "react";
 
+export const TotalUsers = () => {
+  const [totalUsers, setTotalUsers] = useState<string[]>([])
+  
+  async function getTotalUsers() {
+    const res = await httpApis.getUsersCount();
+    if (!res) return;
+
+    console.log("res from total users ", res)
+    
+    setTotalUsers(res?.toString()?.split(""));
+  }
+  
+  useEffect(() => {
+    getTotalUsers()
+  }, [])
+  
   return (
     <section className="w-full py-20 md:py-32 bg-neutral-950 flex flex-col items-center gap-12 px-6">
       {/* Heading */}
@@ -15,7 +31,7 @@ export const TotalUsers = () => {
 
       {/* Digits */}
       <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
-        {digits.map((val, index) => (
+        {totalUsers.map((val, index) => (
           <div
             key={index}
             className="bg-[#3A3A3A] 
@@ -26,8 +42,7 @@ export const TotalUsers = () => {
               px-5 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6
               rounded-xl md:rounded-2xl"
           >
-            {/* {val} */}
-            0
+            {val}
           </div>
         ))}
       </div>

@@ -9,9 +9,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 const GamePage = ({ gameId }: { gameId: string }) => {
   if (typeof window === "undefined") return;
-  
+
   const router = useRouter();
-  
+
   const [answer, setAnswer] = useState<string>("");
   const [ansStatus, setAnsStatus] = useState<"correct" | "wrong" | "default">(
     "default",
@@ -70,7 +70,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
     if (!finalQuestion) return;
 
     console.log("sending answerrrr", finalQuestion);
-    
+
     const userAns = Number(input.trim());
     if (userAns === correctAnswer) {
       ws?.send(

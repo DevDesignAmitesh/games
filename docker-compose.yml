@@ -13,31 +13,31 @@ services:
     ports:
       - 6379:6379
 
-  http:
-    build:
-      context: .
-      dockerfile: "./dockerfiles/http.dockerfile"
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/games
-      - JWT_SECRET=${JWT_SECRET}
-    ports:
-      - 3001:4000
-  ws:
-    build:
-      context: .
-      dockerfile: "./dockerfiles/ws.dockerfile"
-    depends_on:
-      - http
-      - postgres
-      - redis
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/games
-      - JWT_SECRET=${JWT_SECRET}
-    ports:
-      - 3002:8080
+  # http:
+  #   build:
+  #     context: .
+  #     dockerfile: "./dockerfiles/http.dockerfile"
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/games
+  #     - JWT_SECRET=${JWT_SECRET}
+  #   ports:
+  #     - 3001:4000
+  # ws:
+  #   build:
+  #     context: .
+  #     dockerfile: "./dockerfiles/ws.dockerfile"
+  #   depends_on:
+  #     - http
+  #     - postgres
+  #     - redis
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/games
+  #     - JWT_SECRET=${JWT_SECRET}
+  #   ports:
+  #     - 3002:8080
   # client:
   #   build:
   #     context: .

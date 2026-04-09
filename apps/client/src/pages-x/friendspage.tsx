@@ -70,7 +70,7 @@ const FriendsPage = () => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-neutral-900 flex justify-center p-6">
+    <div className="w-full h-full bg-neutral-900 flex justify-center p-6">
       <div className="w-full max-w-2xl flex flex-col gap-4">
         <h1 className="text-white text-xl font-semibold">Friends</h1>
 
@@ -82,7 +82,7 @@ const FriendsPage = () => {
         )}
 
         {!pageLoading && friends.length === 0 && (
-          <p className="text-neutral-400 text-sm">No friends yet</p>
+          <p className="text-neutral-400 text-sm w-full text-center mt-4">No friends yet</p>
         )}
 
         {!pageLoading &&
