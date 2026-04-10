@@ -8,7 +8,7 @@ export const CardLayout = ({ label, icon, type }: CardLayoutProps) => {
   return (
     <div
       className={`flex h-fit w-full flex-col rounded-xl border border-neutral-700 p-4
-    ${type === "download" ? "md:col-span-2 xl:col-span-1" : ""}
+    ${type === "download" ? "col-span-1" : ""}
     `}
     >
       <div className="flex w-full items-center justify-between pb-4">

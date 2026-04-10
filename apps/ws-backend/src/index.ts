@@ -516,10 +516,12 @@ server.on("connection", async (ws: ExtendedWs, req) => {
     console.log("removing user");
     userManager.removeUser(ws.userId);
 
-    await redisManager.unsubscribe("room:online_users");
-
+    console.log("user length after removing ", userManager.users.length);
+    
     await redisManager.publish("room:online_users", {
       type: "online_users",
     });
+
+    await redisManager.unsubscribe("room:online_users");
   });
 });

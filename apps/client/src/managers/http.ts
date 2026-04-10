@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 const HTTP_URL =
   process.env.NEXT_PUBLIC_NODE_ENV === "development"
-    ? "http://localhost:3001"
+    ? "http://localhost:4000"
     : "https://games-http-be.amitesh.work";
 
 export const httpApis = {

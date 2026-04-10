@@ -40,19 +40,17 @@ class RedisManager {
   // room:online_users
   // room:user:userId (to)
   // room:game:gameId (running game)
-  subscribe = async (room: string) => {
-    const users = userManager.users;
-    const games = bodmasgameManager.games;
-    
+  subscribe = async (room: string) => {    
     await this.subscriber.subscribe(room, async (message, channel) => {
       const parsedData = JSON.parse(message);
-
+      
       const { type, payload } = parsedData;
-
+      
       console.log("channel ", channel);
-
+      
       if (room === "room:online_users") {
         if (type === "online_users") {
+          const users = userManager.users;
           console.log("users length ", users.length);
 
           users.forEach((usr) => {
@@ -71,7 +69,7 @@ class RedisManager {
           });
         } else if (type === "BODMAS_GAME_REQUEST") {
           const { from } = payload;
-
+          const users = userManager.users;
           users.forEach((usr) => {
             if (!usr || !usr.ws || usr.id === from.id) return;
             usr.ws.send(message);
@@ -80,6 +78,7 @@ class RedisManager {
       }
 
       if (room.startsWith("room:user:")) {
+        const users = userManager.users;
         const userId = room.split("room:user:")[1];
         const user = users.find((u) => u.id === userId);
 
@@ -91,6 +90,9 @@ class RedisManager {
       }
 
       if (room.startsWith("room:game:")) {
+        const users = userManager.users;
+        const games = bodmasgameManager.games;
+
         const gameId = channel.split("room:game:")[1];
         if (!gameId) return;
 

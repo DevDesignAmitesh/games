@@ -8,7 +8,6 @@ import React, {
   SetStateAction,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from "react";
 import { toast } from "sonner";
@@ -46,7 +45,7 @@ const WebSocketContext = createContext<WSContextType | null>(null);
 
 const WS_URL =
   process.env.NEXT_PUBLIC_NODE_ENV === "development"
-    ? "ws://localhost:3002"
+    ? "ws://localhost:8080"
     : "wss://games-ws-be.amitesh.work";
 
 export const WebSocketProvider = ({
