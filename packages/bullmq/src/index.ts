@@ -339,6 +339,8 @@ class BullmqManager {
         payload: { gameId },
       });
 
+      console.log("sending game end message to the clients")
+
       for (let i = 0; i <= totalQuestions; i++) {
         await redisManager.unsubscribe(`room:game:${gameId}`);
       }

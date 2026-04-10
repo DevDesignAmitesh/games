@@ -46,6 +46,8 @@ class RedisManager {
       
       const { type, payload } = parsedData;
       
+      console.log("type in the subscribe", type);
+      
       console.log("channel ", channel);
       
       if (room === "room:online_users") {
