@@ -4,7 +4,8 @@ interface GreenInputProps {
   placeholder?: string;
   icon?: React.ReactNode;
   type?: string;
-  focus?: boolean
+  focus?: boolean;
+  disabled?: boolean;
 }
 
 export const GreenInput = ({
@@ -13,7 +14,8 @@ export const GreenInput = ({
   placeholder,
   icon,
   type = "text",
-  focus = true
+  focus = true,
+  disabled = false,
 }: GreenInputProps) => {
   return (
     <div className="relative inline-block w-full max-w-80">
@@ -24,7 +26,7 @@ export const GreenInput = ({
         rounded-xl
         bg-neutral-900 border border-[#B1FA63]
         focus-within:ring-2 focus-within:ring-[#B1FA63]/40
-        transition-all"
+        transition-all disabled:opacity-70"
       >
         {/* Left Icon (optional) */}
         {icon && (
@@ -33,14 +35,15 @@ export const GreenInput = ({
 
         {/* Input */}
         <input
-          autoFocus={focus}
+          autoFocus={focus && !disabled}
+          disabled={disabled}
           type={type}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           className="flex-1 bg-transparent outline-none
           text-neutral-50 font-bold font-nuni
-          text-xs sm:text-sm placeholder:text-neutral-500"
+          text-xs sm:text-sm placeholder:text-neutral-500 disabled:cursor-not-allowed"
         />
       </div>
 

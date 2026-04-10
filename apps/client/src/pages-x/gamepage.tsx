@@ -58,6 +58,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   const finalMeResult = meResults ?? restMeResult;
   const finalOppResult = oppsResults ?? restOppResult;
   const finalTimeLimit = endTime ?? restData.endTime;
+  const isTimeUp = endTimeSec !== null && secondsLeft === 0;
 
   const getInitial = useCallback(
     (name: string) => name.charAt(0).toUpperCase(),
@@ -66,6 +67,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
   const compareAnswer = (input: string) => {
     if (!finalQuestion) return;
+    if (isTimeUp) return;
 
     console.log("sending answerrrr", finalQuestion);
 
@@ -157,6 +159,22 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-neutral-900 px-4 py-6 sm:px-6">
+      {isTimeUp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+          <div className="relative flex max-w-md flex-col items-center justify-center text-center">
+            <div className="pointer-events-none absolute h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(177,250,99,0.28)_0%,rgba(177,250,99,0.12)_30%,rgba(0,0,0,0)_72%)] blur-md" />
+            <div className="relative rounded-3xl border border-neutral-700 bg-neutral-900/70 px-6 py-8">
+              <div className="mx-auto mb-5 h-20 w-20 rounded-full border border-[#B1FA63]/35 bg-[radial-gradient(circle,rgba(177,250,99,0.35)_0%,rgba(177,250,99,0.12)_45%,rgba(0,0,0,0)_100%)]" />
+              <p className="font-bebas text-3xl tracking-[0.18em] text-neutral-50 uppercase">
+                Game Finished
+              </p>
+              <p className="mt-3 font-nuni text-sm text-neutral-300 sm:text-base">
+                Waiting for the server to calculate score
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col justify-between gap-6">
         {/* header */}
         <div className="flex w-full items-center justify-center">
@@ -240,6 +258,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
               onChange={(e) => compareAnswer(e.target.value)}
               placeholder="ENTER ANSWER"
               focus
+              disabled={isTimeUp}
             />
           </div>
           <div
