@@ -5,7 +5,7 @@ import { LivePlayers } from "@/components/liveplayers";
 
 const HomePage = () => {
   return (
-    <div className="px-8 py-4 h-full">
+    <div className="h-full px-4 py-4 sm:px-6 lg:px-8">
       <LivePlayers />
       <Games />
     </div>

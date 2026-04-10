@@ -2,15 +2,10 @@
 
 import { IoReload } from "react-icons/io5";
 import { CardLayout } from "./cardlayout";
-import { usePathname } from "next/navigation";
 
 export const RightSideBar = () => {
-  const pathName = usePathname();
-
-  // if (pathName !== "/home") return null;
-
   return (
-    <div className="w-80 shrink-0 overflow-auto grid p-4 gap-4 place-content-start">
+    <div className="order-2 grid lg:pb-0 pb-20 gap-4 border-t border-neutral-800 px-4 py-4 xl:order-0 xl:w-80 xl:shrink-0 xl:auto-rows-max xl:border-t-0 xl:border-l xl:border-neutral-700 xl:overflow-y-auto xl:p-4">
       <CardLayout
         label="RATINGS"
         icon={<IoReload className="text-neutral-300" />}

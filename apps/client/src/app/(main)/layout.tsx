@@ -11,12 +11,11 @@ export default function mainLayout({
   return (
     <ProtectedRoute>
       <div className="w-full bg-neutral-900">
-        <div className="w-full max-w-375 mx-auto h-screen flex flex-col">
+        <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col">
           <HomeHeader />
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
             <LeftSideBar />
-            <main className="flex-1 overflow-auto">
-              {/* Your main content goes here */}
+            <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
               {children}
             </main>
             <RightSideBar />

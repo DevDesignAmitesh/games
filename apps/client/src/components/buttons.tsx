@@ -12,7 +12,7 @@ interface ButtonIconProps extends ButtonProps {
 
 export const GreenButton = ({ label, onClick }: ButtonProps) => {
   return (
-    <div className="relative inline-block w-55 sm:w-60 md:w-65">
+    <div className="relative inline-block w-full max-w-65">
       <button
         onClick={onClick}
         className="relative z-10 w-full
@@ -40,7 +40,7 @@ export const GreenButton = ({ label, onClick }: ButtonProps) => {
 
 export const GreenIconButton = ({ label, onClick, icon }: ButtonIconProps) => {
   return (
-    <div className="relative inline-block w-60 sm:w-72 md:w-80">
+    <div className="relative inline-block w-full max-w-80">
       <button
         onClick={onClick}
         className="relative z-10 w-full
@@ -76,7 +76,7 @@ export const GreenIconButton = ({ label, onClick, icon }: ButtonIconProps) => {
 
 export const GrayIconButton = ({ label, onClick, icon }: ButtonIconProps) => {
   return (
-    <div className="relative inline-block w-60 sm:w-72 md:w-80">
+    <div className="relative inline-block w-full max-w-80">
       <button
         onClick={onClick}
         className="relative z-10 w-full
@@ -112,7 +112,7 @@ export const GrayIconButton = ({ label, onClick, icon }: ButtonIconProps) => {
 
 export const GrayButton = ({ label, onClick }: ButtonProps) => {
   return (
-    <div className="relative inline-block w-55 sm:w-60 md:w-65">
+    <div className="relative inline-block w-full max-w-65">
       <button
         onClick={onClick}
         className="relative z-10 w-full
@@ -140,7 +140,7 @@ export const GrayButton = ({ label, onClick }: ButtonProps) => {
 
 export const BlackButton = ({ label, onClick }: ButtonProps) => {
   return (
-    <div className="relative inline-block w-55 sm:w-60 md:w-65">
+    <div className="relative inline-block w-full max-w-65">
       <button
         onClick={onClick}
         className="relative z-10 w-full
@@ -168,7 +168,7 @@ export const BlackButton = ({ label, onClick }: ButtonProps) => {
 
 export const OutlineButton = ({ label, onClick }: ButtonProps) => {
   return (
-    <div className="relative inline-block w-55 sm:w-60 md:w-65">
+    <div className="relative inline-block w-full max-w-65">
       <button
         onClick={onClick}
         className="relative z-10 w-full

@@ -11,6 +11,15 @@
   height: 2px; /* For horizontal scrollbars */
 }
 
+.custom-scrollbar-x::-webkit-scrollbar {
+  height: 3px;
+}
+
+.custom-scrollbar-x::-webkit-scrollbar:vertical {
+  width: 0;
+  height: 0;
+}
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: rgb(38 38 38); /* neutral-800 */
 }
@@ -27,6 +36,11 @@
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgb(163 163 163) rgb(245 245 245); /* thumb track */
+}
+
+.custom-scrollbar-x {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(115 115 115) rgb(38 38 38);
 }
 
 @media (prefers-color-scheme: dark) {

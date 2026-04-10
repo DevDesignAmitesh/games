@@ -8,9 +8,9 @@ const SettingsPage = () => {
   const router = useRouter();
   
   return (
-    <div className="w-full h-full">
-      <div className="w-full h-full max-w-2xl mx-auto">
-        <header className="w-full flex gap-4 items-center py-6">
+    <div className="h-full w-full px-4 py-4 sm:px-6">
+      <div className="mx-auto h-full w-full max-w-2xl">
+        <header className="flex w-full items-center gap-4 py-4 sm:py-6">
           {/* button */}
           <div
             onClick={() => router.back()}
@@ -47,13 +47,13 @@ const SettingsPage = () => {
           </h3>
         </header>
 
-        <div className="w-full grid font-nuni mt-4">
+        <div className="mt-4 grid w-full font-nuni">
           <div
-            className="w-full border rounded-md border-neutral-700 py-6 cursor-pointer"
+            className="w-full cursor-pointer rounded-md border border-neutral-700 py-5 sm:py-6"
           >
             <div 
               onClick={() => router.push("/search-mathletes")}
-              className="w-full flex justify-between items-center px-4">
+              className="flex w-full items-center justify-between gap-4 px-4">
               <div className="flex flex-col gap-1">
                 <p className="text-sm text-neutral-50 font-semibold">
                   Search friends by username

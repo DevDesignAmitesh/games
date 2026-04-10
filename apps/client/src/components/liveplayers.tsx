@@ -7,17 +7,17 @@ export const LivePlayers = () => {
 
   return (
     <div className="w-full py-3">
-      <div className="custom-scrollbar overflow-x-auto h-full w-full">
-        <div className="flex justify-start items-center gap-6 min-w-max">
+      <div className="custom-scrollbar-x h-full w-full overflow-x-auto overflow-y-hidden pb-2">
+        <div className="flex min-w-max items-center justify-start gap-4 sm:gap-6">
           {liveUsers.map((player) => (
             <div
               key={player.id}
-              className="flex flex-col justify-center items-center gap-1.5 relative shrink-0 cursor-pointer"
+              className="relative flex shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5"
             >
               {/* Avatar */}
               <div className="p-1 rounded-full border-2 border-neutral-600 relative">
-                <div className="h-12 w-12 rounded-full bg-purple-700 text-neutral-50 flex justify-center items-center shadow-lg">
-                  <p className="text-xl font-semibold font-nuni">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-700 text-neutral-50 shadow-lg sm:h-12 sm:w-12">
+                  <p className="font-nuni text-lg font-semibold sm:text-xl">
                     {player.username[0]}
                   </p>
                 </div>
@@ -27,7 +27,7 @@ export const LivePlayers = () => {
               </div>
 
               {/* Player Name */}
-              <p className="text-neutral-400 text-[10px] font-nuni font-bold uppercase whitespace-nowrap">
+              <p className="font-nuni text-[10px] font-bold whitespace-nowrap uppercase text-neutral-400 sm:text-xs">
                 {player.username}
               </p>
             </div>

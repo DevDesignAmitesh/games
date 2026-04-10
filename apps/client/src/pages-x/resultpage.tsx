@@ -29,7 +29,7 @@ const ResultPage = ({ gameId }: { gameId: string }) => {
   if (!me || !opponent) return <LoadingScreen />;
 
   return (
-    <div className="w-full h-screen bg-neutral-900 flex justify-center items-center">
+    <div className="flex min-h-screen w-full items-center justify-center bg-neutral-900 px-4 py-6">
       <ResultCard
         me={{
           name: me?.user?.username ?? "",

@@ -3,20 +3,20 @@ import Image from "next/image";
 
 export const RatingComp = ({ label, src, val }: RatingCompProps) => {
   return (
-    <div className="bg-neutral-800 flex h-full justify-center items-center gap-4 rounded-xl py-3">
+    <div className="flex h-full items-center justify-center gap-3 rounded-xl bg-neutral-800 px-3 py-3">
       <Image
         unoptimized
         src={src}
         alt="math"
         height={100}
         width={100}
-        className="w-8"
+        className="w-7 sm:w-8"
       />
-      <div className="flex flex-col justify-center items-center">
-        <p className="text-[10px] tracking-wider text-neutral-300 font-bold font-nuni uppercase">
+      <div className="flex flex-col items-center justify-center">
+        <p className="font-nuni text-[10px] font-bold tracking-wider text-neutral-300 uppercase">
           {label}
         </p>
-        <p className="text-xl text-neutral-50 font-black font-nuni uppercase">
+        <p className="font-nuni text-lg font-black text-neutral-50 uppercase sm:text-xl">
           {val}
         </p>
       </div>

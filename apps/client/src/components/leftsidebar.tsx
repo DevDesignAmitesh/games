@@ -8,7 +8,8 @@ export const LeftSideBar = () => {
   const pathName = usePathname();
 
   return (
-    <div className="w-44 shrink-0 border-r border-neutral-700 p-4 gap-1 flex flex-col">
+    <div className="lg:relative fixed bottom-0 w-full order-3 border-t border-neutral-700 bg-neutral-900 px-3 py-3 lg:order-none lg:w-44 lg:shrink-0 lg:border-t-0 lg:border-r lg:p-4">
+      <div className="flex justify-between lg:justify-start gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
       {sidebarData.map((item) => {
         const IconComponent = item.icon;
 
@@ -16,15 +17,15 @@ export const LeftSideBar = () => {
           <Link
             href={item.href}
             key={item.href}
-            className={`w-full rounded-lg flex items-center gap-2 cursor-pointer transition-colors duration-200 ${
+            className={`flex shrink-0 items-center gap-2 rounded-lg transition-colors duration-200 lg:w-full ${
               pathName === item.href
-                ? "border border-[#A9F99E] text-[#A9F99E] px-4 py-3.5"
-                : "text-neutral-300 p-4"
+                ? "border border-[#A9F99E] px-3 py-2.5 text-[#A9F99E] lg:px-4 lg:py-3.5"
+                : "p-3 text-neutral-300 lg:p-4"
             }`}
           >
             <IconComponent />
             <p
-              className={`text-xs capitalize font-nuni tracking-wide ${
+              className={`whitespace-nowrap text-xs capitalize font-nuni tracking-wide ${
                 pathName === item.href ? "text-[#A9F99E]" : "text-neutral-400"
               }`}
             >
@@ -33,6 +34,7 @@ export const LeftSideBar = () => {
           </Link>
         );
       })}
+      </div>
     </div>
   );
 };

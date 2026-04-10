@@ -16,7 +16,7 @@ export const GreenInput = ({
   focus = true
 }: GreenInputProps) => {
   return (
-    <div className="relative inline-block w-60 sm:w-72 md:w-80">
+    <div className="relative inline-block w-full max-w-80">
       <div
         className="relative z-10 w-full
         flex items-center gap-3

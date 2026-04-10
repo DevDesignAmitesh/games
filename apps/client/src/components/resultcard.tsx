@@ -23,7 +23,7 @@ export const ResultCard = ({
 }) => {
   const getInitial = useCallback(
     (name: string) => name.charAt(0).toUpperCase(),
-    [me, opponent],
+    [],
   );
 
   const total1 = useMemo(() => {
@@ -36,49 +36,49 @@ export const ResultCard = ({
   const router = useRouter();
 
   return (
-    <div className="w-full h-screen bg-neutral-900 flex justify-center items-center text-white">
-      <div className="w-full max-w-md rounded-2xl border border-neutral-700 p-6 relative overflow-hidden bg-linear-to-br from-neutral-900 to-neutral-800">
+    <div className="flex w-full items-center justify-center text-white">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-neutral-700 bg-linear-to-br from-neutral-900 to-neutral-800 p-4 sm:p-6">
         {/* TITLE */}
         <div className="text-center mb-6">
           <h1
-            className={`text-6xl font-bold font-bebas ${me.correct >= opponent.correct ? "text-green-400" : "text-pink-500"} tracking-widest`}
+            className={`font-bebas text-5xl font-bold tracking-widest sm:text-6xl ${me.correct >= opponent.correct ? "text-green-400" : "text-pink-500"}`}
           >
             {me.correct >= opponent.correct ? "VICTORY" : "DEFEAT"}
           </h1>
         </div>
 
         {/* SCORE */}
-        <div className="flex justify-between items-center mb-6 px-10">
-          <p className="text-5xl font-bold text-neutral-400">{me.score}</p>
+        <div className="mb-6 flex items-center justify-between gap-3 px-2 sm:px-10">
+          <p className="text-4xl font-bold text-neutral-400 sm:text-5xl">{me.score}</p>
           <p className="text-2xl text-neutral-500">-</p>
-          <p className="text-5xl font-bold text-white">{opponent.score}</p>
+          <p className="text-4xl font-bold text-white sm:text-5xl">{opponent.score}</p>
         </div>
 
         {/* PLAYERS */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="mb-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* PLAYER 1 */}
           <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2 bg-neutral-800 px-3 py-2 rounded-md">
+            <div className="flex items-center gap-2 rounded-md bg-neutral-800 px-3 py-2">
               <div className="w-6 h-6 bg-purple-600 rounded flex items-center justify-center text-xs">
                 {getInitial(me.name)}
               </div>
-              <span className="text-sm">{me.name}</span>
+              <span className="max-w-28 truncate text-sm sm:max-w-none">{me.name}</span>
             </div>
           </div>
 
           {/* PLAYER 2 */}
           <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2 bg-neutral-800 px-3 py-2 rounded-md">
+            <div className="flex items-center gap-2 rounded-md bg-neutral-800 px-3 py-2">
               <div className="w-6 h-6 bg-neutral-700 rounded flex items-center justify-center text-xs">
                 {getInitial(opponent.name)}
               </div>
-              <span className="text-sm">{opponent.name}</span>
+              <span className="max-w-28 truncate text-sm sm:max-w-none">{opponent.name}</span>
             </div>
           </div>
         </div>
 
         {/* STATS */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* PLAYER 1 STATS */}
           <div className="bg-neutral-800/60 rounded-xl p-4 space-y-3">
             <p className="text-xs text-neutral-400 uppercase tracking-widest">

@@ -49,12 +49,12 @@ export const Games = () => {
 
   return (
     <div className="mt-10 relative">
-      <h1 className="w-full text-left font-extrabold font-bebas text-2xl text-neutral-100 tracking-widest mb-5 uppercase">
+      <h1 className="mb-5 w-full text-left font-bebas text-xl font-extrabold tracking-[0.2em] text-neutral-100 uppercase sm:text-2xl">
         ONLINE MULTIPLAYER GAMES
       </h1>
 
       <div
-        className={`w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${
+        className={`grid w-full grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3 ${
           loading ? "pointer-events-none opacity-60" : ""
         }`}
       >
@@ -62,9 +62,9 @@ export const Games = () => {
           <div
             onClick={handleCreateGame}
             key={game.id}
-            className={`w-full ${game.bgColor} rounded-xl p-4 aspect-video relative overflow-hidden cursor-pointer`}
+            className={`relative aspect-[16/10] w-full cursor-pointer overflow-hidden rounded-xl p-4 sm:aspect-video ${game.bgColor}`}
           >
-            <div className="px-10">
+            <div className="px-6 sm:px-10">
               <Image
                 unoptimized
                 src={game.image}
@@ -75,10 +75,12 @@ export const Games = () => {
             </div>
 
             <div className="relative z-10">
-              <h3 className="text-white font-extrabold text-sm font-nuni leading-tight">
+              <h3 className="font-nuni text-sm leading-tight font-extrabold text-white sm:text-base">
                 {game.title}
               </h3>
-              <p className="text-white/80 text-sm font-nuni">{game.subtitle}</p>
+              <p className="font-nuni text-xs text-white/80 sm:text-sm">
+                {game.subtitle}
+              </p>
             </div>
           </div>
         ))}

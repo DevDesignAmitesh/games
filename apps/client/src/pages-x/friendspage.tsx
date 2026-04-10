@@ -70,8 +70,8 @@ const FriendsPage = () => {
   };
 
   return (
-    <div className="w-full h-full bg-neutral-900 flex justify-center p-6">
-      <div className="w-full max-w-2xl flex flex-col gap-4">
+    <div className="flex h-full w-full justify-center bg-neutral-900 px-4 py-4 sm:px-6 sm:py-6">
+      <div className="flex w-full max-w-2xl flex-col gap-4">
         <h1 className="text-white text-xl font-semibold">Friends</h1>
 
         {/* Page Loader */}
@@ -92,7 +92,7 @@ const FriendsPage = () => {
             return (
               <div
                 key={friend.otherId}
-                className="flex items-center justify-between bg-neutral-800 p-3 rounded-xl"
+                className="flex flex-col gap-3 rounded-xl bg-neutral-800 p-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 {/* Left side */}
                 <Link
@@ -112,7 +112,7 @@ const FriendsPage = () => {
                 </Link>
 
                 {/* Right side */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                   {friend.status === "PENDING" && friend.canAccept && (
                     <>
                       <button

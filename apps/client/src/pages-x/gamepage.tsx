@@ -8,8 +8,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const GamePage = ({ gameId }: { gameId: string }) => {
-  if (typeof window === "undefined") return;
-
   const router = useRouter();
 
   const [answer, setAnswer] = useState<string>("");
@@ -39,7 +37,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   const [endTimeSec, setEndTimeSec] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number>(endTimeSec ?? 0);
 
-  const { question, players, endTime, ws, results, startTime } = useWsContext();
+  const { question, players, endTime, ws, results } = useWsContext();
 
   const userId = useMemo(() => localStorage.getItem("userId"), []);
 
@@ -63,7 +61,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
 
   const getInitial = useCallback(
     (name: string) => name.charAt(0).toUpperCase(),
-    [finalMe, finalOpponent],
+    [],
   );
 
   const compareAnswer = (input: string) => {
@@ -158,23 +156,23 @@ const GamePage = ({ gameId }: { gameId: string }) => {
   }, [gameId]);
 
   return (
-    <div className="w-full h-screen bg-neutral-900 flex justify-center items-center">
-      <div className="w-full h-full max-w-md mx-auto flex flex-col justify-center items-center">
+    <div className="flex min-h-screen w-full items-center justify-center bg-neutral-900 px-4 py-6 sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col justify-between gap-6">
         {/* header */}
-        <div className="w-full h-full flex justify-center items-center">
-          <div className="w-full max-w-md flex justify-between items-center px-6 py-4">
+        <div className="flex w-full items-center justify-center">
+          <div className="flex w-full flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-800 bg-neutral-900/60 px-4 py-4 sm:px-6">
             {/* LEFT PLAYER */}
-            <div className="flex flex-col items-center justify-center gap-3">
-              <div className="flex items-center justify-center gap-2">
+            <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-3 sm:items-center">
+              <div className="flex min-w-0 items-center justify-center gap-2">
                 {/* avatar */}
                 <div className="w-10 h-10 rounded-md bg-purple-600 flex items-center justify-center text-white font-semibold">
                   {getInitial(finalMe?.username ?? "R")}
                 </div>
 
                 {/* name + rating */}
-                <div className="flex flex-col leading-tight">
-                  <p className="text-sm text-white font-medium">
-                    {finalMe?.username!}
+                <div className="min-w-0 flex flex-col leading-tight">
+                  <p className="truncate text-sm font-medium text-white">
+                    {finalMe?.username ?? "You"}
                   </p>
                   <p className="text-xs text-neutral-400">896</p>
                 </div>
@@ -187,18 +185,18 @@ const GamePage = ({ gameId }: { gameId: string }) => {
             </div>
 
             {/* CENTER TIMER */}
-            <div className="flex items-center gap-2">
-              <div className="px-4 py-1 rounded-full bg-neutral-800 text-cyan-400 text-sm font-medium">
+            <div className="order-3 flex w-full items-center justify-center sm:order-none sm:w-auto">
+              <div className="rounded-full bg-neutral-800 px-4 py-1 text-sm font-medium text-cyan-400">
                 {secondsLeft}
               </div>
             </div>
 
             {/* RIGHT PLAYER */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-1 flex-col items-end gap-3 sm:items-center">
+              <div className="flex min-w-0 items-center gap-2">
                 {/* name + rating */}
-                <div className="flex flex-col leading-tight text-right">
-                  <p className="text-sm text-white font-medium">
+                <div className="min-w-0 flex flex-col leading-tight text-right">
+                  <p className="truncate text-sm font-medium text-white">
                     {finalOpponent?.username}
                   </p>
                   <p className="text-xs text-neutral-400">996</p>
@@ -218,12 +216,12 @@ const GamePage = ({ gameId }: { gameId: string }) => {
           </div>
         </div>
         {/* questions sections */}
-        <div className="w-full py-32 relative">
+        <div className="relative w-full flex-1 rounded-2xl border border-neutral-800 py-20 sm:py-24">
           {/* pattern */}
           <div className="absolute opacity-50 z-0 inset-0 h-full w-full bg-[linear-gradient(to_right,#404040_1px,transparent_1px),linear-gradient(to_bottom,#404040_1px,transparent_1px)] bg-size-[6rem_4rem]" />
 
           {/* content */}
-          <div className="w-full z-10 h-full flex justify-center items-center text-3xl font-semibold text-neutral-50">
+          <div className="z-10 flex h-full w-full items-center justify-center px-4 text-2xl font-semibold text-neutral-50 sm:text-3xl">
             <div className="flex justify-center items-end gap-2">
               <p>{finalQuestion?.operation === "ADD" && "+"}</p>
               <div className="flex flex-col">
@@ -235,8 +233,8 @@ const GamePage = ({ gameId }: { gameId: string }) => {
         </div>
 
         {/* submit area */}
-        <div className="w-full h-full flex justify-center items-center gap-4">
-          <div className="w-full flex justify-center items-center">
+        <div className="flex w-full flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="flex w-full justify-center items-center">
             <GreenInput
               value={answer}
               onChange={(e) => compareAnswer(e.target.value)}
@@ -245,7 +243,7 @@ const GamePage = ({ gameId }: { gameId: string }) => {
             />
           </div>
           <div
-            className={`px-6 py-2 rounded-md text-lg flex items-center justify-center transition-all duration-200 bg-neutral-800 text-neutral-300`}
+            className={`flex items-center justify-center rounded-md bg-neutral-800 px-6 py-2 text-lg text-neutral-300 transition-all duration-200`}
           >
             {icon}
           </div>

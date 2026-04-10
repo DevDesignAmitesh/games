@@ -13,8 +13,6 @@ type User = {
 };
 
 const SearchFriendsPage = () => {
-  if (typeof window === "undefined") return;
-
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<User[]>([]);
@@ -50,10 +48,10 @@ const SearchFriendsPage = () => {
   const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
   return (
-    <div className="w-full h-full bg-neutral-900 flex justify-center items-start">
-      <div className="w-full h-full max-w-2xl mx-auto px-4 py-4">
+    <div className="flex h-full w-full items-start justify-center bg-neutral-900 px-4 py-4 sm:px-6">
+      <div className="mx-auto h-full w-full max-w-2xl py-1">
         {/* HEADER */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="mb-6 flex items-center gap-3">
           {/* button */}
           <div
             onClick={() => router.back()}
@@ -86,7 +84,7 @@ const SearchFriendsPage = () => {
           </div>
 
           {/* search bar */}
-          <div className="flex-1 flex items-center gap-2 px-4 py-2 rounded-full border border-green-500 bg-neutral-800">
+          <div className="flex flex-1 items-center gap-2 rounded-full border border-green-500 bg-neutral-800 px-4 py-2 min-w-0">
             <FaSearch className="text-neutral-400" />
 
             <input
@@ -110,7 +108,7 @@ const SearchFriendsPage = () => {
             <Link
               href={`/profile/${user.userName}`}
               key={user.id}
-              className="flex items-center font-nuni gap-4 p-2 rounded-xl hover:bg-neutral-800 transition"
+                className="flex items-center gap-4 rounded-xl p-2 font-nuni transition hover:bg-neutral-800"
             >
               {/* avatar */}
               <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-white text-sm">
