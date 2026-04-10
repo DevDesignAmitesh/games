@@ -2,21 +2,18 @@ import { WebSocketServer } from "ws";
 import { userManager } from "./userManager";
 import { verifyToken } from "@repo/common/common";
 import type { WebSocket } from "ws";
-import type { GameResult, TokenPayload } from "@repo/types/types";
+import type { TokenPayload } from "@repo/types/types";
 import { redisManager } from "@repo/redis/redis";
 import { prisma, type BodmasGameUserAnswer } from "@repo/db/db";
 import { bodmasgameManager } from "./gameManager";
 import { generateRandomQuesions } from "./utils";
 import { bullmqManager } from "@repo/bullmq/bullmq";
 
-const server = new WebSocketServer({ port: 3002 });
+const server = new WebSocketServer({ port: 8080, host: "0.0.0.0" });
 
 type ExtendedWs = WebSocket & TokenPayload;
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://games.amitesh.work",
-];
+const allowedOrigins = ["http://localhost:3000", "https://games.amitesh.work"];
 
 server.on("connection", async (ws: ExtendedWs, req) => {
   const origin = req.headers.origin;
@@ -96,7 +93,7 @@ server.on("connection", async (ws: ExtendedWs, req) => {
       if (!receiver || !sender) return;
 
       await redisManager.subscribe(`room:user:${to}`);
-      
+
       await redisManager.publish(`room:user:${to}`, {
         type: parsedData.type,
         payload: {

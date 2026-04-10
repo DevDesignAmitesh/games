@@ -22,7 +22,7 @@ import { deleteGame } from "./services/deleteGame";
 import { getUserCount } from "./services/getUserCount";
 
 const app = express();
-const PORT = 3001;
+const PORT = 4000;
 
 app.use(express.json());
 app.use(
@@ -96,4 +96,4 @@ app.get("/total-users", getUserCount);
 
 app.delete("/game/:gameId", auth, deleteGame);
 
-app.listen(PORT, () => console.log("code is running at ", PORT));
+app.listen(PORT, "0.0.0.0", () => console.log("code is running at ", PORT));
