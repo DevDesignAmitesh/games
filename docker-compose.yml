@@ -21,6 +21,8 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - REDIS_URL=${REDIS_URL}
+    restart: on-failure
+      
   ws:
     image: amitesh252/games-ws-be:latest
     ports:
@@ -29,6 +31,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - REDIS_URL=${REDIS_URL}
+    restart: on-failure
 
   # client:
   #   image: amitesh252/games-fe:latest
