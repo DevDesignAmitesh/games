@@ -15,16 +15,19 @@ class BullmqManager {
   private constructor() {
     this.queue = new Queue("game", {
       connection: BullmqManager.getConnection(),
+      defaultJobOptions: {
+        removeOnComplete: { count: 100 },
+        removeOnFail: { count: 500 },
+      },
     });
-    const worker = new Worker(
+    
+    new Worker(
       "game",
       async (job) => {
         this.handler(job.data, job.id);
       },
       { connection: BullmqManager.getConnection(), concurrency: 1 },
     );
-
-    worker.on("completed", (job) => {});
   }
 
   private static getConnection() {
