@@ -23,7 +23,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./dockerfiles/http.dockerfile
+          file: ./ops/http.dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/games-http-be:latest
 
@@ -31,7 +31,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./dockerfiles/ws.dockerfile
+          file: ./ops/ws.dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/games-ws-be:latest
 
