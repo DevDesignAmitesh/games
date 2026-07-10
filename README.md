@@ -107,7 +107,7 @@ The project uses a Turborepo-based monorepo for sharing code and simplifying dev
 
 ## Architecture
 
-> Add architecture diagram here.
+![architecture](./architecture.png)
 
 ---
 
